@@ -1,0 +1,74 @@
+[versions]
+# --- Frameworks ---
+spring-boot = "3.4.4"
+kotlin = "2.1.20"
+spring-dependency-management = "1.1.6"
+
+# --- Other Libraries ---
+aspectj = "1.9.22.1"
+auth0-java-jwt = "4.4.0"
+commons-lang3 = "3.15.0"
+commons-io = "2.16.1"
+commons-codec = "1.17.1"
+thumbnailator = "0.4.20"
+mustache-java = "0.9.13"
+springdoc-openapi = "2.8.6"
+httpclient5 = "5.4.3"
+simmetrics = "4.1.1"
+
+# --- Testing ---
+kotest = "5.9.1"
+kotest-extensions-spring= "1.3.0"
+mockk = "1.13.11"
+
+
+[libraries]
+# --- Kotlin ---
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+
+# --- Spring Boot Starters (version managed by spring-boot plugin/BOM) ---
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-jetty = { module = "org.springframework.boot:spring-boot-starter-jetty" }
+spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb" }
+spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+springdoc-openapi-starter-webmvc-api = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc-openapi" }
+
+# --- Other Libraries ---
+aspectj-weaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectj" }
+auth0-java-jwt = { module = "com.auth0:java-jwt", version.ref = "auth0-java-jwt" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
+commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
+# Jackson versions managed by spring-boot BOM
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
+jackson-dataformat-csv = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-csv" }
+# Caffeine version now managed by spring-boot BOM
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine" }
+thumbnailator = { module = "net.coobird:thumbnailator", version.ref = "thumbnailator" }
+jakarta-activation-api = { module = "jakarta.activation:jakarta.activation-api" }
+jakarta-validation = { module = "jakarta.validation:jakarta.validation-api" }
+mustache-java = { module = "com.github.spullara.mustache.java:compiler", version.ref = "mustache-java" }
+httpclient5 = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpclient5" }
+# Micrometer Prometheus version managed by spring-boot BOM
+micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
+simmetrics-core = { module = "com.github.mpkorstanje:simmetrics-core", version.ref = "simmetrics" }
+bson = { module = "org.mongodb:bson" }
+
+# --- Testing Libraries ---
+kotest-bom = { group = "io.kotest", name = "kotest-bom", version.ref = "kotest"}
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5-jvm" } # Version from kotest-bom
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core-jvm" } # Version from kotest-bom
+kotest-property = { module = "io.kotest:kotest-property-jvm" } # Version from kotest-bom
+kotest-extensions-spring = { module = "io.kotest.extensions:kotest-extensions-spring", version.ref = "kotest-extensions-spring" } # Version from kotest-bom
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }

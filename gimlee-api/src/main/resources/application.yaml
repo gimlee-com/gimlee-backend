@@ -1,0 +1,43 @@
+server:
+  port: 12060
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+  jetty:
+    max-threads: 40
+    min-threads: 40
+    max-http-form-post-size: 1MB
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 1MB
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+
+gimlee:
+  # gimlee-auth properties
+  auth:
+    jwt:
+      enabled: true
+    rest:
+      jwt:
+        issuer: gimlee
+      unsecured-paths: >
+        /swagger-ui.html,
+        /swagger-ui/**,
+        /v3/api-docs,
+        /auth/register,
+        /auth/register/**,
+        /auth/login,
+        /playground/**
+  # gimlee-payments properties
+  payments:
+    pirate-chain:
+      client:
+        max-connections: 2
+        response-timeout-millis: 1000
+        connection-request-timeout-millis: 300

@@ -1,0 +1,72 @@
+### Add a Pirate Chain View Key (Successful)
+# Requires authentication (e.g., a valid jwt cookie)
+# Replace "zv..." with a real Pirate Chain viewing key
+POST http://localhost:12060/api/payments/piratechain/addresses/view-key
+Content-Type: application/json
+
+{
+  "viewKey": "zv..."
+}
+
+### Expected Response (Success):
+# HTTP/1.1 200 OK
+# (No response body)
+
+
+### Add a Pirate Chain View Key (Validation Error - Empty Key)
+# Requires authentication
+POST http://localhost:12060/api/payments/piratechain/addresses/view-key
+Content-Type: application/json
+
+{
+  "viewKey": ""
+}
+
+### Expected Response (Validation Error):
+# HTTP/1.1 400 Bad Request
+# Content-Type: application/json
+#
+# {
+#   "timestamp": "...",
+#   "status": 400,
+#   "error": "Bad Request",
+#   "errors": [
+#     {
+#       "codes": [ ... ],
+#       "arguments": [ ... ],
+#       "defaultMessage": "Viewing key cannot be empty.",
+#       "objectName": "addViewKeyRequest",
+#       "field": "viewKey",
+#       "rejectedValue": "",
+#       "bindingFailure": false,
+#       "code": "NotEmpty"
+#     }
+#   ],
+#   "path": "/api/payments/piratechain/addresses/view-key"
+# }
+
+
+### Get User's Pirate Chain Transactions (Successful)
+GET http://localhost:12060/api/payments/piratechain/transactions
+Accept: application/json
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# [
+#   {
+#     "txid": "a1b2c3d4...",
+#     "memo": "test", // Example memo
+#     "amount": 10.5,
+#     "confirmations": 15,
+#     "zAddress": "zs1abcdefg..."
+#   },
+#   {
+#     "txid": "e5f6g7h8...",
+#     "memo": null, // Memo might be null or empty
+#     "amount": 2.75,
+#     "confirmations": 5,
+#     "zAddress": "zs1hijklmnop..."
+#   }
+#   // ... more transactions
+# ]

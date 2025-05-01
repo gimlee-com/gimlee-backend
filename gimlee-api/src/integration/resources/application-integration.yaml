@@ -1,0 +1,56 @@
+server:
+  port: 8888
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+
+spring:
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/gimlee?maxPoolSize=10
+      repositories:
+        type: auto
+  mail:
+    host: dummydummy.com
+    port: 587
+    username: dummy@dummy.com
+    password: dummy
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+      from: dummy@dummy.com
+      reply-to: dummy@dummy.com
+
+gimlee:
+  # gimlee-auth properties
+  auth:
+    jwt:
+      enabled: true
+    csrf:
+      validation:
+        enabled: true
+    rest:
+      jwt:
+        issuer: gimlee
+        key: password
+
+  # gimlee-media-store properties
+  media:
+    store:
+      directory: ./target/tempmediastore
+
+  # gimlee-payments properties
+  payments:
+    pirate-chain:
+      client:
+        rpc-url: http://127.0.0.1
+        user: dummy
+        password: dummy

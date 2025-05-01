@@ -1,0 +1,7 @@
+### Create Playground Users
+# @name createUsers
+POST http://localhost:12060/api/playground/createUsers
+
+### Create Playground Media
+# @name createMedia
+POST http://localhost:12060/api/playground/createMedia

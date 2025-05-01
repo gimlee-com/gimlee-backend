@@ -1,0 +1,56 @@
+# mongodb
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/gimlee?maxPoolSize=10
+      repositories:
+        type: auto
+  # email config
+  mail:
+    host: <fillme>
+    port: 587
+    username: <fillme> # e.g. some@one.com
+    password: <fillme> # SMTP password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+gimlee:
+  # gimlee-auth properties
+  auth:
+    rest:
+      jwt:
+        key: <fillme> # JWT tokens will be signed with this key
+
+  # gimlee-media-store properties
+  media:
+    store:
+      directory: <fillme> # (absolute path) - media files will be stored here
+
+  # gimlee-payments properties
+  payments:
+    pirate-chain:
+      client:
+        rpc-url: <fillme>
+        user: <fillme>
+        password: <fillme>
+
+# Metrics related configurations
+management:
+  endpoint:
+    metrics:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
