@@ -27,7 +27,7 @@ gimlee:
   auth:
     rest:
       jwt:
-        key: <fillme> # JWT tokens will be signed with this key
+        key: "iamnotmeantforproduction" # JWT tokens will be signed with this key
 
   # gimlee-media-store properties
   media:
