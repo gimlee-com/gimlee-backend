@@ -21,6 +21,8 @@ data class AdDto(
     val createdAt: Instant,
     val updatedAt: Instant,
     val location: LocationDto?,
+    val mediaPaths: List<String>?,
+    val mainPhotoPath: String?,
 ) {
     companion object {
         fun fromDomain(ad: Ad): AdDto = with(ad) {
@@ -34,7 +36,9 @@ data class AdDto(
                 status = status,
                 createdAt = createdAt,
                 updatedAt = updatedAt,
-                location = location?.let { LocationDto(cityId = it.cityId, point = it.point) }
+                location = location?.let { LocationDto(cityId = it.cityId, point = it.point) },
+                mediaPaths = mediaPaths,
+                mainPhotoPath = mainPhotoPath,
             )
         }
     }

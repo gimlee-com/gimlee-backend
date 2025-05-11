@@ -19,7 +19,12 @@ Content-Type: application/json
 #   "price": null,
 #   "currency": null,
 #   "status": "INACTIVE",
-#   "userId": "5f8f8f8f8f8f8f8f8f8f8f8f" // Example User ID
+#   "userId": "5f8f8f8f8f8f8f8f8f8f8f8f", // Example User ID
+#   "location": null,
+#   "mediaPaths": [],
+#   "mainPhotoPath": null,
+#   "createdAt": "2023-01-01T10:00:00Z",
+#   "updatedAt": "2023-01-01T10:00:00Z"
 # }
 
 
@@ -35,7 +40,19 @@ Content-Type: application/json
   "title": "Updated Ad Title",
   "description": "This is a detailed description of the item.",
   "price": 19.99,
-  "currency": "USD"
+  "currency": "USD",
+  "location": {
+    "cityId": "city-id-123",
+    "point": {
+      "latitude": 40.7128,
+      "longitude": -74.0060
+    }
+  },
+  "mediaPaths": [
+    "path/to/media/image1.jpg",
+    "path/to/media/details/image2.png"
+  ],
+  "mainPhotoPath": "path/to/media/image1.jpg"
 }
 
 ### Expected Response (Success - 200 OK):
@@ -48,7 +65,21 @@ Content-Type: application/json
 #   "price": 19.99,
 #   "currency": "USD",
 #   "status": "INACTIVE", // Status remains INACTIVE after update
-#   "userId": "5f8f8f8f8f8f8f8f8f8f8f8f" // Example User ID
+#   "userId": "5f8f8f8f8f8f8f8f8f8f8f8f", // Example User ID
+#   "location": {
+#     "cityId": "city-id-123",
+#     "point": {
+#       "latitude": 40.7128,
+#       "longitude": -74.0060
+#     }
+#   },
+#   "mediaPaths": [
+#     "path/to/media/image1.jpg",
+#     "path/to/media/details/image2.png"
+#   ],
+#   "mainPhotoPath": "path/to/media/image1.jpg",
+#   "createdAt": "2023-01-01T10:00:00Z",
+#   "updatedAt": "2023-01-01T10:05:00Z"
 # }
 
 ### Expected Response (Not Found - 404 Not Found):
@@ -83,7 +114,21 @@ POST http://localhost:12060/api/ads/{adId}/activate
 #   "price": 19.99, // Or null/previous value
 #   "currency": "USD", // Or null/previous value
 #   "status": "ACTIVE", // Status is now ACTIVE
-#   "userId": "5f8f8f8f8f8f8f8f8f8f8f8f" // Example User ID
+#   "userId": "5f8f8f8f8f8f8f8f8f8f8f8f", // Example User ID
+#   "location": { // Or null/previous value
+#     "cityId": "city-id-123",
+#     "point": {
+#       "latitude": 40.7128,
+#       "longitude": -74.0060
+#     }
+#   },
+#   "mediaPaths": [ // Or null/previous value
+#     "path/to/media/image1.jpg",
+#     "path/to/media/details/image2.png"
+#   ],
+#   "mainPhotoPath": "path/to/media/image1.jpg", // Or null/previous value
+#   "createdAt": "2023-01-01T10:00:00Z",
+#   "updatedAt": "2023-01-01T10:10:00Z"
 # }
 
 ### Expected Response (Not Found - 404 Not Found):

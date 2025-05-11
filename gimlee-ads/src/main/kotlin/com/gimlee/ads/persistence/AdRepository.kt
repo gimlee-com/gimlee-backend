@@ -103,6 +103,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             } else {
                 Sorts.ascending(AdDocument.FIELD_CREATED_AT)
             }
+            // Add other sorting options if needed for By enum
         }
 
         val documents: List<AdDocument>
@@ -140,6 +141,9 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             .append(AdDocument.FIELD_CREATED_AT, ad.createdAtMicros)
             .append(AdDocument.FIELD_UPDATED_AT, ad.updatedAtMicros)
             .append(AdDocument.FIELD_CITY_ID, ad.cityId) // Map cityId
+            .append(AdDocument.FIELD_MEDIA_PATHS, ad.mediaPaths)
+            .append(AdDocument.FIELD_MAIN_PHOTO_PATH, ad.mainPhotoPath)
+
 
         // Map GeoJsonPoint to Document format { type: "Point", coordinates: [lon, lat] }
         ad.location?.let { geoPoint ->
@@ -168,6 +172,9 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             }
         }
 
+        @Suppress("UNCHECKED_CAST")
+        val mediaPathsList = doc.get(AdDocument.FIELD_MEDIA_PATHS) as? List<String>
+
         return AdDocument(
             id = doc.getObjectId(AdDocument.FIELD_ID),
             userId = doc.getObjectId(AdDocument.FIELD_USER_ID),
@@ -178,8 +185,10 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             status = AdStatus.valueOf(statusString ?: AdStatus.INACTIVE.name),
             createdAtMicros = doc.getLong(AdDocument.FIELD_CREATED_AT),
             updatedAtMicros = doc.getLong(AdDocument.FIELD_UPDATED_AT),
-            cityId = doc.getString(AdDocument.FIELD_CITY_ID), // Map cityId
-            location = geoPoint // Map location
+            cityId = doc.getString(AdDocument.FIELD_CITY_ID),
+            location = geoPoint,
+            mediaPaths = mediaPathsList ?: emptyList(),
+            mainPhotoPath = doc.getString(AdDocument.FIELD_MAIN_PHOTO_PATH)
         )
     }
 }

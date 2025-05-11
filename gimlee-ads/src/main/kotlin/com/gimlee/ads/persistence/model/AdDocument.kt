@@ -21,6 +21,8 @@ data class AdDocument(
     val updatedAtMicros: Long,
     val cityId: String?,
     val location: GeoJsonPoint?,
+    val mediaPaths: List<String>? = emptyList(),
+    val mainPhotoPath: String?
 ) {
     companion object {
         const val FIELD_ID = "_id"
@@ -34,14 +36,16 @@ data class AdDocument(
         const val FIELD_UPDATED_AT = "upd"
         const val FIELD_CITY_ID = "cid"
         const val FIELD_LOCATION = "loc"
+        const val FIELD_MEDIA_PATHS = "mep"
+        const val FIELD_MAIN_PHOTO_PATH = "mpp"
 
         // Note: A 2dsphere index should be manually created on the 'loc' field in MongoDB
         // Example: db.getCollection('gimlee-ads-advertisements').createIndex({ "loc" : "2dsphere" })
         // Note: An index should be manually created on 'cid' if frequent city filtering is expected
         // Example: db.getCollection('gimlee-ads-advertisements').createIndex({ "cid" : 1 })
-         // Note: An index should be manually created on 'crt' for sorting by creation date
+        // Note: An index should be manually created on 'crt' for sorting by creation date
         // Example: db.getCollection('gimlee-ads-advertisements').createIndex({ "crt" : -1 })
-         // Note: An index should be manually created on 'uid' for fetching user's ads
+        // Note: An index should be manually created on 'uid' for fetching user's ads
         // Example: db.getCollection('gimlee-ads-advertisements').createIndex({ "uid" : 1 })
 
     }
@@ -53,9 +57,6 @@ data class AdDocument(
         val domainLocation = if (this.cityId != null && this.location != null) {
             Location(cityId = this.cityId, point = doubleArrayOf(this.location.x, this.location.y))
         } else if (this.cityId != null) {
-             // Handle case where only cityId might be stored (if coordinates weren't provided)
-             // This depends on how you decide to handle partial location data
-             // For now, assume if loc is null, point is unknown. Adjust as needed.
             Location(cityId = this.cityId, point = doubleArrayOf())
         } else {
             null
@@ -72,6 +73,8 @@ data class AdDocument(
             createdAt = fromMicros(this.createdAtMicros),
             updatedAt = fromMicros(this.updatedAtMicros),
             location = domainLocation,
+            mediaPaths = this.mediaPaths,
+            mainPhotoPath = this.mainPhotoPath
         )
     }
 }

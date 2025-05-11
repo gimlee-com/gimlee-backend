@@ -18,5 +18,7 @@ data class Ad(
     val status: AdStatus,
     val createdAt: Instant,
     val updatedAt: Instant,
-    val location: Location?
+    val location: Location?,
+    val mediaPaths: List<String>? = emptyList(),
+    val mainPhotoPath: String?,
 )

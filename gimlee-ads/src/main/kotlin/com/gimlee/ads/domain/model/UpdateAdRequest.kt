@@ -12,4 +12,6 @@ data class UpdateAdRequest(
     val price: BigDecimal?,
     val currency: Currency?,
     val location: Location?,
+    val mediaPaths: List<String>?,
+    val mainPhotoPath: String?,
 )

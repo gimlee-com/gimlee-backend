@@ -7,12 +7,12 @@ import com.gimlee.ads.persistence.model.AdDocument
 import com.gimlee.common.toMicros
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Service
 import java.time.Instant
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest // Add this import if not present:
 
 
 @Service
@@ -43,6 +43,8 @@ class AdService(private val adRepository: AdRepository) {
             updatedAtMicros = nowMicros,
             cityId = null,
             location = null,
+            mediaPaths = emptyList(),
+            mainPhotoPath = null
         )
         log.info("Creating new ad with title '{}' for user {}", title, userId)
         val savedDocument = adRepository.save(adDocument)
@@ -50,7 +52,7 @@ class AdService(private val adRepository: AdRepository) {
     }
 
     /**
-     * Updates an existing ad. Handles location update.
+     * Updates an existing ad. Handles location and media update.
      */
     fun updateAd(
         adId: String,
@@ -74,7 +76,7 @@ class AdService(private val adRepository: AdRepository) {
 
         val newTitle = updateData.title ?: existingAdDoc.title // Use existing if null provided
         if (newTitle.isBlank()) {
-             log.warn("Attempted to update ad {} with blank title", adId)
+            log.warn("Attempted to update ad {} with blank title", adId)
             throw AdOperationException("Title is mandatory and cannot be empty.")
         }
 
@@ -83,6 +85,20 @@ class AdService(private val adRepository: AdRepository) {
             GeoJsonPoint(it[0], it[1])
         }
 
+        // Media fields validation
+        val newMediaPaths = updateData.mediaPaths ?: existingAdDoc.mediaPaths
+        var newMainPhotoPath = updateData.mainPhotoPath ?: existingAdDoc.mainPhotoPath
+
+        if (newMainPhotoPath != null && (newMediaPaths == null || !newMediaPaths.contains(newMainPhotoPath))) {
+            log.warn("Update failed for ad {}: mainPhotoPath '{}' is not in mediaPaths list.", adId, newMainPhotoPath)
+            throw AdOperationException("Main photo path must be one of the media paths.")
+        }
+        if ((newMediaPaths == null || newMediaPaths.isEmpty()) && newMainPhotoPath != null) {
+            log.warn("Update failed for ad {}: mainPhotoPath is set but mediaPaths is empty. Clearing mainPhotoPath.", adId)
+            newMainPhotoPath = null // Or throw error: "Cannot set main photo if media paths are empty."
+        }
+
+
         val updatedAdDoc = existingAdDoc.copy(
             title = newTitle,
             description = updateData.description ?: existingAdDoc.description,
@@ -90,6 +106,8 @@ class AdService(private val adRepository: AdRepository) {
             currency = updateData.currency ?: existingAdDoc.currency,
             cityId = newCityId ?: existingAdDoc.cityId,
             location = newGeoPoint ?: existingAdDoc.location,
+            mediaPaths = newMediaPaths,
+            mainPhotoPath = newMainPhotoPath,
             updatedAtMicros = Instant.now().toMicros()
         )
 
@@ -98,7 +116,7 @@ class AdService(private val adRepository: AdRepository) {
         return savedDocument.toDomain()
     }
 
-     /**
+    /**
      * Retrieves a single ad by its ID.
      */
     fun getAd(adId: String): Ad? {
@@ -115,7 +133,8 @@ class AdService(private val adRepository: AdRepository) {
         val effectiveFilters = if (filters.createdBy != null) {
             filters
         } else {
-            filters
+            // Ensure only ACTIVE ads are fetched if not fetching by createdBy (my ads)
+            filters // Status is already filtered in AdRepository.find for general queries
         }
         log.debug("Fetching ads with filters: {}, sorting: {}, page: {}", effectiveFilters, sorting, pageRequest)
         val pageOfAdDocuments = adRepository.find(effectiveFilters, sorting, pageRequest)
@@ -126,9 +145,10 @@ class AdService(private val adRepository: AdRepository) {
     /**
      * Retrieves featured ads (currently most recent active ads).
      */
-     fun getFeaturedAds(): Page<Ad> {
-        val filters = AdFilters()
+    fun getFeaturedAds(): Page<Ad> {
+        val filters = AdFilters() // Status ACTIVE is applied in repository
         val sorting = AdSorting(by = By.CREATED_DATE, direction = Direction.DESC)
+        // Consider if PAGE_SIZE from controller should be used or a specific one for featured
         val pageRequest = PageRequest.of(0, 30)
 
         log.debug("Fetching featured ads")
