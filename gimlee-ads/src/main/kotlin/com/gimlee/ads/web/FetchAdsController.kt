@@ -14,6 +14,7 @@ import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
@@ -36,12 +37,13 @@ class FetchAdsController(
      */
     @Validated
     @GetMapping(path = ["/ads/"])
-    fun fetchAds(@Valid fetchAdsRequestDto: FetchAdsRequestDto) = adService.getAds(
-        filters = toAdFilters(fetchAdsRequestDto.filters),
-        sorting = toAdSorting(fetchAdsRequestDto.sorting),
-        pageRequest = PageRequest.of(fetchAdsRequestDto.page, PAGE_SIZE)
-    ).map {
-        AdPreviewDto.fromAd(it)
+    fun fetchAds(@Valid fetchAdsRequestDto: FetchAdsRequestDto): Page<AdPreviewDto> {
+        val pageOfAds = adService.getAds(
+            filters = toAdFilters(fetchAdsRequestDto.filters),
+            sorting = toAdSorting(fetchAdsRequestDto.sorting),
+            pageRequest = PageRequest.of(fetchAdsRequestDto.page, PAGE_SIZE)
+        )
+        return pageOfAds.map { AdPreviewDto.fromAd(it) }
     }
 
     /**
@@ -50,8 +52,9 @@ class FetchAdsController(
      * Note #2: As of now, the "featured ads" are recently added ads - a proper algo will follow in the future.
      */
     @GetMapping(path = ["/ads/featured"])
-    fun fetchFeaturedAds() = adService.getFeaturedAds().map {
-        AdPreviewDto.fromAd(it)
+    fun fetchFeaturedAds(): Page<AdPreviewDto> {
+        val pageOfFeaturedAds = adService.getFeaturedAds()
+        return pageOfFeaturedAds.map { AdPreviewDto.fromAd(it) }
     }
 
     /**
@@ -60,12 +63,13 @@ class FetchAdsController(
      */
     @GetMapping(path = ["/ads/my"])
     @Privileged("USER")
-    fun fetchMyAds() = adService.getAds(
-        filters = AdFilters(createdBy = HttpServletRequestAuthUtil.getPrincipal().userId),
-        sorting = AdSorting(by = By.CREATED_DATE, direction = Direction.DESC),
-        pageRequest = Pageable.unpaged()
-    ).map {
-        AdPreviewDto.fromAd(it)
+    fun fetchMyAds(): Page<AdPreviewDto> {
+        val pageOfMyAds = adService.getAds(
+            filters = AdFilters(createdBy = HttpServletRequestAuthUtil.getPrincipal().userId),
+            sorting = AdSorting(by = By.CREATED_DATE, direction = Direction.DESC),
+            pageRequest = Pageable.unpaged() // This will result in a Page with all user's ads
+        )
+        return pageOfMyAds.map { AdPreviewDto.fromAd(it) }
     }
 
     @GetMapping(path = ["/ads/{adId}"])
@@ -74,7 +78,6 @@ class FetchAdsController(
         response: HttpServletResponse
     ): AdDetailsDto? {
         val ad = adService.getAd(adId)
-        val userId = HttpServletRequestAuthUtil.getPrincipal().userId
 
         if (null == ad) {
             response.status = HttpStatus.NOT_FOUND.value()

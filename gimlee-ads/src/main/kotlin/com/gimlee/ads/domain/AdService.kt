@@ -11,6 +11,9 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Service
 import java.time.Instant
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest // Add this import if not present:
+
 
 @Service
 class AdService(private val adRepository: AdRepository) {
@@ -108,32 +111,29 @@ class AdService(private val adRepository: AdRepository) {
         return adRepository.findById(adObjectId)?.toDomain()
     }
 
-    /**
-     * Retrieves ads based on filters, sorting, and pagination.
-     */
-    fun getAds(filters: AdFilters, sorting: AdSorting, pageRequest: Pageable): List<Ad> {
-        // Ensure only ACTIVE ads are fetched unless 'createdBy' filter is present (for 'my ads')
+    fun getAds(filters: AdFilters, sorting: AdSorting, pageRequest: Pageable): Page<Ad> {
         val effectiveFilters = if (filters.createdBy != null) {
-            // If fetching user's ads, don't force ACTIVE status here, repo handles user filter
             filters
         } else {
             filters
         }
         log.debug("Fetching ads with filters: {}, sorting: {}, page: {}", effectiveFilters, sorting, pageRequest)
-        return adRepository.find(effectiveFilters, sorting, pageRequest).map { it.toDomain() }
+        val pageOfAdDocuments = adRepository.find(effectiveFilters, sorting, pageRequest)
+        return pageOfAdDocuments.map { it.toDomain() }
     }
 
 
     /**
      * Retrieves featured ads (currently most recent active ads).
      */
-     fun getFeaturedAds(): List<Ad> {
+     fun getFeaturedAds(): Page<Ad> {
         val filters = AdFilters()
         val sorting = AdSorting(by = By.CREATED_DATE, direction = Direction.DESC)
-        val pageRequest = Pageable.ofSize(10)
+        val pageRequest = PageRequest.of(0, 30)
 
         log.debug("Fetching featured ads")
-        return adRepository.find(filters, sorting, pageRequest).map { it.toDomain() }
+        val pageOfAdDocuments = adRepository.find(filters, sorting, pageRequest)
+        return pageOfAdDocuments.map { it.toDomain() }
     }
 
 

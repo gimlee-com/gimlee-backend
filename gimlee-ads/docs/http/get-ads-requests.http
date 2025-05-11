@@ -1,0 +1,57 @@
+### Fetch Ads - Basic
+# Fetches ads with default pagination (page 0) and default sorting (created date descending).
+# @name GetAdsBasic
+GET http://localhost:12060/api/ads/
+
+### Fetch Ads - With Text Search and Page
+# t: text search query
+# p: page number (0-indexed)
+# @name GetAdsTextSearch
+GET http://localhost:12060/api/ads/?t=Searched%20Keyword&p=1
+
+### Fetch Ads - With City, Price Range, and Sorting
+# cty: city ID
+# minp: minimum price
+# maxp: maximum price
+# by: sort by field (e.g., CREATED_DATE, PRICE)
+# dir: sort direction (ASC, DESC)
+# @name GetAdsFilteredAndSorted
+GET http://localhost:12060/api/ads/?cty=city-id-123&minp=100&maxp=500&by=CREATED_DATE&dir=ASC
+
+### Fetch Ads - With Geographic Circle Filter
+# x: longitude
+# y: latitude
+# r: radius in kilometers (must be >= 0.5)
+# @name GetAdsGeoFilter
+GET http://localhost:12060/api/ads/?x=-73.985130&y=40.758896&r=10
+
+### Fetch Ads - Combined Filters
+# Example combining text search, price range, city, and specific page, sorted ascending by price.
+# @name GetAdsCombinedFilters
+GET http://localhost:12060/api/ads/?t=Vintage%20Bike&minp=50&maxp=250&cty=another-city-id&by=PRICE&dir=ASC&p=0
+
+### Fetch Featured Ads
+# Fetches featured ads. Currently, these are the most recently added ads.
+# No client-side filtering or pagination parameters.
+# @name GetFeaturedAds
+GET http://localhost:12060/api/ads/featured
+
+### Fetch My Ads
+# Fetches ads belonging to the authenticated user.
+# Requires USER role authentication. Replace <YOUR_AUTH_TOKEN_HERE> with a valid token.
+# Returns all ads for the user (unpaged), sorted by created date descending.
+# @name GetMyAds
+GET http://localhost:12060/api/ads/my
+Authorization: Bearer <YOUR_AUTH_TOKEN_HERE>
+
+### Fetch Single Ad Details
+# Fetches details for a specific ad by its ID.
+# Replace {adId} with an actual Ad ID.
+# @name GetAdById
+GET http://localhost:12060/api/ads/some-ad-id-12345
+
+### Fetch Single Ad Details - Non-Existent Ad
+# Example for an ad ID that is not expected to exist, to test 404 response.
+# Replace {adId} with an ID that is unlikely to exist.
+# @name GetAdByIdNotFound
+GET http://localhost:12060/api/ads/non-existent-ad-id-999

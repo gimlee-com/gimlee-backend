@@ -15,6 +15,8 @@ import com.mongodb.client.model.Sorts
 import org.bson.Document
 import org.bson.conversions.Bson
 import org.bson.types.ObjectId
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Repository
@@ -54,84 +56,74 @@ class AdRepository(mongoDatabase: MongoDatabase) {
     /**
      * Finds ads based on filters, sorting, and pagination.
      */
-    fun find(filters: AdFilters, sorting: AdSorting, pageRequest: Pageable): List<AdDocument> {
+    fun find(filters: AdFilters, sorting: AdSorting, pageRequest: Pageable): Page<AdDocument> { // Return type changed
         val queryFilters = mutableListOf<Bson>()
 
-        // Add status filter - typically only fetch ACTIVE ads unless specified otherwise
-        // FetchAdsController implies fetching ACTIVE ads for the general search
         queryFilters.add(Filters.eq(AdDocument.FIELD_STATUS, AdStatus.ACTIVE.name))
 
-        // Filter by user ID if provided (e.g., for "my ads")
         filters.createdBy?.let {
             queryFilters.add(Filters.eq(AdDocument.FIELD_USER_ID, ObjectId(it)))
         }
-
-        // Filter by text (requires a text index on relevant fields)
-        // Simple implementation: Check if text filter exists
-        // A proper implementation would use Filters.text() and require a text index
         filters.text?.let {
-             // Placeholder: Add Filters.text(it) if a text index is configured
-             // queryFilters.add(Filters.text(it))
-             // Simple alternative (less efficient): Use regex on title/description
-             val regexFilter = Filters.or(
-                 Filters.regex(AdDocument.FIELD_TITLE, ".*$it.*", "i"), // Case-insensitive regex
-                 Filters.regex(AdDocument.FIELD_DESCRIPTION, ".*$it.*", "i")
-             )
+            val regexFilter = Filters.or(
+                Filters.regex(AdDocument.FIELD_TITLE, ".*$it.*", "i"),
+                Filters.regex(AdDocument.FIELD_DESCRIPTION, ".*$it.*", "i")
+            )
             queryFilters.add(regexFilter)
         }
-
-        // Filter by price range
         filters.priceRange?.let { range ->
             val priceFilters = mutableListOf<Bson>()
-            range.from?.let { priceFilters.add(Filters.gte(AdDocument.FIELD_PRICE, it.toPlainString())) } // Store price as string, compare as needed or use Decimal128
+            range.from?.let { priceFilters.add(Filters.gte(AdDocument.FIELD_PRICE, it.toPlainString())) }
             range.to?.let { priceFilters.add(Filters.lte(AdDocument.FIELD_PRICE, it.toPlainString())) }
             if (priceFilters.isNotEmpty()) {
                 queryFilters.add(Filters.and(priceFilters))
             }
         }
-
-        // Filter by location
         filters.location?.let { locationFilter ->
             locationFilter.cityIds?.takeIf { it.isNotEmpty() }?.let {
                 queryFilters.add(Filters.`in`(AdDocument.FIELD_CITY_ID, it))
             }
             locationFilter.circle?.let { circle ->
-                // Use $geoWithin with $centerSphere for distance queries (requires 2dsphere index)
-                // Circle object from Spring Data Geo holds center (Point) and radius (Distance/double)
-                // MongoDB $centerSphere expects: [ [ lon, lat ], radius_in_radians ]
                 queryFilters.add(
                     Filters.geoWithinCenterSphere(
                         AdDocument.FIELD_LOCATION,
-                        circle.center.x, // longitude
-                        circle.center.y, // latitude
-                        circle.radius.value // radius in radians (already converted in DTO)
+                        circle.center.x,
+                        circle.center.y,
+                        circle.radius.value
                     )
                 )
             }
         }
 
-        // Combine all filters
         val combinedFilter = if (queryFilters.isEmpty()) Document() else Filters.and(queryFilters)
 
-        // Determine sorting
         val sort = when (sorting.by) {
             By.CREATED_DATE -> if (sorting.direction == Direction.DESC) {
                 Sorts.descending(AdDocument.FIELD_CREATED_AT)
             } else {
                 Sorts.ascending(AdDocument.FIELD_CREATED_AT)
             }
-            // Add other sorting options if needed
         }
 
-        // Apply query, sort, skip, and limit
-        val findIterable = collection.find(combinedFilter).sort(sort)
+        val documents: List<AdDocument>
+        val total: Long
 
         if (pageRequest.isPaged) {
-            findIterable.skip(pageRequest.offset.toInt()).limit(pageRequest.pageSize)
+            total = collection.countDocuments(combinedFilter)
+            val findIterable = collection.find(combinedFilter)
+                .sort(sort)
+                .skip(pageRequest.offset.toInt())
+                .limit(pageRequest.pageSize)
+            documents = findIterable.map { mapToAdDocument(it) }.toList()
+        } else { // Handles Pageable.unpaged()
+            val findIterable = collection.find(combinedFilter).sort(sort)
+            documents = findIterable.map { mapToAdDocument(it) }.toList()
+            total = documents.size.toLong()
         }
 
-        return findIterable.map { mapToAdDocument(it) }.toList()
+        return PageImpl(documents, pageRequest, total)
     }
+
 
 
     // --- Manual Mapping Functions ---
