@@ -1,4 +1,4 @@
-package com.gimlee.api.cities.data
+package com.gimlee.location.cities.data
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext

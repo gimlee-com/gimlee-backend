@@ -1,4 +1,4 @@
-package com.gimlee.api.cities
+package com.gimlee.location.cities
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
-import com.gimlee.api.cities.data.City
-import com.gimlee.api.cities.domain.CitySuggestion
-import com.gimlee.api.cities.search.CitySearch
+import com.gimlee.location.cities.data.City
+import com.gimlee.location.cities.domain.CitySuggestion
+import com.gimlee.location.cities.search.CitySearch
 
 @RestController
 class CitiesController(

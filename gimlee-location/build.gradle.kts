@@ -1,9 +1,6 @@
 dependencies {
     // Module dependencies
     implementation(project(":gimlee-common"))
-    implementation(project(":gimlee-events"))
-    implementation(project(":gimlee-auth"))
-    implementation(project(":gimlee-location"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)
@@ -14,11 +11,10 @@ dependencies {
     implementation(libs.spring.boot.starter.data.mongodb)
 
     // Other dependencies
-    implementation(libs.httpclient5)
+    implementation(libs.simmetrics.core)
     implementation(libs.caffeine)
-    implementation(libs.commons.codec)
     implementation(libs.jakarta.validation)
-    implementation(libs.jackson.module.kotlin)
+    implementation(libs.jackson.dataformat.csv)
 }
 
 sourceSets {

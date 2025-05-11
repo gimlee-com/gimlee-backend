@@ -1,14 +1,14 @@
-package com.gimlee.api.cities.search
+package com.gimlee.location.cities.search
 
 import org.simmetrics.StringMetric
 import org.simmetrics.builders.StringMetricBuilder
 import org.simmetrics.metrics.StringMetrics
 import org.simmetrics.simplifiers.Simplifiers
 import org.springframework.stereotype.Component
-import com.gimlee.api.cities.data.City
-import com.gimlee.api.cities.data.cityDataById
-import com.gimlee.api.cities.data.cityDataUnsorted
-import com.gimlee.api.cities.domain.CitySuggestion
+import com.gimlee.location.cities.data.City
+import com.gimlee.location.cities.data.cityDataById
+import com.gimlee.location.cities.data.cityDataUnsorted
+import com.gimlee.location.cities.domain.CitySuggestion
 
 
 val metric: StringMetric = StringMetricBuilder.with(StringMetrics.jaroWinkler())

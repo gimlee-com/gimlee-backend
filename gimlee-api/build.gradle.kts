@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":gimlee-media-store"))
     implementation(project(":gimlee-payments"))
     implementation(project(":gimlee-ads"))
+    implementation(project(":gimlee-location"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)
@@ -29,7 +30,6 @@ dependencies {
     implementation(libs.commons.lang3)
     implementation(libs.commons.io)
     implementation(libs.commons.codec)
-    implementation(libs.simmetrics.core)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.jackson.dataformat.csv)
     implementation(libs.mustache.java)

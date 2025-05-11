@@ -1,4 +1,4 @@
-package com.gimlee.api.cities.data
+package com.gimlee.location.cities.data
 
 import com.fasterxml.jackson.dataformat.csv.CsvMapper
 import com.fasterxml.jackson.dataformat.csv.CsvParser

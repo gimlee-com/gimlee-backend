@@ -3,7 +3,6 @@ package com.gimlee.ads.web.dto.response
 import com.gimlee.ads.domain.model.Ad
 import com.gimlee.ads.model.AdStatus
 import com.gimlee.ads.model.Currency
-import com.gimlee.ads.web.dto.request.LocationDto // Import LocationDto
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -20,7 +19,7 @@ data class AdDto(
     val status: AdStatus,
     val createdAt: Instant,
     val updatedAt: Instant,
-    val location: LocationDto?,
+    val location: LocationWithCityDetailsDto?, // Changed type here
     val mediaPaths: List<String>?,
     val mainPhotoPath: String?,
 ) {
@@ -36,7 +35,7 @@ data class AdDto(
                 status = status,
                 createdAt = createdAt,
                 updatedAt = updatedAt,
-                location = location?.let { LocationDto(cityId = it.cityId, point = it.point) },
+                location = LocationWithCityDetailsDto.fromDomain(ad.location),
                 mediaPaths = mediaPaths,
                 mainPhotoPath = mainPhotoPath,
             )

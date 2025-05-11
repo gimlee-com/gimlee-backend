@@ -7,14 +7,16 @@ data class AdPreviewDto(
     val id: String,
     val title: String,
     val price: BigDecimal? = null,
-    val mainPhotoPath: String? = null
+    val mainPhotoPath: String? = null,
+    val location: LocationWithCityDetailsDto? = null,
 ) {
     companion object {
         fun fromAd(ad: Ad) = AdPreviewDto(
             id = ad.id,
             title = ad.title,
             price = ad.price,
-            mainPhotoPath = ad.mainPhotoPath
+            mainPhotoPath = ad.mainPhotoPath,
+            location = LocationWithCityDetailsDto.fromDomain(ad.location),
         )
     }
 }

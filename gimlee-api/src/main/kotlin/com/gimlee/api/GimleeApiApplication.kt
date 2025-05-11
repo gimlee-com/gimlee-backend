@@ -7,9 +7,10 @@ import org.springframework.boot.runApplication
 	"com.gimlee.auth",
 	"com.gimlee.notifications",
 	"com.gimlee.mediastore",
-	"com.gimlee.api",
 	"com.gimlee.ads",
-	"com.gimlee.payments"
+	"com.gimlee.payments",
+	"com.gimlee.location",
+	"com.gimlee.api",
 ])
 class GimleeApiApplication
 
