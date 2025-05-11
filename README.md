@@ -21,12 +21,19 @@ Gimlee employs a non-custodial payment verification system to enable seamless an
 their cryptocurrency wallet's **viewing key** into the platform. This key grants read-only access to incoming
 transaction data (*it does not grant spending capabilities or visibility of outgoing transactions*).
 
-This mechanism allows Gimlee to:
-1.  Monitor the relevant blockchain for incoming transactions destined for the seller's address.
-2.  Automatically confirm when an order payment has been successfully received.
+This mechanism facilitates:
+1. Continuous monitoring of the designated blockchain for incoming transactions to the seller's registered address.
+2. Automated confirmation upon successful receipt of order payments.
 
-Payment verification occurs directly on the blockchain, ensuring transparency and security without the platform ever
-taking custody of user funds. This approach is compatible with privacy-focused cryptocurrencies like Monero (XMR),
+These capabilities are beneficial in many ways, including:
+1. Enhanced User Experience: The platform delivers comprehensive order status visibility throughout the entire
+   purchasing process, from the point of order initiation to the successful delivery of the item to the buyer.
+2. Integrity of Reputation System: Buyer feedback, submitted post-transaction, combined with the system's verification
+   of legitimate payment, contributes to more authentic and reliable seller ratings. This, in turn, underpins
+   the development of a robust reputation system by mitigating manipulative or fraudulent activities.
+
+Payment verification occurs directly on the blockchain, ensuring transparency and security **without the platform ever
+taking custody of user funds**. This approach is compatible with privacy-focused cryptocurrencies like Monero (XMR),
 PirateChain (ARRR), and Firo (FIRO).
 
 ## Project Status & Roadmap
