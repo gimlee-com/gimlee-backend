@@ -1,4 +1,8 @@
 dependencies {
+    // Module dependencies
+    implementation(project(":gimlee-common"))
+    implementation(project(":gimlee-notifications"))
+
     // Common Kotlin dependencies
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
@@ -15,6 +19,9 @@ dependencies {
     implementation(libs.auth0.java.jwt)
     implementation(libs.commons.lang3)
     implementation(libs.commons.codec)
+    implementation(libs.commons.io)
+    implementation(libs.mustache.java)
+    implementation(libs.jakarta.validation)
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(platform(libs.kotest.bom))

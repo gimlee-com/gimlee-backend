@@ -3,10 +3,11 @@ package com.gimlee.api.playground.users.data
 import org.apache.logging.log4j.LogManager
 import org.springframework.stereotype.Component
 import com.gimlee.auth.model.Role
-import com.gimlee.api.auth.persistence.UserRepository
-import com.gimlee.api.auth.persistence.UserRoleRepository
-import com.gimlee.api.auth.domain.User.Companion.FIELD_USERNAME
+import com.gimlee.auth.persistence.UserRepository
+import com.gimlee.auth.persistence.UserRoleRepository
+import com.gimlee.auth.domain.User.Companion.FIELD_USERNAME
 import com.gimlee.api.playground.users.createUsers
+import com.gimlee.auth.domain.User
 
 @Component
 class UsersPopulator(
@@ -17,7 +18,7 @@ class UsersPopulator(
         private val log = LogManager.getLogger()
     }
 
-    fun populateUsers(): List<Pair<com.gimlee.api.auth.domain.User, List<Role>>> {
+    fun populateUsers(): List<Pair<User, List<Role>>> {
         val users = createUsers()
         if (userRepository.findOneByField(FIELD_USERNAME, users.first().first.username!!) != null) {
             log.warn("Dummy users are already created. Returning empty list.")

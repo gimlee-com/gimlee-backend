@@ -5,8 +5,10 @@ import org.springframework.boot.runApplication
 
 @SpringBootApplication(scanBasePackages = [
 	"com.gimlee.auth",
+	"com.gimlee.notifications",
 	"com.gimlee.mediastore",
 	"com.gimlee.api",
+	"com.gimlee.ads",
 	"com.gimlee.payments"
 ])
 class GimleeApiApplication

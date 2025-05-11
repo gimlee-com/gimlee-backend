@@ -1,0 +1,101 @@
+### Create a New Ad
+# Requires USER role authentication
+# Creates an ad in an INACTIVE state.
+# @name /ads [POST]
+POST http://localhost:12060/api/ads
+Content-Type: application/json
+
+{
+  "title": "My Awesome New Ad Title"
+}
+
+### Expected Response (Success - 201 Created):
+# Content-Type: application/json
+#
+# {
+#   "id": "60f8f9b3a9d9e8f8a8b8c8d8", // Example generated Ad ID
+#   "title": "My Awesome New Ad Title",
+#   "description": null,
+#   "price": null,
+#   "currency": null,
+#   "status": "INACTIVE",
+#   "userId": "5f8f8f8f8f8f8f8f8f8f8f8f" // Example User ID
+# }
+
+
+### Update an Existing Ad
+# Requires USER role authentication
+# Can only update INACTIVE ads.
+# Replace {adId} with the actual ID of the ad you want to update.
+# @name /ads/{adId} [PUT]
+PUT http://localhost:12060/api/ads/{adId}
+Content-Type: application/json
+
+{
+  "title": "Updated Ad Title",
+  "description": "This is a detailed description of the item.",
+  "price": 19.99,
+  "currency": "USD"
+}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "id": "{adId}", // The updated Ad ID
+#   "title": "Updated Ad Title",
+#   "description": "This is a detailed description of the item.",
+#   "price": 19.99,
+#   "currency": "USD",
+#   "status": "INACTIVE", // Status remains INACTIVE after update
+#   "userId": "5f8f8f8f8f8f8f8f8f8f8f8f" // Example User ID
+# }
+
+### Expected Response (Not Found - 404 Not Found):
+# Content-Type: application/json
+#
+# {
+#   "error": "Ad with ID {adId} not found for this user."
+# }
+
+### Expected Response (Bad Request - 400 Bad Request):
+# Content-Type: application/json
+#
+# {
+#   "error": "Cannot update an ad that is not INACTIVE."
+# }
+
+
+### Activate an Ad
+# Requires USER role authentication
+# Changes the status of an INACTIVE ad to ACTIVE.
+# Replace {adId} with the actual ID of the ad you want to activate.
+# @name /ads/{adId}/activate [POST]
+POST http://localhost:12060/api/ads/{adId}/activate
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "id": "{adId}", // The activated Ad ID
+#   "title": "Updated Ad Title", // Or original title if not updated
+#   "description": "This is a detailed description of the item.", // Or null/previous value
+#   "price": 19.99, // Or null/previous value
+#   "currency": "USD", // Or null/previous value
+#   "status": "ACTIVE", // Status is now ACTIVE
+#   "userId": "5f8f8f8f8f8f8f8f8f8f8f8f" // Example User ID
+# }
+
+### Expected Response (Not Found - 404 Not Found):
+# Content-Type: application/json
+#
+# {
+#   "error": "Ad with ID {adId} not found for this user."
+# }
+
+### Expected Response (Bad Request - 400 Bad Request):
+# Content-Type: application/json
+#
+# {
+#   "error": "Cannot activate an ad that is already ACTIVE." // Or similar message
+# }

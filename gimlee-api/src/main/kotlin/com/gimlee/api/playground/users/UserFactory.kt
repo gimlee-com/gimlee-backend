@@ -6,7 +6,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.util.createHexSaltAndPasswordHash
 import com.gimlee.auth.util.generateSalt
-import com.gimlee.api.auth.domain.UserStatus
+import com.gimlee.auth.domain.UserStatus
 import com.gimlee.api.playground.users.domain.User
 import java.io.InputStream
 import java.time.LocalDateTime
@@ -25,14 +25,15 @@ private val users = mapper
 
 fun createUsers() = users.map { user ->
     val (salt, passwordHash) = createHexSaltAndPasswordHash(PASSWORD, generateSalt())
-    Pair(com.gimlee.api.auth.domain.User(
-        username = user.username,
-        displayName = user.username,
-        phone = PHONE,
-        email = EMAIL,
-        password = passwordHash,
-        passwordSalt = salt,
-        status = UserStatus.ACTIVE,
-        lastLogin = LocalDateTime.now()
-    ), user.roles.split(";").map { role -> Role.valueOf(role) })
+    Pair(
+        com.gimlee.auth.domain.User(
+            username = user.username,
+            displayName = user.username,
+            phone = PHONE,
+            email = EMAIL,
+            password = passwordHash,
+            passwordSalt = salt,
+            status = UserStatus.ACTIVE,
+            lastLogin = LocalDateTime.now()
+        ), user.roles.split(";").map { role -> Role.valueOf(role) })
 }

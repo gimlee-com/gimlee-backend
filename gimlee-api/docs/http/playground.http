@@ -5,3 +5,7 @@ POST http://localhost:12060/api/playground/createUsers
 ### Create Playground Media
 # @name createMedia
 POST http://localhost:12060/api/playground/createMedia
+
+### Create Playground Ads
+# @name createAds
+POST http://localhost:12060/api/playground/createAds

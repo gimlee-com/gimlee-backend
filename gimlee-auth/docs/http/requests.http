@@ -1,0 +1,49 @@
+### Register User
+# @name /auth/register
+# Replace "ema... " with real email
+POST http://localhost:12060/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "test",
+  "password": "Password1",
+  "email": "ema..."
+}
+
+### Login User
+# @name /auth/login
+POST http://localhost:12060/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Password1"
+}
+
+### Verify User
+# @name /auth/verifyUser
+POST http://localhost:12060/api/auth/verifyUser
+Content-Type: application/json
+
+{
+  "code": "111378"
+}
+
+### Check Username Availability
+# @name /auth/register/usernameAvailable
+POST http://localhost:12060/api/auth/register/usernameAvailable
+Content-Type: application/json
+
+{
+  "username": "test"
+}
+
+### Check Email Availability
+# @name /auth/register/emailAvailable
+# Replace "ema... " with real email
+POST http://localhost:12060/api/auth/register/emailAvailable
+Content-Type: application/json
+
+{
+  "email": "ema..."
+}

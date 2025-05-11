@@ -4,9 +4,9 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import com.gimlee.auth.model.Role
-import com.gimlee.api.auth.persistence.UserRepository
-import com.gimlee.api.auth.persistence.UserRoleRepository
-import com.gimlee.api.auth.domain.User
+import com.gimlee.auth.persistence.UserRepository
+import com.gimlee.auth.persistence.UserRoleRepository
+import com.gimlee.auth.domain.User
 import java.time.Duration
 import kotlin.random.Random
 

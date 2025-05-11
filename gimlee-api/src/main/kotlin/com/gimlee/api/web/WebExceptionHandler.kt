@@ -10,8 +10,8 @@ import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import com.gimlee.auth.exception.AuthenticationException
 import com.gimlee.auth.exception.AuthorizationException
-import com.gimlee.api.domain.StatusCode
-import com.gimlee.api.web.dto.StatusResponseDto
+import com.gimlee.common.domain.model.StatusCode
+import com.gimlee.common.web.dto.StatusResponseDto
 
 @ControllerAdvice(basePackages = ["com.gimlee"])
 class WebExceptionHandler : ResponseEntityExceptionHandler() {

@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":gimlee-events"))
     implementation(project(":gimlee-media-store"))
     implementation(project(":gimlee-payments"))
+    implementation(project(":gimlee-ads"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)
@@ -21,7 +22,6 @@ dependencies {
     }
     implementation(libs.spring.boot.starter.jetty)
     implementation(libs.spring.boot.starter.data.mongodb)
-    implementation(libs.spring.boot.starter.mail)
 
     // Other dependencies
     implementation(libs.aspectj.weaver)
@@ -29,16 +29,17 @@ dependencies {
     implementation(libs.commons.lang3)
     implementation(libs.commons.io)
     implementation(libs.commons.codec)
-    implementation(libs.simmetrics.core) // Make sure this is uncommented
+    implementation(libs.simmetrics.core)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.jackson.dataformat.csv)
     implementation(libs.mustache.java)
     implementation(libs.micrometer.prometheus)
     implementation(libs.springdoc.openapi.starter.webmvc.api)
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
     implementation(libs.caffeine)
 
     // Test dependencies
-    testImplementation(platform(libs.kotest.bom)) // Assuming you added kotest dependencies correctly
+    testImplementation(platform(libs.kotest.bom))
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.property)

@@ -12,6 +12,8 @@ spring:
     username: <fillme> # e.g. some@one.com
     password: <fillme> # SMTP password
     properties:
+      from: <fillme>
+      reply-to: <fillme>
       mail:
         smtp:
           auth: true
