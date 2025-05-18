@@ -1,7 +1,6 @@
 package com.gimlee.ads.domain
 
 import com.gimlee.ads.domain.model.*
-import com.gimlee.ads.model.AdStatus
 import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.ads.persistence.model.AdDocument
 import com.gimlee.common.toMicros
@@ -98,12 +97,15 @@ class AdService(private val adRepository: AdRepository) {
             newMainPhotoPath = null // Or throw error: "Cannot set main photo if media paths are empty."
         }
 
+        val newPrice = updateData.price?.amount ?: existingAdDoc.price
+        val newCurrency = updateData.price?.currency ?: existingAdDoc.currency
+
 
         val updatedAdDoc = existingAdDoc.copy(
             title = newTitle,
             description = updateData.description ?: existingAdDoc.description,
-            price = updateData.price ?: existingAdDoc.price,
-            currency = updateData.currency ?: existingAdDoc.currency,
+            price = newPrice,
+            currency = newCurrency,
             cityId = newCityId ?: existingAdDoc.cityId,
             location = newGeoPoint ?: existingAdDoc.location,
             mediaPaths = newMediaPaths,

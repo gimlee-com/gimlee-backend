@@ -7,13 +7,13 @@ server:
   jetty:
     max-threads: 40
     min-threads: 40
-    max-http-form-post-size: 1MB
+    max-http-form-post-size: 15MB
 
 spring:
   servlet:
     multipart:
-      max-file-size: 1MB
-      max-request-size: 1MB
+      max-file-size: 15MB
+      max-request-size: 51MB
   messages:
     basename: i18n/messages
     encoding: UTF-8

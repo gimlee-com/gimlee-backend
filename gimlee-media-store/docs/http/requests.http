@@ -19,7 +19,7 @@ Content-Type: multipart/form-data; boundary=boundary
 Content-Disposition: form-data; name="files[]"; filename="photo2pixel_download.png"
 
 # Replace "< /path/to/your/image.png" with the actual path to your file
-< /path/to/your/image.png
+< /home/q/landscape-lake-surrounded-by-mountains.jpg
 --boundary--
 
 ### Get media

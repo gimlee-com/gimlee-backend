@@ -1,4 +1,4 @@
-package com.gimlee.ads.model
+package com.gimlee.ads.domain.model
 
 /**
  * Represents the lifecycle status of an ad.

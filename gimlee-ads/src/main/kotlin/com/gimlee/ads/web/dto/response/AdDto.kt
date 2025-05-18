@@ -1,9 +1,7 @@
 package com.gimlee.ads.web.dto.response
 
 import com.gimlee.ads.domain.model.Ad
-import com.gimlee.ads.model.AdStatus
-import com.gimlee.ads.model.Currency
-import java.math.BigDecimal
+import com.gimlee.ads.domain.model.AdStatus
 import java.time.Instant
 
 /**
@@ -14,8 +12,7 @@ data class AdDto(
     val userId: String,
     val title: String,
     val description: String?,
-    val price: BigDecimal?,
-    val currency: Currency?,
+    val price: CurrencyAmountDto?,
     val status: AdStatus,
     val createdAt: Instant,
     val updatedAt: Instant,
@@ -30,8 +27,7 @@ data class AdDto(
                 userId = userId,
                 title = title,
                 description = description,
-                price = price,
-                currency = currency,
+                price = CurrencyAmountDto.fromDomain(price),
                 status = status,
                 createdAt = createdAt,
                 updatedAt = updatedAt,

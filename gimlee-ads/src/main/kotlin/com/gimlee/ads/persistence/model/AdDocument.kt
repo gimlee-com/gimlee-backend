@@ -1,13 +1,10 @@
 package com.gimlee.ads.persistence.model
 
-import com.gimlee.ads.domain.model.Ad
-import com.gimlee.ads.domain.model.Location
-import com.gimlee.ads.model.AdStatus
-import com.gimlee.ads.model.Currency
+import com.gimlee.ads.domain.model.*
 import com.gimlee.common.InstantUtils.fromMicros
 import org.bson.types.ObjectId
-import java.math.BigDecimal
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
+import java.math.BigDecimal
 
 data class AdDocument(
     val id: ObjectId,
@@ -54,27 +51,23 @@ data class AdDocument(
      * Converts this persistence document to the domain Ad object.
      */
     fun toDomain(): Ad {
-        val domainLocation = if (this.cityId != null && this.location != null) {
-            Location(cityId = this.cityId, point = doubleArrayOf(this.location.x, this.location.y))
-        } else if (this.cityId != null) {
-            Location(cityId = this.cityId, point = doubleArrayOf())
-        } else {
-            null
-        }
-
+        val domainPrice = if (price != null && currency != null) CurrencyAmount(price, currency) else null
         return Ad(
-            id = this.id.toHexString(),
-            userId = this.userId.toHexString(),
-            title = this.title,
-            description = this.description,
-            price = this.price,
-            currency = this.currency,
-            status = this.status,
-            createdAt = fromMicros(this.createdAtMicros),
-            updatedAt = fromMicros(this.updatedAtMicros),
-            location = domainLocation,
-            mediaPaths = this.mediaPaths,
-            mainPhotoPath = this.mainPhotoPath
+            id = id.toHexString(),
+            userId = userId.toHexString(),
+            title = title,
+            description = description,
+            price = domainPrice,
+            status = status,
+            createdAt = fromMicros(createdAtMicros),
+            updatedAt = fromMicros(updatedAtMicros),
+            location = if (cityId != null && location != null) {
+                Location(cityId, doubleArrayOf(location.x, location.y))
+            } else {
+                null
+            },
+            mediaPaths = mediaPaths,
+            mainPhotoPath = mainPhotoPath
         )
     }
 }

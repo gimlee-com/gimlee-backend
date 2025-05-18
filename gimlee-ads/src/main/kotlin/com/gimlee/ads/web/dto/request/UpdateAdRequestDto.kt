@@ -2,7 +2,8 @@ package com.gimlee.ads.web.dto.request
 
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
-import com.gimlee.ads.model.Currency
+import com.gimlee.ads.domain.model.Currency
+import com.gimlee.ads.domain.model.CurrencyAmount
 import jakarta.validation.Valid
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Size
@@ -33,15 +34,17 @@ data class UpdateAdRequestDto(
 ) {
     fun toDomain(): UpdateAdRequest {
         return UpdateAdRequest(
-            title = this.title,
-            description = this.description,
-            price = this.price,
-            currency = this.currency,
-            location = this.location?.let { dto ->
+            title = title,
+            description = description,
+            price = price?.let {
+                require(currency != null) { "Currency must be provided when the price is provided." }
+                CurrencyAmount(price, currency)
+            },
+            location = location?.let { dto ->
                 Location(cityId = dto.cityId, point = dto.point)
             },
-            mediaPaths = this.mediaPaths,
-            mainPhotoPath = this.mainPhotoPath,
+            mediaPaths = mediaPaths,
+            mainPhotoPath = mainPhotoPath,
         )
     }
 }

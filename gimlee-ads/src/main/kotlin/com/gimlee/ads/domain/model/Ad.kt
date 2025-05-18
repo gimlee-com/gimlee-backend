@@ -1,8 +1,5 @@
 package com.gimlee.ads.domain.model
 
-import com.gimlee.ads.model.AdStatus
-import com.gimlee.ads.model.Currency
-import java.math.BigDecimal
 import java.time.Instant
 
 /**
@@ -13,8 +10,7 @@ data class Ad(
     val userId: String,
     val title: String,
     val description: String?,
-    val price: BigDecimal?,
-    val currency: Currency?,
+    val price: CurrencyAmount?,
     val status: AdStatus,
     val createdAt: Instant,
     val updatedAt: Instant,

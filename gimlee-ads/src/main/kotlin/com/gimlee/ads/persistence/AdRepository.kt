@@ -4,8 +4,8 @@ import com.gimlee.ads.domain.model.AdFilters
 import com.gimlee.ads.domain.model.AdSorting
 import com.gimlee.ads.domain.model.By
 import com.gimlee.ads.domain.model.Direction
-import com.gimlee.ads.model.AdStatus
-import com.gimlee.ads.model.Currency
+import com.gimlee.ads.domain.model.AdStatus
+import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.persistence.model.AdDocument
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
@@ -103,7 +103,6 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             } else {
                 Sorts.ascending(AdDocument.FIELD_CREATED_AT)
             }
-            // Add other sorting options if needed for By enum
         }
 
         val documents: List<AdDocument>

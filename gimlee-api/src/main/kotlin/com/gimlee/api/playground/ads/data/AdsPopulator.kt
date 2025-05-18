@@ -5,7 +5,8 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
-import com.gimlee.ads.model.Currency
+import com.gimlee.ads.domain.model.Currency
+import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.location.cities.data.cityDataUnsorted // Import the city data list
 import com.gimlee.api.playground.ads.domain.AdTemplate
 import com.gimlee.api.playground.media.data.PlaygroundMediaRepository // Import PlaygroundMediaRepository
@@ -188,8 +189,7 @@ class AdsPopulator(
                         val updateRequest = UpdateAdRequest(
                             title = template.title,
                             description = template.description,
-                            price = price,
-                            currency = currency,
+                            price = CurrencyAmount(price, currency),
                             location = location,
                             mediaPaths = adMediaPaths,
                             mainPhotoPath = adMainPhotoPath,
