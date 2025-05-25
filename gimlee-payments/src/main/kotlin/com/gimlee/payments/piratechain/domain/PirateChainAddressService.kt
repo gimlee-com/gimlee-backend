@@ -1,5 +1,6 @@
 package com.gimlee.payments.piratechain.domain
 
+import com.gimlee.common.toMicros
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -8,6 +9,12 @@ import com.gimlee.payments.piratechain.client.PirateChainRpcClient.PirateChainRp
 import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo
 import com.gimlee.payments.piratechain.persistence.UserPirateChainAddressRepository
 import com.gimlee.payments.piratechain.util.anonymize
+import java.security.SecureRandom
+import java.security.spec.KeySpec
+import java.time.Instant
+import java.util.Base64
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
 
 @Service
 class PirateChainAddressService(
@@ -15,17 +22,36 @@ class PirateChainAddressService(
     private val pirateChainRpcClient: PirateChainRpcClient
 ) {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    companion object {
+        private val log = LoggerFactory.getLogger(this::class.java)
+
+        // Constants for PBKDF2
+        private const val PBKDF2_ITERATIONS = 256
+        private const val PBKDF2_KEY_LENGTH = 512
+        private const val PBKDF2_ALGORITHM = "PBKDF2WithHmacSHA512"
+        private const val SALT_SIZE_BYTES = 16 // 128-bit salt
+    }
+
+    private fun generateSalt(): ByteArray {
+        val random = SecureRandom()
+        val salt = ByteArray(SALT_SIZE_BYTES)
+        random.nextBytes(salt)
+        return salt
+    }
+
+    private fun hashViewKey(viewKey: String): Pair<String, String> {
+        val salt = generateSalt()
+        val spec: KeySpec = PBEKeySpec(viewKey.toCharArray(), salt, PBKDF2_ITERATIONS, PBKDF2_KEY_LENGTH)
+        val factory = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM)
+        val hash = factory.generateSecret(spec).encoded
+
+        val encoder = Base64.getEncoder()
+        return Pair(encoder.encodeToString(hash), encoder.encodeToString(salt))
+    }
 
     /**
-     * Imports a viewing key into the Pirate Chain node and associates the resulting
-     * primary z-address with the given user ID in the repository.
-     *
-     * @param userId The ID of the user.
-     * @param viewKey The viewing key provided by the user.
-     * @throws PirateChainRpcException if interaction with the Pirate Chain node fails.
-     * @throws IllegalStateException if the viewing key does not yield any addresses after import.
-     * @throws RuntimeException for database errors.
+     * Imports a viewing key, hashes it, generates a timestamp, and associates the
+     * z-address with the user, applying optimistic locking logic in the repository.
      */
     fun importAndAssociateViewKey(userId: String, viewKey: String) {
         log.info("Importing and associating view key for user ID: {}", userId)
@@ -43,32 +69,40 @@ class PirateChainAddressService(
             throw RuntimeException("Unexpected error during view key import.", e)
         }
 
+        val (viewKeyHash, viewKeySalt) = try {
+            hashViewKey(viewKey)
+        } catch (e: Exception) {
+            log.error("Error hashing view key for user {}: {}", userId, e.message, e)
+            throw RuntimeException("Failed to hash view key.", e)
+        }
+
+        val currentTimestampMicros = Instant.now().toMicros()
+
         val addressInfo = rpcResponse.result?.let {
             PirateChainAddressInfo(
                 zAddress = it.address,
-                viewKey = viewKey,
+                viewKeyHash = viewKeyHash,
+                viewKeySalt = viewKeySalt,
+                lastUpdateTimestamp = currentTimestampMicros
             )
         } ?: error("Successfully added view key for user: $userId, but the associated address was null!")
 
         try {
             userPirateChainAddressRepository.addAddressToUser(ObjectId(userId), addressInfo)
             log.info(
-                "Successfully associated view key {} and address {} for user ID: {}",
-                anonymize(viewKey),
+                "Successfully processed view key for address {} for user ID: {}",
                 anonymize(addressInfo.zAddress),
                 userId
             )
         } catch (e: Exception) {
             log.error(
-                "Failed to add address info for user {} (zAddress {}, viewKey {}): {}",
+                "Failed to add/update address info for user {} (zAddress {}): {}",
                 userId,
                 anonymize(addressInfo.zAddress),
-                anonymize(viewKey),
                 e.message,
                 e
             )
-            throw RuntimeException("Failed to store Pirate Chain address information.", e)
+            throw RuntimeException("Failed to store/update Pirate Chain address information due to: ${e.message}", e)
         }
-
     }
 }

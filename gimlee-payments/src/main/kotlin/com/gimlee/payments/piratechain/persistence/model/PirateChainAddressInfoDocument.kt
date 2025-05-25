@@ -4,14 +4,19 @@ import org.bson.types.ObjectId
 
 /**
  * Represents the details of a single Pirate Chain Z-Address associated with a user.
+ * Stores a hash of the view key, the salt used for hashing, and an update timestamp.
  */
 data class PirateChainAddressInfo(
     val zAddress: String,
-    val viewKey: String,
+    val viewKeyHash: String,
+    val viewKeySalt: String,
+    val lastUpdateTimestamp: Long
 ) {
     companion object {
         const val FIELD_Z_ADDRESS = "addr"
-        const val FIELD_VIEW_KEY = "vk"
+        const val FIELD_VIEW_KEY_HASH = "vkh"
+        const val FIELD_VIEW_KEY_SALT = "vks"
+        const val FIELD_LAST_UPDATE_TIMESTAMP = "ts"
     }
 }
 

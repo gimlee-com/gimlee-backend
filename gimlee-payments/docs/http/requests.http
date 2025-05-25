@@ -5,7 +5,7 @@ POST http://localhost:12060/api/payments/piratechain/addresses/view-key
 Content-Type: application/json
 
 {
-  "viewKey": "zv..."
+  "viewKey": "zxview..."
 }
 
 ### Expected Response (Success):

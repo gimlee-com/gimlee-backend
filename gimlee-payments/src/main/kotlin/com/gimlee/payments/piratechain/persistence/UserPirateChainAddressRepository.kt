@@ -1,17 +1,23 @@
 package com.gimlee.payments.piratechain.persistence
 
-import com.mongodb.client.MongoCollection
-import com.mongodb.client.MongoDatabase
-import com.mongodb.client.model.*
-import org.bson.Document
-import org.bson.types.ObjectId
-import org.springframework.stereotype.Repository
 import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo
-import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo.Companion.FIELD_VIEW_KEY
+import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo.Companion.FIELD_LAST_UPDATE_TIMESTAMP
+import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo.Companion.FIELD_VIEW_KEY_HASH
+import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo.Companion.FIELD_VIEW_KEY_SALT
 import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo.Companion.FIELD_Z_ADDRESS
 import com.gimlee.payments.piratechain.persistence.model.UserPirateChainAddresses
 import com.gimlee.payments.piratechain.persistence.model.UserPirateChainAddresses.Companion.FIELD_ADDRESSES
 import com.gimlee.payments.piratechain.persistence.model.UserPirateChainAddresses.Companion.FIELD_USER_ID
+import com.mongodb.client.MongoCollection
+import com.mongodb.client.MongoDatabase
+import com.mongodb.client.model.Filters
+import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.model.Updates
+import com.mongodb.client.result.UpdateResult
+import org.bson.Document
+import org.bson.types.ObjectId
+import org.springframework.stereotype.Repository
 
 @Repository
 class UserPirateChainAddressRepository(
@@ -26,21 +32,13 @@ class UserPirateChainAddressRepository(
         mongoDatabase.getCollection(COLLECTION_NAME)
     }
 
-    /**
-     * Finds the address mapping document for a given user ID.
-     */
     fun findByUserId(userId: ObjectId): UserPirateChainAddresses? {
         val query = Filters.eq(FIELD_USER_ID, userId)
         return collection.find(query)
             .limit(1)
-            .firstOrNull()?.toUserPirateChainAddresses() // Manual mapping
+            .firstOrNull()?.toUserPirateChainAddresses()
     }
 
-    /**
-     * Saves or updates the entire address mapping document for a user using replaceOne with upsert.
-     * Use this carefully, prefer addAddressToUser for adding single addresses.
-     * @return The updated/inserted UserPirateChainAddresses object.
-     */
     fun save(userAddresses: UserPirateChainAddresses): UserPirateChainAddresses {
         val doc = mapToUserAddressesDocument(userAddresses)
         val filter = Filters.eq(FIELD_USER_ID, userAddresses.userId)
@@ -50,33 +48,75 @@ class UserPirateChainAddressRepository(
     }
 
     /**
-     * Adds new Pirate Chain address information to a user's document.
-     * Uses $addToSet to avoid adding duplicates based on the entire PirateChainAddressInfo object.
-     * Creates the document if it doesn't exist for the user (upsert).
+     * Attempts to update an existing address sub-document if its timestamp is older.
+     * Returns true if an update occurred, false otherwise.
      */
-    fun addAddressToUser(userId: ObjectId, addressInfo: PirateChainAddressInfo) {
-        val filter = Filters.eq(FIELD_USER_ID, userId)
-        val addressInfoDoc = mapToAddressInfoDocument(addressInfo)
-        val update = Updates.addToSet(FIELD_ADDRESSES, addressInfoDoc)
-        val options = UpdateOptions().upsert(true)
-        collection.updateOne(filter, update, options)
+    private fun tryUpdateExistingAddressWithOptimisticLock(userId: ObjectId, addressInfo: PirateChainAddressInfo): Boolean {
+        val updateExistingFilter = Filters.and(
+            Filters.eq(FIELD_USER_ID, userId),
+            Filters.elemMatch(
+                FIELD_ADDRESSES, Filters.and(
+                    Filters.eq(FIELD_Z_ADDRESS, addressInfo.zAddress),
+                    Filters.lt(FIELD_LAST_UPDATE_TIMESTAMP, addressInfo.lastUpdateTimestamp)
+                )
+            )
+        )
+
+        val updateOperations = Updates.combine(
+            Updates.set("$FIELD_ADDRESSES.$.$FIELD_VIEW_KEY_HASH", addressInfo.viewKeyHash),
+            Updates.set("$FIELD_ADDRESSES.$.$FIELD_VIEW_KEY_SALT", addressInfo.viewKeySalt),
+            Updates.set("$FIELD_ADDRESSES.$.$FIELD_LAST_UPDATE_TIMESTAMP", addressInfo.lastUpdateTimestamp)
+        )
+
+        val updateResult: UpdateResult = collection.updateOne(updateExistingFilter, updateOperations)
+        return updateResult.modifiedCount > 0
     }
 
     /**
-     * Finds the user ID associated with a given Z-address.
-     * Uses projection to only fetch the _id field.
+     * Adds or updates Pirate Chain address information in a user's document using optimistic locking.
+     * - If an address with the same zAddress exists and its stored timestamp is older than
+     *   the timestamp in `addressInfo`, it's updated.
+     * - If an address with the same zAddress does not exist, it's added to the user's addresses array.
+     * - If the user document itself doesn't exist, it's created with the address.
+     * - If an address with the same zAddress exists but its stored timestamp is NOT older,
+     *   no modification occurs for that address (optimistic lock prevents overwrite of fresher data).
      */
-    fun findUserIdByAddress(zAddress: String): ObjectId? {
-        // Query for documents where the 'addresses' array contains an element
-        // matching the specified zAddress
-        val query = Filters.eq("$FIELD_ADDRESSES.$FIELD_Z_ADDRESS", zAddress)
-        val projection = Projections.include(FIELD_USER_ID)
+    fun addAddressToUser(userId: ObjectId, addressInfo: PirateChainAddressInfo) {
+        val updated = tryUpdateExistingAddressWithOptimisticLock(userId, addressInfo)
 
-        return collection.find(query)
-            .projection(projection)
-            .limit(1)
-            .firstOrNull()
-            ?.getObjectId(FIELD_USER_ID)
+        if (!updated) {
+            // If no update occurred (either zAddress not found, or its timestamp wasn't older, or user not found)
+            // then attempt to ensure the user exists and add the address if it's not a duplicate.
+            tryEnsureUserAndAddAddress(userId, addressInfo)
+        }
+    }
+
+    /**
+     * Ensures the user document exists (creating it if necessary with an empty addresses array)
+     * and then attempts to add the new address to the user's document if it's not already present.
+     * This is called if updating an existing address did not occur.
+     */
+    private fun tryEnsureUserAndAddAddress(userId: ObjectId, addressInfo: PirateChainAddressInfo) {
+        // Step 1: Ensure the user document exists.
+        // If it's new, initialize the addresses field as an empty list.
+        // If it exists, $setOnInsert does nothing to existing fields.
+        collection.updateOne(
+            Filters.eq(FIELD_USER_ID, userId),
+            Updates.setOnInsert(FIELD_ADDRESSES, emptyList<Document>()),
+            UpdateOptions().upsert(true)
+        )
+
+        // Step 2: Now that the user document is guaranteed to exist,
+        // add the addressInfo to the 'addresses' array, but only if an address
+        // with the same zAddress is not already in that array.
+        // No upsert is needed here because the document itself is confirmed to exist.
+        val addAddressIfNotPresentFilter = Filters.and(
+            Filters.eq(FIELD_USER_ID, userId),
+            Filters.not(Filters.elemMatch(FIELD_ADDRESSES, Filters.eq(FIELD_Z_ADDRESS, addressInfo.zAddress)))
+        )
+        val addAddressUpdate = Updates.addToSet(FIELD_ADDRESSES, mapToAddressInfoDocument(addressInfo))
+
+        collection.updateOne(addAddressIfNotPresentFilter, addAddressUpdate)
     }
 
     private fun mapToUserAddressesDocument(userAddresses: UserPirateChainAddresses): Document {
@@ -88,13 +128,17 @@ class UserPirateChainAddressRepository(
     private fun mapToAddressInfoDocument(addressInfo: PirateChainAddressInfo): Document {
         return Document()
             .append(FIELD_Z_ADDRESS, addressInfo.zAddress)
-            .append(FIELD_VIEW_KEY, addressInfo.viewKey)
+            .append(FIELD_VIEW_KEY_HASH, addressInfo.viewKeyHash)
+            .append(FIELD_VIEW_KEY_SALT, addressInfo.viewKeySalt)
+            .append(FIELD_LAST_UPDATE_TIMESTAMP, addressInfo.lastUpdateTimestamp)
     }
 
     private fun Document.toPirateChainAddressInfo(): PirateChainAddressInfo {
         return PirateChainAddressInfo(
             zAddress = this.getString(FIELD_Z_ADDRESS),
-            viewKey = this.getString(FIELD_VIEW_KEY)
+            viewKeyHash = this.getString(FIELD_VIEW_KEY_HASH),
+            viewKeySalt = this.getString(FIELD_VIEW_KEY_SALT),
+            lastUpdateTimestamp = this.getLong(FIELD_LAST_UPDATE_TIMESTAMP)
         )
     }
 
