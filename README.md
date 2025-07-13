@@ -69,6 +69,7 @@ This section guides developers looking to contribute or run a local instance for
 *   **Java Development Kit (JDK):** Version 21 or later.
 *   **MongoDB:** Version 8.0 or later. The provided Docker configuration simplifies local setup:
     `docker-compose -f docker/mongo/docker-compose.yml up`.
+*   **Flyway CLI:** For database migrations, ensure the Flyway CLI is installed and available in your PATH.
 *   **PirateChain Full Node:** A running [PirateChain](https://piratechain.com) full node wallet is required for 
     transaction verification during development. (*Note: By default, this node will connect to the PirateChain mainnet.*)
 *   **SMTP Server:** A configured SMTP server is necessary for the application to send emails (e.g., notifications,
@@ -111,3 +112,15 @@ Example API requests can be found in the `.http` files located within:
 These files (compatible with IDEs like IntelliJ IDEA's HTTP Client) provide examples for various endpoints.
 The `playground.http` file in `gimlee-api/docs/http/` contains requests useful for populating the local development
 environment with sample data.
+
+### MongoDB indexes
+If any of the project modules requires any MongoDB indexes, you will find a flyway.conf file in the module's
+root directory. This file contains the configuration for the Flyway CLI to apply the necessary indexes.
+
+As a prerequisite, ensure that the Flyway CLI is installed and available in your PATH.
+You can find a helper [Flyway CLI installation shell script](scripts/install_flyway.sh) in the `scripts` directory.
+
+Once the flyway CLI is set up, run the following commands:
+```
+flyway migrate -configFiles=gimlee-ads/flyway.conf -baselineOnMigrate=true -url=jdbc:mongodb://localhost:27017/gimlee-ads
+```

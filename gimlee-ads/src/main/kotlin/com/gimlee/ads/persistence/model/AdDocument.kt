@@ -35,16 +35,6 @@ data class AdDocument(
         const val FIELD_LOCATION = "loc"
         const val FIELD_MEDIA_PATHS = "mep"
         const val FIELD_MAIN_PHOTO_PATH = "mpp"
-
-        // Note: A 2dsphere index should be manually created on the 'loc' field in MongoDB
-        // Example: db.getCollection('gimlee-ads-advertisements').createIndex({ "loc" : "2dsphere" })
-        // Note: An index should be manually created on 'cid' if frequent city filtering is expected
-        // Example: db.getCollection('gimlee-ads-advertisements').createIndex({ "cid" : 1 })
-        // Note: An index should be manually created on 'crt' for sorting by creation date
-        // Example: db.getCollection('gimlee-ads-advertisements').createIndex({ "crt" : -1 })
-        // Note: An index should be manually created on 'uid' for fetching user's ads
-        // Example: db.getCollection('gimlee-ads-advertisements').createIndex({ "uid" : 1 })
-
     }
 
     /**

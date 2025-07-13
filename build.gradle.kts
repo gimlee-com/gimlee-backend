@@ -1,8 +1,5 @@
-import org.gradle.api.JavaVersion
-import org.gradle.api.plugins.JavaPluginExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.gradle.api.tasks.testing.Test
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -17,6 +14,7 @@ allprojects {
     repositories {
         gradlePluginPortal()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") }
     }
 }
 

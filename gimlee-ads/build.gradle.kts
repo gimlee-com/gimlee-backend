@@ -39,3 +39,7 @@ tasks.named("bootJar") {
 tasks.named("jar") {
     enabled = true
 }
+
+tasks.processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
