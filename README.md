@@ -86,9 +86,9 @@ Before running the application for the first time:
     *   **PirateChain RPC:** The `rpc-url`, `user`, and `password` values for the `gimlee.payments.piratechain` section
         can typically be found in the PirateChain full node's configuration file (usually located
         at `~/.komodo/PIRATE/PIRATE.conf`).
-    *   **Media Storage:** Set `gimlee.media.store.directory` to the absolute path where uploaded media files should
-        be stored. The application will attempt to create this directory if it doesn't exist (ensure the process has
-        write permissions).
+    *   **Media Storage:** The application supports two media storage backends: local filesystem and S3-compatible object storage. This is controlled by the `gimlee.media.store.storage-type` property.
+        *   **For local storage (default):** Set `gimlee.media.store.storage-type` to `LOCAL` (or omit it). Then, configure `gimlee.media.store.local.directory` with the absolute path where files should be saved.
+        *   **For S3-compatible storage:** Set `gimlee.media.store.storage-type` to `S3`. Then, configure the properties under `gimlee.media.store.s3`, including `endpoint`, `region`, `bucket`, `access-key`, and `secret-key`.
     *   **Email:** Configure the `spring.mail` section with valid SMTP server details.
     *   **JWT Key:** Set a secure secret key for `gimlee.auth.rest.jwt.key`.
 
