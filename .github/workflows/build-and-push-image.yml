@@ -5,7 +5,7 @@ name: Build and Push Docker Image
 # This workflow will run every time you push code to the 'main' branch.
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   build-and-push:
