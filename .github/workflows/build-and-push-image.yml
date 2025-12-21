@@ -1,0 +1,50 @@
+# .github/workflows/build-and-push-image.yml
+
+name: Build and Push Docker Image
+
+# This workflow will run every time you push code to the 'main' branch.
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    # This job will run on a fresh Ubuntu machine provided by GitHub.
+    runs-on: ubuntu-latest
+
+    # We need to give this job permissions to write to the GitHub Container Registry.
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Step 1: Check out your source code so the workflow can access it.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Log in to the GitHub Container Registry (GHCR).
+      # The GITHUB_TOKEN is a special secret automatically created by GitHub for each workflow run.
+      - name: Log in to the Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 3: This clever action extracts metadata, like the git commit hash,
+      # to create a unique and identifiable tag for your Docker image.
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      # Step 4: This is the main event! It builds your Docker image and pushes it to GHCR.
+      # It uses the tag we generated in the previous step (e.g., ghcr.io/your-username/gimlee-backend:main)
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
