@@ -1,0 +1,52 @@
+---
+- name: Deploy Database
+  hosts: db
+  become: true
+  tasks:
+    - name: Create data directory
+      file:
+        path: /opt/mongodb/data
+        state: directory
+        mode: '0755'
+
+    - name: Run MongoDB container
+      community.docker.docker_container:
+        name: mongodb
+        image: mongo:8.0
+        restart_policy: always
+        ports:
+          - "27017:27017"
+        volumes:
+          - /opt/mongodb/data:/data/db
+
+- name: Deploy PirateChain Wallet
+  hosts: wallet
+  become: true
+  tasks:
+    - name: Create data directory
+      file:
+        path: /opt/piratechain/data
+        state: directory
+        mode: '0755'
+
+    - name: Copy Dockerfile for PirateChain
+      copy:
+        src: ../../../wallets/pirate-chain/Dockerfile
+        dest: /opt/piratechain/Dockerfile
+
+    - name: Build PirateChain image from Dockerfile
+      community.docker.docker_image:
+        name: piratechain:latest
+        build:
+          path: /opt/piratechain
+        source: build
+
+    - name: Run PirateChain container from built image
+      community.docker.docker_container:
+        name: piratechain
+        image: piratechain:latest
+        restart_policy: always
+        ports:
+          - "45453:45453"
+        volumes:
+          - /opt/piratechain/data:/root/.komodo/PIRATE

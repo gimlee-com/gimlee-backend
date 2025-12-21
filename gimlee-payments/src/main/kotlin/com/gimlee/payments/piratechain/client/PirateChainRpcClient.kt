@@ -12,6 +12,7 @@ import org.apache.hc.core5.http.io.entity.StringEntity
 import org.slf4j.LoggerFactory
 import com.gimlee.common.UUIDv7
 import com.gimlee.payments.piratechain.client.model.Address
+import com.gimlee.payments.piratechain.client.model.PirateChainInfo
 import com.gimlee.payments.piratechain.client.model.RawReceivedTransaction
 import com.gimlee.payments.piratechain.client.model.RpcRequest
 import com.gimlee.payments.piratechain.client.model.RpcResponse
@@ -33,6 +34,7 @@ class PirateChainRpcClient(
     companion object {
         private const val NO_RESCAN = "no"
 
+        private const val RPC_GET_INFO = "getinfo"
         private const val RPC_IMPORT_VIEWING_KEY = "z_importviewingkey"
         private const val RPC_LIST_RECEIVED_BY_ADDRESS = "z_listreceivedbyaddress"
     }
@@ -97,6 +99,10 @@ class PirateChainRpcClient(
         log.debug("Determined JavaType for method '{}': {}", method, responseType.toCanonical())
         return responseType
     }
+
+    @Throws(IOException::class, PirateChainRpcException::class)
+    fun getInfo(): RpcResponse<PirateChainInfo> =
+        callRpc(RPC_GET_INFO, emptyList())
 
     @Throws(IOException::class, PirateChainRpcException::class)
     fun importViewingKey(viewKey: String): RpcResponse<Address> =

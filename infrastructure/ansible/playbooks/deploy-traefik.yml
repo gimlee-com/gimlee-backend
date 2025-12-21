@@ -1,0 +1,42 @@
+---
+- name: Deploy Traefik
+  hosts: app
+  become: true
+  vars:
+    domain: "{{ lookup('env', 'DOMAIN') }}"
+    email: "{{ lookup('env', 'EMAIL') }}"
+  tasks:
+    - name: Create Traefik directory
+      file:
+        path: /opt/traefik
+        state: directory
+        mode: '0755'
+
+    - name: Create acme.json with correct permissions
+      file:
+        path: /opt/traefik/acme.json
+        state: touch
+        mode: '0600'
+
+    - name: Run Traefik container
+      community.docker.docker_container:
+        name: traefik
+        image: traefik:v3.1
+        restart_policy: always
+        command:
+          - "--api.insecure=false"
+          - "--providers.docker=true"
+          - "--providers.docker.exposedbydefault=false"
+          - "--entrypoints.web.address=:80"
+          - "--entrypoints.websecure.address=:443"
+          - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+          - "--certificatesresolvers.myresolver.acme.email={{ email }}"
+          - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+          - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+          - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+        ports:
+          - "80:80"
+          - "443:443"
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock:ro"
+          - "/opt/traefik/acme.json:/letsencrypt/acme.json"

@@ -11,6 +11,7 @@ dependencies {
     }
     implementation(libs.spring.boot.starter.jetty)
     implementation(libs.spring.boot.starter.data.mongodb)
+    implementation(libs.spring.boot.starter.actuator)
 
     // Other dependencies
     implementation(libs.httpclient5)

@@ -124,3 +124,15 @@ Once the flyway CLI is set up, run the following commands:
 ```
 flyway migrate -configFiles=gimlee-ads/flyway.conf -baselineOnMigrate=true -url=jdbc:mongodb://localhost:27017/gimlee-ads
 ```
+
+## Infrastructure & Deployment
+
+Gimlee is designed for easy deployment and scaling using Infrastructure as Code (Terraform) and Configuration Management (Ansible).
+
+Detailed instructions can be found in the `infrastructure/` directory:
+
+1.  **Provisioning**: Choose your cloud provider:
+    *   [DigitalOcean Setup](infrastructure/terraform-digitalocean/README.md)
+    *   [Hetzner Cloud Setup](infrastructure/terraform-hcloud/README.md)
+2.  **Configuration & Deployment**: Use Ansible to set up the nodes and deploy services.
+    *   [Ansible Playbooks](infrastructure/ansible/README.md)
