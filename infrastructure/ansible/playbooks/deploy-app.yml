@@ -3,21 +3,20 @@
   become: true
   vars:
     # We default to 'latest' but will override this on the command line
-    image_tag: "main"
+    image_tag: "master"
     mongodb_uri: "mongodb://{{ hostvars['db1']['ansible_host'] }}:27017/gimlee"
     piratechain_rpc: "http://{{ hostvars['wallet1']['ansible_host'] }}:45453"
   tasks:
     - name: Run Gimlee API container from pre-built image
       community.docker.docker_container:
         name: gimlee-api
-        # This tells Ansible which image to run, e.g., ghcr.io/your-user/gimlee-backend:main
+        # This tells Ansible which image to run, e.g., ghcr.io/your-user/gimlee-backend:master
         image: "ghcr.io/gimlee-com/gimlee-backend:{{ image_tag }}"
         # This is important! It ensures the server always pulls the newest version of the image tag.
         pull: true
         restart_policy: always
         env:
           SPRING_PROFILES_ACTIVE: test
-          # ... (All your env vars for secrets and config are exactly the same) ...
           SPRING_DATA_MONGODB_URI: "{{ mongodb_uri }}"
           GIMLEE_PAYMENTS_PIRATECHAIN_CLIENT_RPC_URL: "{{ piratechain_rpc }}"
           SPRING_MAIL_PASSWORD: "{{ mail_password }}"
