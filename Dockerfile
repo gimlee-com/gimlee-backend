@@ -7,7 +7,6 @@ COPY gradlew .
 COPY gradle gradle
 COPY build.gradle.kts .
 COPY settings.gradle.kts .
-COPY gradle.properties .
 # Copy libs.versions.toml if it exists (it's in gradle/ as per file structure)
 COPY gradle/libs.versions.toml gradle/
 
