@@ -12,7 +12,10 @@ dependencies {
     implementation(libs.spring.boot.starter.data.mongodb)
 
     // Other dependencies
-    implementation(libs.jakarta.activation.api) // <-- Corrected alias
+    implementation(platform(libs.aws.bom))
+    implementation(libs.aws.java.sdk.s3)
+    implementation(libs.aws.apache.client)
+    implementation(libs.jakarta.activation.api)
     implementation(libs.commons.io)
     implementation(libs.thumbnailator)
 

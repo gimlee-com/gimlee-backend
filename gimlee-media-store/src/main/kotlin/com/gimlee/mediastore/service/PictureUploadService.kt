@@ -1,18 +1,18 @@
 package com.gimlee.mediastore.service
 
+import com.gimlee.common.UUIDv7
+import com.gimlee.mediastore.config.MediaStoreConfig
+import com.gimlee.mediastore.domain.MediaItem
+import com.gimlee.mediastore.exception.MediaUploadException
+import com.gimlee.mediastore.persistence.MediaItemRepository
 import net.coobird.thumbnailator.Thumbnails
 import net.coobird.thumbnailator.resizers.configurations.AlphaInterpolation
 import net.coobird.thumbnailator.resizers.configurations.Antialiasing
 import net.coobird.thumbnailator.resizers.configurations.Dithering
-import org.springframework.data.util.Pair
 import org.springframework.stereotype.Service
-import com.gimlee.common.UUIDv7
-import com.gimlee.mediastore.config.MediaStoreConfig
-import com.gimlee.mediastore.persistence.MediaItemRepository
-import com.gimlee.mediastore.domain.MediaItem
-import com.gimlee.mediastore.exception.MediaUploadException
 import java.awt.image.BufferedImage
-import java.io.File
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.time.Instant
@@ -21,7 +21,8 @@ import javax.imageio.ImageIO
 @Service
 class PictureUploadService(
     private val mediaItemRepository: MediaItemRepository,
-    private val mediaStoreConfig: MediaStoreConfig
+    private val mediaStoreConfig: MediaStoreConfig,
+    private val storageService: StorageService
 ) {
 
     fun uploadAndCreateThumbs(fileInputStream: InputStream): MediaItem {
@@ -50,59 +51,61 @@ class PictureUploadService(
 
     }
 
-    @Throws(IOException::class)
-    private fun saveImage(fileName: String, extension: String?, fileInputStream: InputStream) {
-
-        val mediaStoreDirectory = mediaStoreConfig.mediaStoreDirectory
-        val largeFile = File("$mediaStoreDirectory/", "$fileName.$extension")
-        val thumbnailXSFile = File(mediaStoreDirectory + mediaStoreConfig.xsThumbsPath, "$fileName.$extension")
-        val thumbnailSMFile = File(mediaStoreDirectory + mediaStoreConfig.smThumbsPath, "$fileName.$extension")
-        val thumbnailMDFile = File(mediaStoreDirectory + mediaStoreConfig.mdThumbsPath, "$fileName.$extension")
-
-        if (!largeFile.exists()) {
-            largeFile.parentFile.mkdirs()
-            thumbnailXSFile.parentFile.mkdirs()
-            thumbnailSMFile.parentFile.mkdirs()
-            thumbnailMDFile.parentFile.mkdirs()
-        }
+    private fun saveImage(fileName: String, extension: String, fileInputStream: InputStream) {
         val bufferedImage = ImageIO.read(fileInputStream)
         fileInputStream.close()
 
-        val targetLargeImageWidth =
-            if (bufferedImage.width < mediaStoreConfig.pictureSizeLg) {
-                bufferedImage.width
-            } else {
-                mediaStoreConfig.pictureSizeLg
-            }
+        val fullFileName = "$fileName.$extension"
 
-        Thumbnails.of(bufferedImage)
-            .size(targetLargeImageWidth.toInt(), (targetLargeImageWidth * 1.5).toInt())
+        // Generate and upload large image
+        val targetLargeImageWidth = if (bufferedImage.width < mediaStoreConfig.pictureSizeLg) {
+            bufferedImage.width
+        } else {
+            mediaStoreConfig.pictureSizeLg
+        }
+        val largeImage = Thumbnails.of(bufferedImage)
+            .size(targetLargeImageWidth, (targetLargeImageWidth * 1.5).toInt())
             .outputFormat("jpg")
             .outputQuality(mediaStoreConfig.jpegQuality)
-            .toFile(largeFile.path)
-        saveThumbnail(bufferedImage, largeFile.path, targetLargeImageWidth)
-        saveThumbnail(bufferedImage, thumbnailXSFile.path, mediaStoreConfig.pictureSizeXs)
-        saveThumbnail(bufferedImage, thumbnailSMFile.path, mediaStoreConfig.pictureSizeSm)
-        saveThumbnail(bufferedImage, thumbnailMDFile.path, mediaStoreConfig.pictureSizeMd)
+            .asBufferedImage()
+        uploadImage(largeImage, "/$fullFileName")
+
+        // Generate and upload thumbnails
+        uploadThumbnail(bufferedImage, fullFileName, mediaStoreConfig.pictureSizeXs, mediaStoreConfig.xsThumbsPath)
+        uploadThumbnail(bufferedImage, fullFileName, mediaStoreConfig.pictureSizeSm, mediaStoreConfig.smThumbsPath)
+        uploadThumbnail(bufferedImage, fullFileName, mediaStoreConfig.pictureSizeMd, mediaStoreConfig.mdThumbsPath)
     }
 
-    @Throws(IOException::class)
-    private fun saveThumbnail(bufferedImage: BufferedImage, path: String, size: Int) {
-        val imageAspectRatio = bufferedImage.width.toDouble() / bufferedImage.height.toDouble()
-        val dimensions = calculateThumbDimensions(size, imageAspectRatio)
-        Thumbnails.of(bufferedImage)
+    private fun uploadThumbnail(image: BufferedImage, fileName: String, size: Int, path: String) {
+        val imageAspectRatio = image.width.toDouble() / image.height.toDouble()
+        val (width, height) = calculateThumbDimensions(size, imageAspectRatio)
+
+        val thumbnailImage = Thumbnails.of(image)
             .antialiasing(Antialiasing.OFF)
             .dithering(Dithering.DISABLE)
             .alphaInterpolation(AlphaInterpolation.QUALITY)
-            .size(dimensions.first.toInt(), dimensions.second.toInt())
+            .size(width, height)
             .outputQuality(mediaStoreConfig.jpegQuality)
-            .toFile(path)
+            .asBufferedImage()
 
+        uploadImage(thumbnailImage, "$path$fileName")
+    }
+
+    private fun uploadImage(image: BufferedImage, destinationPath: String) {
+        val outputStream = ByteArrayOutputStream()
+        ImageIO.write(image, "jpg", outputStream)
+        val inputStream = ByteArrayInputStream(outputStream.toByteArray())
+        storageService.upload(
+            inputStream,
+            outputStream.size().toLong(),
+            "image/jpeg",
+            destinationPath.removePrefix("/")
+        )
     }
 
     private fun calculateThumbDimensions(size: Int, aspectRatio: Double): Pair<Int, Int> {
         return if (aspectRatio < 1.0) {
-            Pair.of((size / aspectRatio).toInt(), size)
-        } else Pair.of(size, (size * aspectRatio).toInt())
+            (size / aspectRatio).toInt() to size
+        } else size to (size * aspectRatio).toInt()
     }
 }

@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 data class MediaStoreConfig(
-    @Value("\${gimlee.media.store.directory}") val mediaStoreDirectory: String,
     @Value("\${gimlee.media.store.picture.thumbs-xs-path:/thumbs-xs/}") val xsThumbsPath: String,
     @Value("\${gimlee.media.store.picture.thumbs-sm-path:/thumbs-sm/}") val smThumbsPath: String,
     @Value("\${gimlee.media.store.picture.thumbs-md-path:/thumbs-md/}") val mdThumbsPath: String,

@@ -3,6 +3,7 @@
 spring-boot = "3.4.4"
 kotlin = "2.1.20"
 spring-dependency-management = "1.1.6"
+aws-sdk = "2.26.14"
 
 # --- Other Libraries ---
 aspectj = "1.9.22.1"
@@ -39,6 +40,9 @@ springdoc-openapi-starter-webmvc-api = { module = "org.springdoc:springdoc-opena
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
 
 # --- Other Libraries ---
+aws-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws-sdk" }
+aws-java-sdk-s3 = { module = "software.amazon.awssdk:s3" }
+aws-apache-client = { module = "software.amazon.awssdk:apache-client" }
 aspectj-weaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectj" }
 auth0-java-jwt = { module = "com.auth0:java-jwt", version.ref = "auth0-java-jwt" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
