@@ -21,8 +21,3 @@ RUN mkdir -p /root/.komodo/PIRATE
 
 # Expose RPC Port (Default is usually 45453 for Mainnet)
 EXPOSE 45453
-
-# Run the daemon
-# -printtoconsole: Shows logs in Docker
-# -server: Enables RPC interface so your backend can talk to it
-CMD ["./pirated", "-printtoconsole", "-server", "-rpcbind=0.0.0.0", "-rpcallowip=0.0.0.0/0"]

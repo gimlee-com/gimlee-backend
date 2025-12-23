@@ -21,22 +21,32 @@
     - name: Run Traefik container
       community.docker.docker_container:
         name: traefik
-        image: traefik:v3.1
+        image: traefik:v3.6.5
+        pull: true
         restart_policy: always
         command:
           - "--api.insecure=false"
+          - "--ping=true"
           - "--providers.docker=true"
           - "--providers.docker.exposedbydefault=false"
           - "--entrypoints.web.address=:80"
+          # ADD these lines for a global, ACME-aware redirect
+          - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+          - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+          #
           - "--entrypoints.websecure.address=:443"
-          - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+          - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+          - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
           - "--certificatesresolvers.myresolver.acme.email={{ email }}"
           - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-          - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-          - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
         ports:
           - "80:80"
           - "443:443"
         volumes:
           - "/var/run/docker.sock:/var/run/docker.sock:ro"
           - "/opt/traefik/acme.json:/letsencrypt/acme.json"
+        labels:
+          traefik.enable: "true"
+          traefik.http.routers.health.rule: "Path(`/health`)"
+          traefik.http.routers.health.entrypoints: "web"
+          traefik.http.routers.health.service: "ping@internal"

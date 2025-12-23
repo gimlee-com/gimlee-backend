@@ -44,7 +44,9 @@ ansible-playbook -i ../inventory.ini setup.yml
 **2. Deploy Infrastructure Services**  
 This deploys MongoDB on db nodes and the PirateChain Full Node on wallet nodes.
 ```bash
-ansible-playbook -i ../inventory.ini deploy-services.yml
+ansible-playbook -i ../inventory.ini deploy-services.yml \
+  --extra-vars "piratechain_user=YOUR_RPC_USER" \
+  --extra-vars "piratechain_password=YOUR_RPC_PASSWORD"
 ```
 
 **3. Deploy Traefik Reverse Proxy**  
@@ -60,13 +62,19 @@ This is the final step. The application requires several pieces of configuration
 For security, these are passed directly on the command line using Ansible's --extra-vars flag, rather than being stored in files.
 ```bash
 ansible-playbook -i ../inventory.ini deploy-app.yml \
+  --extra-vars "domain=test-api.gimlee.com" \
+  --extra-vars "mail_host=YOUR_SMTP_HOST" \
+  --extra-vars "mail_port=587" \
+  --extra-vars "mail_username=some@username.com" \
   --extra-vars "mail_password=YOUR_SMTP_PASSWORD" \
   --extra-vars "jwt_key=YOUR_SUPER_SECRET_JWT_KEY" \
   --extra-vars "s3_endpoint=https://your-bucket.s3.provider.com" \
   --extra-vars "s3_region=your-region" \
   --extra-vars "s3_bucket_name=your-bucket-name" \
   --extra-vars "s3_access_key=YOUR_S3_ACCESS_KEY" \
-  --extra-vars "s3_secret_key=YOUR_S3_SECRET_KEY"
+  --extra-vars "s3_secret_key=YOUR_S3_SECRET_KEY" \
+  --extra-vars "piratechain_user=YOUR_RPC_USER" \
+  --extra-vars "piratechain_password=YOUR_RPC_PASSWORD"
 ```
 
 **Where to get these values:**

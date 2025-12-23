@@ -22,12 +22,26 @@
 - name: Deploy PirateChain Wallet
   hosts: wallet
   become: true
+  vars:
+    # This dynamically gets the IP of your app server from the inventory.
+    app_server_ip: "{{ hostvars[groups['app'][0]]['ansible_host'] }}"
   tasks:
     - name: Create data directory
       file:
         path: /opt/piratechain/data
         state: directory
         mode: '0755'
+
+    - name: Create PirateChain config file
+      copy:
+        dest: /opt/piratechain/PIRATE.conf
+        content: |
+          server=1
+          rpcuser={{ piratechain_user }}
+          rpcpassword={{ piratechain_password }}
+          rpcbind=0.0.0.0
+          rpcallowip={{ app_server_ip }}
+        mode: '0600'
 
     - name: Copy Dockerfile for PirateChain
       copy:
@@ -45,8 +59,10 @@
       community.docker.docker_container:
         name: piratechain
         image: piratechain:latest
+        command: ./pirated -printtoconsole
         restart_policy: always
         ports:
           - "45453:45453"
         volumes:
           - /opt/piratechain/data:/root/.komodo/PIRATE
+          - /opt/piratechain/PIRATE.conf:/root/.komodo/PIRATE/PIRATE.conf:ro

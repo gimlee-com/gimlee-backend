@@ -18,7 +18,12 @@
         env:
           SPRING_PROFILES_ACTIVE: test
           SPRING_DATA_MONGODB_URI: "{{ mongodb_uri }}"
-          GIMLEE_PAYMENTS_PIRATECHAIN_CLIENT_RPC_URL: "{{ piratechain_rpc }}"
+          GIMLEE_PAYMENTS_PIRATE_CHAIN_CLIENT_RPC_URL: "{{ piratechain_rpc }}"
+          GIMLEE_PAYMENTS_PIRATE_CHAIN_CLIENT_USER: "{{ piratechain_user }}"
+          GIMLEE_PAYMENTS_PIRATE_CHAIN_CLIENT_PASSWORD: "{{ piratechain_password }}"
+          SPRING_MAIL_HOST: "{{ mail_host }}"
+          SPRING_MAIL_PORT: "{{ mail_port }}"
+          SPRING_MAIL_USERNAME: "{{ mail_username }}"
           SPRING_MAIL_PASSWORD: "{{ mail_password }}"
           GIMLEE_AUTH_REST_JWT_KEY: "{{ jwt_key }}"
           GIMLEE_MEDIA_STORE_STORAGE_TYPE: "S3"
@@ -29,7 +34,12 @@
           GIMLEE_MEDIA_STORE_S3_SECRET_KEY: "{{ s3_secret_key }}"
         labels:
           traefik.enable: "true"
-          traefik.http.routers.gimlee.rule: "Host(`{{ lookup('env', 'DOMAIN') }}`)"
-          traefik.http.routers.gimlee.entrypoints: "websecure"
-          traefik.http.routers.gimlee.tls.certresolver: "myresolver"
-          traefik.http.services.gimlee.loadbalancer.server.port: "12060"
+          # Create the main router for HTTPS on port 443 (websecure)
+          traefik.http.routers.gimlee-secure.rule: "Host(`{{ domain }}`)"
+          traefik.http.routers.gimlee-secure.entrypoints: "websecure"
+          traefik.http.routers.gimlee-secure.tls: "true"
+          traefik.http.routers.gimlee-secure.tls.certresolver: "myresolver"
+          traefik.http.routers.gimlee-secure.service: "gimlee-service"
+
+          # Define the service that points to the application port
+          traefik.http.services.gimlee-service.loadbalancer.server.port: "12060"

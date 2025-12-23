@@ -2,18 +2,14 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://localhost:27017/gimlee?maxPoolSize=10
+      uri: mongodb://db:27017/gimlee?maxPoolSize=10
       repositories:
         type: auto
   # email config
   mail:
-    host: <fillme>
-    port: 587
-    username: <fillme> # e.g. some@one.com
-    password: <fillme> # SMTP password
     properties:
-      from: <fillme>
-      reply-to: <fillme>
+      from: noreply@gimlee.com
+      reply-to: contact@gimlee.com
       mail:
         smtp:
           auth: true
@@ -29,27 +25,25 @@ gimlee:
   auth:
     rest:
       jwt:
-        key: "iamnotmeantforproduction" # JWT tokens will be signed with this key
+        key: "dummy" # JWT tokens will be signed with this key
 
   # gimlee-media-store properties
   media:
     store:
-      storage-type: LOCAL
-      local:
-        directory: <fillme> # (absolute path) - media files will be stored here
+      storage-type: S3
 
   # gimlee-payments properties
   payments:
     pirate-chain:
       client:
-        rpc-url: <fillme>
-        user: <fillme>
-        password: <fillme>
+        rpc-url: http://wallet:45453
 
 # Metrics related configurations
 management:
   endpoint:
     metrics:
+    # access property is deprecated, consider using role-based security
+    # access: read_only # Commented out as potentially deprecated
   endpoints:
     web:
       exposure:
