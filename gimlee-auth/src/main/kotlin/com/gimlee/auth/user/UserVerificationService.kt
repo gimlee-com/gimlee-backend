@@ -12,14 +12,13 @@ import com.gimlee.auth.service.JwtTokenService
 import com.gimlee.notifications.email.EmailService
 import com.github.mustachejava.DefaultMustacheFactory
 import com.github.mustachejava.Mustache
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.bson.types.ObjectId
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.core.io.ResourceLoader
 import org.springframework.stereotype.Service
-import java.io.StringReader
+import java.io.InputStreamReader
 import java.io.StringWriter
 import java.time.LocalDateTime
 
@@ -38,11 +37,9 @@ class UserVerificationService(
     }
 
     private val emailTemplate: Mustache = DefaultMustacheFactory().compile(
-        StringReader(
-            FileUtils.readFileToString(
-                resourceLoader.getResource("classpath:/email/verification.mustache").file,
-                Charsets.UTF_8
-            )
+        InputStreamReader(
+            resourceLoader.getResource("classpath:email/verification.mustache").inputStream,
+            Charsets.UTF_8
         ),
         "emailTemplate"
     )
