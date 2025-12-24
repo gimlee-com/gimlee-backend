@@ -25,6 +25,7 @@
         pull: true
         restart_policy: always
         command:
+          - "--api.dashboard=true"
           - "--api.insecure=false"
           - "--ping=true"
           - "--providers.docker=true"
@@ -47,6 +48,15 @@
           - "/opt/traefik/acme.json:/letsencrypt/acme.json"
         labels:
           traefik.enable: "true"
+
+          # Router for Traefik Health Check
           traefik.http.routers.health.rule: "Path(`/health`)"
           traefik.http.routers.health.entrypoints: "web"
           traefik.http.routers.health.service: "ping@internal"
+
+          # Router for Traefik Dashboard (Secure)
+          traefik.http.routers.traefik-dashboard.rule: "Host(`traefik.{{ domain }}`)"
+          traefik.http.routers.traefik-dashboard.entrypoints: "websecure"
+          traefik.http.routers.traefik-dashboard.tls: "true"
+          traefik.http.routers.traefik-dashboard.tls.certresolver: "myresolver"
+          traefik.http.routers.traefik-dashboard.service: "api@internal"

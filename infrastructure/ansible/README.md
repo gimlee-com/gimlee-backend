@@ -54,7 +54,8 @@ ansible-playbook -i ../inventory.ini deploy-services.yml \
 ```bash
    export DOMAIN="test-api.yourdomain.com"
    export ACME_EMAIL="your-email@example.com"
-   ansible-playbook -i ../inventory.ini deploy-traefik.yml
+   ansible-playbook -i ../inventory.ini deploy-traefik.yml \
+    --extra-vars "domain=test-api.gimlee.com"
 ```
 
 **4. Deploy the Gimlee API Application**  
