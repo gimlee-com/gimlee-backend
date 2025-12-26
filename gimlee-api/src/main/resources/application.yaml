@@ -31,6 +31,7 @@ gimlee:
         /swagger-ui/**,
         /v3/api-docs,
         /v3/api-docs/**,
+        /ads/featured,
         /auth/register,
         /auth/register/**,
         /auth/login,
