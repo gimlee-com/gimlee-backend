@@ -2,7 +2,7 @@ package com.gimlee.auth.web
 
 import com.gimlee.auth.domain.auth.IdentityVerificationResponse
 import com.gimlee.auth.exception.AuthenticationException
-import com.gimlee.auth.util.getJwtCookie
+import com.gimlee.auth.util.extractToken
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
@@ -14,7 +14,7 @@ class InitSessionController {
         request: HttpServletRequest
     ): IdentityVerificationResponse {
         return try {
-            IdentityVerificationResponse(success = true, accessToken = getJwtCookie(request).value)
+            IdentityVerificationResponse(success = true, accessToken = extractToken(request))
         } catch (e: AuthenticationException) {
             IdentityVerificationResponse(success = true, accessToken = null)
         }

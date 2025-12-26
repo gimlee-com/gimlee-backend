@@ -3,6 +3,11 @@ package com.gimlee.auth.filter
 import com.auth0.jwt.JWT
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
+import com.gimlee.auth.model.Principal
+import com.gimlee.auth.model.Role
+import com.gimlee.auth.util.JwtTokenVerifier
+import com.gimlee.auth.util.extractToken
+import com.gimlee.auth.util.getClientIpAddress
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -12,11 +17,6 @@ import org.springframework.util.AntPathMatcher
 import org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
-import com.gimlee.auth.model.Principal
-import com.gimlee.auth.model.Role
-import com.gimlee.auth.util.JwtTokenVerifier
-import com.gimlee.auth.util.getClientIpAddress
-import com.gimlee.auth.util.getJwtCookie
 import java.io.UnsupportedEncodingException
 
 class JWTFilter(
@@ -34,8 +34,8 @@ class JWTFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        val jwt = getJwtCookie(request).value
-        val jwtData = if (jwt.isNotEmpty()) getJwtData(request, jwt, response) else null
+        val jwt = extractToken(request)
+        val jwtData = if (jwt.isNotEmpty()) getJwtData(jwt, response) else null
 
         when {
             isPathUnsecured(request.servletPath) -> {
@@ -74,12 +74,11 @@ class JWTFilter(
     }
 
     private fun getJwtData(
-        request: HttpServletRequest,
         jwt: String,
         response: HttpServletResponse
     ): DecodedJWT? {
         try {
-            jwtTokenVerifier.verifyToken(request)
+            jwtTokenVerifier.verifyToken(jwt)
             return JWT.decode(jwt)
         } catch (e: Exception) {
             when (e) {

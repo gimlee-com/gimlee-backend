@@ -1,8 +1,5 @@
 package com.gimlee.auth.web
 
-import jakarta.servlet.ServletContext
-import jakarta.servlet.http.Cookie
-import jakarta.servlet.http.HttpServletResponse
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -12,38 +9,16 @@ import com.gimlee.auth.web.dto.request.LoginRequestDto
 
 @RestController
 class LoginController(
-    private val loginService: LoginService,
-    private val servletContext: ServletContext
+    private val loginService: LoginService
 ) {
     @PostMapping(path = ["/auth/login"])
     fun login(
-        @RequestBody loginData: LoginRequestDto,
-        response: HttpServletResponse
+        @RequestBody loginData: LoginRequestDto
     ): IdentityVerificationResponse {
-        val loginResponse = loginService.login(loginData.username, loginData.password)
-        response.addCookie(createAccessTokenCookie(loginResponse))
-
-        return loginResponse
+        return loginService.login(loginData.username, loginData.password)
     }
 
     @PostMapping(path = ["/auth/logout"])
-    fun logout(
-        response: HttpServletResponse
-    ) {
-        response.addCookie(createAccessTokenCookie(""))
-    }
-
-    private fun createAccessTokenCookie(accessToken: String): Cookie {
-        val accessTokenCookie = Cookie("JWT", accessToken)
-        accessTokenCookie.path = "/"
-        accessTokenCookie.isHttpOnly = true
-        return accessTokenCookie
-    }
-
-    private fun createAccessTokenCookie(loginResponse: IdentityVerificationResponse): Cookie {
-        val accessTokenCookie = Cookie("JWT", loginResponse.accessToken)
-        accessTokenCookie.path = "${servletContext.contextPath}/"
-        accessTokenCookie.isHttpOnly = true
-        return accessTokenCookie
+    fun logout() {
     }
 }
