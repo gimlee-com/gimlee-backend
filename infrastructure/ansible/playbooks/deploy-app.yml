@@ -43,3 +43,13 @@
 
           # Define the service that points to the application port
           traefik.http.services.gimlee-service.loadbalancer.server.port: "12060"
+
+          # CORS Middleware definition
+          traefik.http.middlewares.gimlee-cors.headers.accesscontrolallowmethods: "GET,OPTIONS,PUT,POST,DELETE,PATCH"
+          traefik.http.middlewares.gimlee-cors.headers.accesscontrolalloworiginlist: "{{ cors_allowed_origins }}"
+          traefik.http.middlewares.gimlee-cors.headers.accesscontrolallowheaders: "Content-Type,Authorization"
+          traefik.http.middlewares.gimlee-cors.headers.accesscontrolmaxage: "100"
+
+          # Attach middleware to the router
+          traefik.http.routers.gimlee-secure.middlewares: "gimlee-cors"
+

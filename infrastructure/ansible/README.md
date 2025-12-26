@@ -64,6 +64,7 @@ For security, these are passed directly on the command line using Ansible's --ex
 ```bash
 ansible-playbook -i ../inventory.ini deploy-app.yml \
   --extra-vars "domain=test-api.gimlee.com" \
+  --extra-vars "cors_allowed_origins=https://gimlee.com,https://staging.gimlee.com" \
   --extra-vars "mail_host=YOUR_SMTP_HOST" \
   --extra-vars "mail_port=587" \
   --extra-vars "mail_username=some@username.com" \
