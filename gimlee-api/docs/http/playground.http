@@ -1,11 +1,11 @@
 ### Create Playground Users
 # @name createUsers
-POST http://localhost:12060/api/playground/createUsers
+POST {{host}}/api/playground/createUsers
 
 ### Create Playground Media
 # @name createMedia
-POST http://localhost:12060/api/playground/createMedia
+POST {{host}}/api/playground/createMedia
 
 ### Create Playground Ads
 # @name createAds
-POST http://localhost:12060/api/playground/createAds
+POST {{host}}/api/playground/createAds

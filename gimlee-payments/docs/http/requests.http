@@ -1,7 +1,7 @@
 ### Add a Pirate Chain View Key (Successful)
 # Requires authentication (e.g., a valid jwt cookie)
 # Replace "zv..." with a real Pirate Chain viewing key
-POST http://localhost:12060/api/payments/piratechain/addresses/view-key
+POST {{host}}/api/payments/piratechain/addresses/view-key
 Content-Type: application/json
 
 {
@@ -15,7 +15,7 @@ Content-Type: application/json
 
 ### Add a Pirate Chain View Key (Validation Error - Empty Key)
 # Requires authentication
-POST http://localhost:12060/api/payments/piratechain/addresses/view-key
+POST {{host}}/api/payments/piratechain/addresses/view-key
 Content-Type: application/json
 
 {
@@ -47,7 +47,7 @@ Content-Type: application/json
 
 
 ### Get User's Pirate Chain Transactions (Successful)
-GET http://localhost:12060/api/payments/piratechain/transactions
+GET {{host}}/api/payments/piratechain/transactions
 Accept: application/json
 
 ### Expected Response (Success - 200 OK):

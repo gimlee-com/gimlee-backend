@@ -1,7 +1,7 @@
 ### Register User
 # @name /auth/register
 # Replace "ema... " with real email
-POST http://localhost:12060/api/auth/register
+POST {{host}}/api/auth/register
 Content-Type: application/json
 
 {
@@ -12,7 +12,7 @@ Content-Type: application/json
 
 ### Login User
 # @name /auth/login
-POST http://localhost:12060/api/auth/login
+POST {{host}}/api/auth/login
 Content-Type: application/json
 
 {
@@ -22,7 +22,7 @@ Content-Type: application/json
 
 ### Verify User
 # @name /auth/verifyUser
-POST http://localhost:12060/api/auth/verifyUser
+POST {{host}}/api/auth/verifyUser
 Content-Type: application/json
 
 {
@@ -31,7 +31,7 @@ Content-Type: application/json
 
 ### Check Username Availability
 # @name /auth/register/usernameAvailable
-POST http://localhost:12060/api/auth/register/usernameAvailable
+POST {{host}}/api/auth/register/usernameAvailable
 Content-Type: application/json
 
 {
@@ -41,7 +41,7 @@ Content-Type: application/json
 ### Check Email Availability
 # @name /auth/register/emailAvailable
 # Replace "ema... " with real email
-POST http://localhost:12060/api/auth/register/emailAvailable
+POST {{host}}/api/auth/register/emailAvailable
 Content-Type: application/json
 
 {

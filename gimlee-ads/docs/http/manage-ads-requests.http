@@ -2,7 +2,7 @@
 # Requires USER role authentication
 # Creates an ad in an INACTIVE state.
 # @name /ads [POST]
-POST http://localhost:12060/api/ads
+POST {{host}}/api/ads
 Content-Type: application/json
 
 {
@@ -33,7 +33,7 @@ Content-Type: application/json
 # Can only update INACTIVE ads.
 # Replace {adId} with the actual ID of the ad you want to update.
 # @name /ads/{adId} [PUT]
-PUT http://localhost:12060/api/ads/{adId}
+PUT {{host}}/api/ads/{adId}
 Content-Type: application/json
 
 {
@@ -102,7 +102,7 @@ Content-Type: application/json
 # Changes the status of an INACTIVE ad to ACTIVE.
 # Replace {adId} with the actual ID of the ad you want to activate.
 # @name /ads/{adId}/activate [POST]
-POST http://localhost:12060/api/ads/{adId}/activate
+POST {{host}}/api/ads/{adId}/activate
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json

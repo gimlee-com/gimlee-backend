@@ -1,6 +1,6 @@
 ### Upload Media (JPEG Example)
 # @name /media/upload [image/jpeg]
-POST http://localhost:12060/api/media/upload
+POST {{host}}/api/media/upload
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
@@ -12,7 +12,7 @@ Content-Disposition: form-data; name="files[]"; filename="image.jpg"
 
 ### Upload Media (PNG Example)
 # @name /media/upload [image/png]
-POST http://localhost:12060/api/media/upload
+POST {{host}}/api/media/upload
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
@@ -23,4 +23,4 @@ Content-Disposition: form-data; name="files[]"; filename="photo2pixel_download.p
 --boundary--
 
 ### Get media
-GET http://localhost:12060/api/media?p=/123.png
+GET {{host}}/api/media?p=/123.png
