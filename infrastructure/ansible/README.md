@@ -63,6 +63,7 @@ This is the final step. The application requires several pieces of configuration
 For security, these are passed directly on the command line using Ansible's --extra-vars flag, rather than being stored in files.
 ```bash
 ansible-playbook -i ../inventory.ini deploy-app.yml \
+  --extra-vars "spring_profile=test" \
   --extra-vars "domain=test-api.gimlee.com" \
   --extra-vars "cors_allowed_origins=https://gimlee.com,https://staging.gimlee.com" \
   --extra-vars "mail_host=YOUR_SMTP_HOST" \
@@ -80,6 +81,7 @@ ansible-playbook -i ../inventory.ini deploy-app.yml \
 ```
 
 **Where to get these values:**
+* `spring_profile`: The Spring Boot profile to activate (e.g., `test`, `prod`).
 * `mail_password` & `jwt_key`: These are secrets you should generate and manage.
 * `s3_*` variables: These come from your object storage provider.
   * If using DigitalOcean, run `terraform output` in the `terraform-digitalocean` directory to get the keys and bucket name.

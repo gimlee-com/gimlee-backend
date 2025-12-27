@@ -2,8 +2,10 @@
   hosts: app
   become: true
   vars:
-    # We default to 'latest' but will override this on the command line
+    # We default to 'master' but will override this on the command line
     image_tag: "master"
+    # Target environment profile (e.g., test, prod)
+    spring_profile: "test"
     mongodb_uri: "mongodb://{{ hostvars['db1']['ansible_host'] }}:27017/gimlee"
     piratechain_rpc: "http://{{ hostvars['wallet1']['ansible_host'] }}:45453"
   tasks:
@@ -16,7 +18,7 @@
         pull: true
         restart_policy: always
         env:
-          SPRING_PROFILES_ACTIVE: test
+          SPRING_PROFILES_ACTIVE: "{{ spring_profile }}"
           SPRING_DATA_MONGODB_URI: "{{ mongodb_uri }}"
           GIMLEE_PAYMENTS_PIRATE_CHAIN_CLIENT_RPC_URL: "{{ piratechain_rpc }}"
           GIMLEE_PAYMENTS_PIRATE_CHAIN_CLIENT_USER: "{{ piratechain_user }}"
