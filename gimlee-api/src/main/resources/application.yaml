@@ -9,6 +9,18 @@ server:
     min-threads: 40
     max-http-form-post-size: 15MB
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus"
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 spring:
   servlet:
     multipart:
@@ -29,6 +41,7 @@ gimlee:
       unsecured-paths: >
         /swagger-ui.html,
         /swagger-ui/**,
+        /actuator/**,
         /v3/api-docs,
         /v3/api-docs/**,
         /ads/featured,
