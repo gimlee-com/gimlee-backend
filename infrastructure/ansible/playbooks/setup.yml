@@ -50,3 +50,31 @@
       pip:
         name: 'docker>=7.1.0'
         state: present
+
+    - name: Set Flyway version
+      set_fact:
+        flyway_version: "10.12.0"
+
+    - name: Download Flyway
+      get_url:
+        url: "https://download.red-gate.com/maven/release/com/redgate/flyway/flyway-commandline/{{ flyway_version }}/flyway-commandline-{{ flyway_version }}-linux-x64.tar.gz"
+        dest: /tmp/flyway.tar.gz
+
+    - name: Create Flyway directory
+      file:
+        path: /opt/flyway-cli
+        state: directory
+        mode: '0755'
+
+    - name: Extract Flyway
+      unarchive:
+        src: /tmp/flyway.tar.gz
+        dest: /opt/flyway-cli
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+
+    - name: Symlink Flyway
+      file:
+        src: /opt/flyway-cli/flyway
+        dest: /usr/local/bin/flyway
+        state: link

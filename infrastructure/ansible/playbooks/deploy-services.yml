@@ -19,6 +19,45 @@
         volumes:
           - /opt/mongodb/data:/data/db
 
+    - name: Wait for MongoDB to be ready
+      wait_for:
+        port: 27017
+        timeout: 30
+
+    - name: Create Flyway migrations directory
+      file:
+        path: "/opt/flyway/{{ item }}/migrations"
+        state: directory
+        mode: '0755'
+      loop:
+        - gimlee-ads
+
+    - name: Copy Flyway configuration
+      copy:
+        src: "../../../{{ item }}/flyway.conf"
+        dest: "/opt/flyway/{{ item }}/flyway.conf"
+        mode: '0644'
+      loop:
+        - gimlee-ads
+
+    - name: Copy Flyway migrations
+      copy:
+        src: "../../../{{ item }}/src/main/resources/{{ item }}/db/migration/mongo/"
+        dest: "/opt/flyway/{{ item }}/migrations/"
+        mode: '0644'
+      loop:
+        - gimlee-ads
+
+    - name: Run Flyway migrations
+      command: >
+        flyway migrate
+        -configFiles=/opt/flyway/{{ item }}/flyway.conf
+        -locations=filesystem:/opt/flyway/{{ item }}/migrations
+        -url=jdbc:mongodb://localhost:27017/gimlee
+        -baselineOnMigrate=true
+      loop:
+        - gimlee-ads
+
 - name: Deploy PirateChain Wallet
   hosts: wallet
   become: true
