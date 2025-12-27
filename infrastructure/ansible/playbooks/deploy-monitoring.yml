@@ -1,0 +1,55 @@
+---
+- name: Deploy Monitoring Stack (Prometheus + Grafana)
+  # We target only the first app server to host the dashboard
+  hosts: wallet[0]
+  become: true
+  tasks:
+    - name: Create monitoring directory
+      file:
+        path: /opt/monitoring
+        state: directory
+        mode: '0755'
+
+    - name: Copy Prometheus config
+      copy:
+        src: ../../docker/monitoring/prometheus.yml
+        dest: /opt/monitoring/prometheus.yml
+        mode: '0644'
+
+    - name: Copy Grafana Datasource config
+      copy:
+        src: ../../docker/monitoring/datasource.yml
+        dest: /opt/monitoring/datasource.yml
+        mode: '0644'
+
+    - name: Run Prometheus Container
+      community.docker.docker_container:
+        name: prometheus
+        image: prom/prometheus:v2.51.0
+        restart_policy: always
+        ports:
+          - "9090:9090"
+        volumes:
+          - /opt/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+          - prometheus_data:/prometheus
+
+    - name: Run Grafana Container
+      community.docker.docker_container:
+        name: grafana
+        image: grafana/grafana:10.4.0
+        restart_policy: always
+        ports:
+          - "3000:3000"
+        env:
+          GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_password }}"
+          # This tells Grafana to look for extra config in this folder
+          GF_PATHS_PROVISIONING: "/etc/grafana/provisioning"
+        volumes:
+          - /opt/monitoring/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+          - grafana_data:/var/lib/grafana
+        links:
+          - prometheus
+
+    # (Optional) Open firewall ports if you use UFW directly,
+    # but your Terraform firewall might block port 3000.
+    # You might need to use SSH tunneling to access Grafana if 3000 is blocked.

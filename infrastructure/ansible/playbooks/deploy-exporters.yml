@@ -1,0 +1,39 @@
+---
+- name: Deploy System Monitoring (Node Exporter)
+  hosts: all
+  become: true
+  tasks:
+    - name: Run Node Exporter
+      community.docker.docker_container:
+        name: node-exporter
+        image: prom/node-exporter:latest
+        restart_policy: always
+        ports:
+          - "9100:9100"
+        volumes:
+          - /proc:/host/proc:ro
+          - /sys:/host/sys:ro
+          - /:/rootfs:ro
+        command:
+          - '--path.procfs=/host/proc'
+          - '--path.sysfs=/host/sys'
+          - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+- name: Deploy Database Monitoring
+  hosts: db
+  become: true
+  vars:
+    # Uses the internal docker network or host IP
+    mongodb_uri: "mongodb://{{ ansible_host }}:27017"
+  tasks:
+    - name: Run MongoDB Exporter
+      community.docker.docker_container:
+        name: mongodb-exporter
+        image: percona/mongodb_exporter:0.40
+        restart_policy: always
+        ports:
+          - "9216:9216"
+        env:
+          MONGODB_URI: "{{ mongodb_uri }}"
+        command:
+          - '--collect-all'

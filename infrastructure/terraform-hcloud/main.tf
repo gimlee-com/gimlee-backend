@@ -136,6 +136,20 @@ resource "hcloud_firewall" "app" {
     port      = "443"
     source_ips = ["0.0.0.0/0", "::/0"]
   }
+  # --- Allow Monitoring from Wallet Node ---
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "9100" # Node Exporter
+    source_ips = ["${hcloud_server.wallet.ipv4_address}/32"]
+  }
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "12060" # gimlee-api Spring Boot Actuator
+    source_ips = ["${hcloud_server.wallet.ipv4_address}/32"]
+  }
+  # ---------------------------------------------------
   apply_to {
     label_selector = "role=app"
   }
@@ -153,8 +167,22 @@ resource "hcloud_firewall" "db" {
     direction = "in"
     protocol  = "tcp"
     port      = "27017"
-    source_ips = [for s in hcloud_server.app : "${s.ipv4_address}/32"] # Only allow App nodes
+    source_ips = [for s in hcloud_server.app : "${s.ipv4_address}/32"]
   }
+  # --- Allow Monitoring from Wallet Node ---
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "9100" # Node Exporter
+    source_ips = ["${hcloud_server.wallet.ipv4_address}/32"]
+  }
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "9216" # MongoDB Exporter
+    source_ips = ["${hcloud_server.wallet.ipv4_address}/32"]
+  }
+  # ---------------------------------------------------
   apply_to {
     label_selector = "role=db"
   }

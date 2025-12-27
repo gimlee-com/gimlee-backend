@@ -28,6 +28,8 @@ wallet1 ansible_host=1.2.3.7
 
 - **`setup.yml`**: Installs Docker and basic dependencies on all nodes.
 - **`deploy-services.yml`**: Deploys MongoDB (on `db` nodes) and the PirateChain Full Node (on `wallet` nodes).
+- **`deploy-exporters.yml`**: Deploys system and database metrics collectors (Node Exporter & MongoDB Exporter).
+- **`deploy-monitoring.yml`**: Deploys the monitoring stack (Prometheus & Grafana) on the wallet node.
 - **`deploy-traefik.yml`**: Deploys the Traefik reverse proxy on `app` nodes to handle SSL (via Let's Encrypt) and load balancing.
 - **`deploy-app.yml`**: Deploys the Gimlee API application on `app` nodes.
 
@@ -49,7 +51,19 @@ ansible-playbook -i ../inventory.ini deploy-services.yml \
   --extra-vars "piratechain_password=YOUR_RPC_PASSWORD"
 ```
 
-**3. Deploy Traefik Reverse Proxy**  
+**3. Deploy Monitoring Stack**
+This deploys the exporters (ears) and the Prometheus/Grafana stack (brains).
+**Important:** You must provide a password for the Grafana `admin` user.
+```bash
+# 1. Deploy Exporters to all nodes
+ansible-playbook -i ../inventory.ini deploy-exporters.yml
+
+# 2. Deploy Prometheus and Grafana (on Wallet node)
+ansible-playbook -i ../inventory.ini deploy-monitoring.yml \
+  --extra-vars "grafana_password=YOUR_SECURE_PASSWORD"
+```
+
+**4. Deploy Traefik Reverse Proxy**  
    This deploys the Traefik reverse proxy to handle SSL and route traffic. It requires your domain and an email for Let's Encrypt SSL certificate registration.
 ```bash
    export DOMAIN="test-api.yourdomain.com"
@@ -58,7 +72,7 @@ ansible-playbook -i ../inventory.ini deploy-services.yml \
     --extra-vars "domain=test-api.gimlee.com"
 ```
 
-**4. Deploy the Gimlee API Application**  
+**5. Deploy the Gimlee API Application**  
 This is the final step. The application requires several pieces of configuration, including secrets (like passwords and API keys) and details for connecting to the object storage.
 For security, these are passed directly on the command line using Ansible's --extra-vars flag, rather than being stored in files.
 ```bash

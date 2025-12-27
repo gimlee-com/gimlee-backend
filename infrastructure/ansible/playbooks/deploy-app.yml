@@ -14,9 +14,10 @@
         name: gimlee-api
         # This tells Ansible which image to run, e.g., ghcr.io/your-user/gimlee-backend:master
         image: "ghcr.io/gimlee-com/gimlee-backend:{{ image_tag }}"
-        # This is important! It ensures the server always pulls the newest version of the image tag.
         pull: true
         restart_policy: always
+        ports:
+          - "12060:12060"
         env:
           SPRING_PROFILES_ACTIVE: "{{ spring_profile }}"
           SPRING_DATA_MONGODB_URI: "{{ mongodb_uri }}"
