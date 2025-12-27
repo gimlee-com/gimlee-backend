@@ -108,12 +108,6 @@ resource "digitalocean_firewall" "app" {
     port_range            = "all"
     destination_addresses = ["0.0.0.0/0", "::/0"]
   }
-
-  outbound_rule {
-    protocol              = "udp"
-    port_range            = "all"
-    destination_addresses = ["0.0.0.0/0", "::/0"]
-  }
 }
 
 # Firewall for DB Node (only allow access from VPC)
@@ -133,6 +127,20 @@ resource "digitalocean_firewall" "db" {
     port_range       = "27017"
     source_tags      = ["gimlee"]
   }
+
+  # --- Allow Monitoring from Wallet Node ---
+  inbound_rule {
+    protocol           = "tcp"
+    port_range         = "9100" # Node Exporter
+    source_droplet_ids = [digitalocean_droplet.wallet.id]
+  }
+
+  inbound_rule {
+    protocol           = "tcp"
+    port_range         = "9216" # MongoDB Exporter
+    source_droplet_ids = [digitalocean_droplet.wallet.id]
+  }
+  # -----------------------------------------
 
   outbound_rule {
     protocol              = "tcp"
