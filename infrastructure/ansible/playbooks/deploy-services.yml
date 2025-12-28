@@ -76,10 +76,12 @@
         dest: /opt/piratechain/PIRATE.conf
         content: |
           server=1
+          txindex=1
           rpcuser={{ piratechain_user }}
           rpcpassword={{ piratechain_password }}
+          rpcport=45453
           rpcbind=0.0.0.0
-          rpcallowip={{ app_server_ip }}
+          rpcallowip=0.0.0.0/0
         mode: '0600'
 
     - name: Copy Dockerfile for PirateChain
