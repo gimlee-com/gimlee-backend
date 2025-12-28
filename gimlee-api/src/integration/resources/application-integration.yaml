@@ -38,6 +38,20 @@ gimlee:
       validation:
         enabled: true
     rest:
+      unsecured-paths:
+        - /swagger-ui.html
+        - /swagger-ui/**
+        - /actuator/**
+        - /v3/api-docs
+        - /v3/api-docs/**
+        - /api/v3/api-docs
+        - /api/v3/api-docs/**
+        - /ads/featured
+        - /auth/register
+        - /auth/register/**
+        - /auth/login
+        - /media
+        - /playground/**
       jwt:
         issuer: gimlee
         key: password
