@@ -40,7 +40,11 @@ gimlee:
 
   # gimlee-payments properties
   payments:
+    timeout-hours: 1
     pirate-chain:
+      memo-prefix: "gimlee:"
+      monitor-delay-ms: 60000
+      min-confirmations: 1
       client:
         rpc-url: <fillme>
         user: <fillme>

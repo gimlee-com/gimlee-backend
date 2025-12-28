@@ -3,6 +3,7 @@ dependencies {
     implementation(project(":gimlee-common"))
     implementation(project(":gimlee-events"))
     implementation(project(":gimlee-auth"))
+    implementation(project(":gimlee-payments"))
     
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)
@@ -14,9 +15,6 @@ dependencies {
     implementation(libs.spring.boot.starter.actuator)
 
     // Other dependencies
-    implementation(libs.httpclient5)
-    implementation(libs.caffeine)
-    implementation(libs.commons.codec)
     implementation(libs.jakarta.validation)
     implementation(libs.jackson.module.kotlin)
 

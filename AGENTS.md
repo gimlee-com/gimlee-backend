@@ -43,6 +43,15 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
     *   Implement caching explicitly using **Caffeine** and **Kryo**.
     *   Each cache must be configured via properties to ensure resource visibility.
 
+### 4. Architecture (`docs/development/architecture-guidelines.md`)
+*   **SRP:** Maintain strict separation between business logic (`gimlee-orders`) and technical implementation (`gimlee-payments`).
+*   **Events:** Use `ApplicationEventPublisher` and `gimlee-events` for loose coupling between modules.
+*   **Roles:** Grant roles (e.g., `PIRATE`) dynamically based on user actions.
+
+### 5. Configuration (`docs/development/configuration-guidelines.md`)
+*   **Externalize Everything:** Timeouts, prefixes, and monitoring delays must be configurable via `application.yaml`.
+*   **Documentation:** Maintain `application-local-EXAMPLE.yaml` with all available properties.
+
 ## Setup & Configuration
 *   **Local Config:** Copy `gimlee-api/src/main/resources/application-local-EXAMPLE.yaml` to `application-local.yaml` and fill in details (PirateChain RPC, SMTP, etc.).
 *   **Run Command:** `./gradlew :gimlee-api:bootRun --args='--spring.profiles.active=local'`

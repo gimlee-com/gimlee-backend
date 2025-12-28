@@ -1,5 +1,7 @@
 package com.gimlee.payments.piratechain.domain
 
+import com.gimlee.auth.model.Role
+import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.toMicros
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
@@ -19,7 +21,8 @@ import javax.crypto.spec.PBEKeySpec
 @Service
 class PirateChainAddressService(
     private val userPirateChainAddressRepository: UserPirateChainAddressRepository,
-    private val pirateChainRpcClient: PirateChainRpcClient
+    private val pirateChainRpcClient: PirateChainRpcClient,
+    private val userRoleRepository: UserRoleRepository
 ) {
 
     companion object {
@@ -94,6 +97,7 @@ class PirateChainAddressService(
                 anonymize(addressInfo.zAddress),
                 userId
             )
+            userRoleRepository.add(ObjectId(userId), Role.PIRATE)
         } catch (e: Exception) {
             log.error(
                 "Failed to add/update address info for user {} (zAddress {}): {}",
