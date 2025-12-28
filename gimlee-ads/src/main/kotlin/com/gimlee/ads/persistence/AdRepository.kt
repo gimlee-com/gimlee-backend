@@ -12,6 +12,7 @@ import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.client.model.Sorts
+import com.mongodb.client.model.Updates
 import org.bson.Document
 import org.bson.conversions.Bson
 import org.bson.types.ObjectId
@@ -124,6 +125,36 @@ class AdRepository(mongoDatabase: MongoDatabase) {
         return PageImpl(documents, pageRequest, total)
     }
 
+    /**
+     * Increments the locked stock count by 1.
+     */
+    fun incrementLockedStock(adId: ObjectId) {
+        val filter = Filters.eq(AdDocument.FIELD_ID, adId)
+        val update = Updates.inc(AdDocument.FIELD_LOCKED_STOCK, 1)
+        collection.updateOne(filter, update)
+    }
+
+    /**
+     * Decrements the locked stock count by 1.
+     */
+    fun decrementLockedStock(adId: ObjectId) {
+        val filter = Filters.eq(AdDocument.FIELD_ID, adId)
+        val update = Updates.inc(AdDocument.FIELD_LOCKED_STOCK, -1)
+        collection.updateOne(filter, update)
+    }
+
+    /**
+     * Decrements both stock and locked stock by 1 (used when order is complete).
+     */
+    fun completeSale(adId: ObjectId) {
+        val filter = Filters.eq(AdDocument.FIELD_ID, adId)
+        val update = Updates.combine(
+            Updates.inc(AdDocument.FIELD_STOCK, -1),
+            Updates.inc(AdDocument.FIELD_LOCKED_STOCK, -1)
+        )
+        collection.updateOne(filter, update)
+    }
+
 
 
     // --- Manual Mapping Functions ---
@@ -142,6 +173,8 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             .append(AdDocument.FIELD_CITY_ID, ad.cityId) // Map cityId
             .append(AdDocument.FIELD_MEDIA_PATHS, ad.mediaPaths)
             .append(AdDocument.FIELD_MAIN_PHOTO_PATH, ad.mainPhotoPath)
+            .append(AdDocument.FIELD_STOCK, ad.stock)
+            .append(AdDocument.FIELD_LOCKED_STOCK, ad.lockedStock)
 
 
         // Map GeoJsonPoint to Document format { type: "Point", coordinates: [lon, lat] }
@@ -187,7 +220,9 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             cityId = doc.getString(AdDocument.FIELD_CITY_ID),
             location = geoPoint,
             mediaPaths = mediaPathsList ?: emptyList(),
-            mainPhotoPath = doc.getString(AdDocument.FIELD_MAIN_PHOTO_PATH)
+            mainPhotoPath = doc.getString(AdDocument.FIELD_MAIN_PHOTO_PATH),
+            stock = doc.getInteger(AdDocument.FIELD_STOCK) ?: 0,
+            lockedStock = doc.getInteger(AdDocument.FIELD_LOCKED_STOCK) ?: 0
         )
     }
 }

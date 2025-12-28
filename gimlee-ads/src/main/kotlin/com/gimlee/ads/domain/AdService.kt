@@ -28,7 +28,7 @@ class AdService(private val adRepository: AdRepository) {
     /**
      * Initiates a new ad with a title in the INACTIVE state. Location and other details are set via updateAd.
      */
-    fun createAd(userId: String, title: String): Ad {
+    fun createAd(userId: String, title: String, stock: Int = 0): Ad {
         val nowMicros = Instant.now().toMicros()
         val adDocument = AdDocument(
             id = ObjectId(),
@@ -43,7 +43,8 @@ class AdService(private val adRepository: AdRepository) {
             cityId = null,
             location = null,
             mediaPaths = emptyList(),
-            mainPhotoPath = null
+            mainPhotoPath = null,
+            stock = stock
         )
         log.info("Creating new ad with title '{}' for user {}", title, userId)
         val savedDocument = adRepository.save(adDocument)
@@ -110,6 +111,7 @@ class AdService(private val adRepository: AdRepository) {
             location = newGeoPoint ?: existingAdDoc.location,
             mediaPaths = newMediaPaths,
             mainPhotoPath = newMainPhotoPath,
+            stock = updateData.stock ?: existingAdDoc.stock,
             updatedAtMicros = Instant.now().toMicros()
         )
 
@@ -196,18 +198,20 @@ class AdService(private val adRepository: AdRepository) {
                 existingAd.price != null &&
                 existingAd.currency != null
                 && (existingAd.cityId != null || existingAd.location != null)
+                && existingAd.stock > 0
 
         if (!isComplete) {
             log.warn(
-                "Attempted to activate incomplete ad {}: title={}, desc={}, price={}, curr={}, location={}",
+                "Attempted to activate incomplete ad {}: title={}, desc={}, price={}, curr={}, location={}, stock={}",
                 adId,
                 existingAd.title.isNotBlank(),
                 !existingAd.description.isNullOrBlank(),
                 existingAd.price != null,
                 existingAd.currency != null,
-                existingAd.cityId != null || existingAd.location != null
+                existingAd.cityId != null || existingAd.location != null,
+                existingAd.stock
             )
-            throw AdOperationException("Ad cannot be activated until title, description, price and location are all set.")
+            throw AdOperationException("Ad cannot be activated until title, description, price, location and stock are all set. Stock must be greater than 0.")
         }
     }
 }

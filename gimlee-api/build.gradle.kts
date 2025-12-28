@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":gimlee-payments"))
     implementation(project(":gimlee-ads"))
     implementation(project(":gimlee-location"))
+    implementation(project(":gimlee-orders"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)
@@ -59,8 +60,4 @@ sourceSets {
         kotlin.srcDirs("src/test/kotlin")
         resources.srcDirs("src/test/resources")
     }
-}
-
-tasks.withType<Copy>().configureEach {
-    duplicatesStrategy = DuplicatesStrategy.WARN
 }

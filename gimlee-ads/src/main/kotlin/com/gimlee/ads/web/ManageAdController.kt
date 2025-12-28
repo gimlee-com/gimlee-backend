@@ -1,10 +1,12 @@
 package com.gimlee.ads.web
 
 import com.gimlee.ads.domain.AdService
+import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.web.dto.request.CreateAdRequestDto
 import com.gimlee.ads.web.dto.request.UpdateAdRequestDto
 import com.gimlee.ads.web.dto.response.AdDto
 import com.gimlee.auth.annotation.Privileged
+import com.gimlee.auth.model.Role
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
@@ -47,6 +49,13 @@ class ManageAdController(private val adService: AdService) {
     ): ResponseEntity<Any> {
         val principal = HttpServletRequestAuthUtil.Companion.getPrincipal()
         log.info("User {} attempting to update ad {}", principal.userId, adId)
+
+        if (request.currency == Currency.ARRR && !principal.roles.contains(Role.PIRATE)) {
+            log.warn("User {} attempted to use ARRR without PIRATE role", principal.userId)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(mapOf("error" to "Only users with the PIRATE role can make sales in ARRR. To get that role, you need to link your Pirate Chain wallet."))
+        }
+
         return try {
             val updatedAdDomain = adService.updateAd(
                 adId = adId,

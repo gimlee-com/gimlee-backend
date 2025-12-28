@@ -193,6 +193,7 @@ class AdsPopulator(
                             location = location,
                             mediaPaths = adMediaPaths,
                             mainPhotoPath = adMainPhotoPath,
+                            stock = Random.nextInt(1, 100)
                         )
                         val updatedAd = adService.updateAd(createdAd.id, userId, updateRequest)
 

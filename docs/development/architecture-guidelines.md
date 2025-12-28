@@ -15,3 +15,15 @@
 ### 3. Role-Based Evolution
 *   **Dynamic Role Granting:** Users may start with a base role (`USER`) and be granted additional roles (e.g., `PIRATE`) upon completing specific actions (like linking a cryptocurrency viewing key).
 *   **Privileged Access:** Use the `@Privileged` annotation to enforce role-based access control at the controller level.
+
+### 4. API and DTO Design
+*   **Capture Intent Early:** Design creation DTOs with the absolute minimum required fields (e.g., just a `title` for an Ad). This allows the system to capture user intent even if they don't complete the full process immediately.
+*   **Progressive Data Gathering:** Use separate update endpoints to gather detailed information after the initial entity creation.
+
+### 5. Concurrency and Consistency
+*   **Locked Stock Pattern:** For systems managing finite resources (like marketplace inventory), use a `lockedStock` attribute. 
+    *   When an order is initiated, increment `lockedStock`.
+    *   When an order is completed, decrement `lockedStock` and decrement total `stock`.
+    *   When an order is cancelled or times out, simply decrement `lockedStock`.
+    *   `availableStock` is always calculated as `stock - lockedStock`.
+*   **Atomic Operations:** Always use atomic MongoDB operations (`$inc`, `$set`, `$push`) in repositories to ensure thread-safe updates without requiring heavy application-level locking or transactions where possible.

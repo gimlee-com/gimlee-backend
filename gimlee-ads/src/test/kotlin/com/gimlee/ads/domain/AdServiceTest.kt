@@ -1,0 +1,109 @@
+package com.gimlee.ads.domain
+
+import com.gimlee.ads.domain.model.*
+import com.gimlee.ads.persistence.AdRepository
+import com.gimlee.ads.persistence.model.AdDocument
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import org.bson.types.ObjectId
+import java.math.BigDecimal
+import java.time.Instant
+
+class AdServiceTest : StringSpec({
+
+    val adRepository = mockk<AdRepository>()
+    val adService = AdService(adRepository)
+
+    "createAd should set stock" {
+        val userId = ObjectId().toHexString()
+        val title = "Test Ad"
+        val stock = 10
+
+        every { adRepository.save(any()) } answers { it.invocation.args[0] as AdDocument }
+
+        val result = adService.createAd(userId, title, stock)
+
+        result.title shouldBe title
+        result.stock shouldBe stock
+        verify {
+            adRepository.save(match {
+                it.title == title && it.stock == stock
+            })
+        }
+    }
+
+    "updateAd should update stock" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Old Title",
+            description = null,
+            price = null,
+            currency = null,
+            status = AdStatus.INACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = null,
+            location = null,
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 5
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+        every { adRepository.save(any()) } answers { it.invocation.args[0] as AdDocument }
+
+        val updateRequest = UpdateAdRequest(
+            title = null,
+            description = null,
+            price = null,
+            location = null,
+            mediaPaths = null,
+            mainPhotoPath = null,
+            stock = 20
+        )
+
+        val result = adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+
+        result.stock shouldBe 20
+        verify {
+            adRepository.save(match {
+                it.id == adId && it.stock == 20
+            })
+        }
+    }
+
+    "activateAd should fail if stock is 0" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Test Ad",
+            description = "Description",
+            price = BigDecimal("100"),
+            currency = Currency.USD,
+            status = AdStatus.INACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = "city1",
+            location = org.springframework.data.mongodb.core.geo.GeoJsonPoint(1.0, 2.0),
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 0
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+            adService.activateAd(adId.toHexString(), userId.toHexString())
+        }
+
+        exception.message shouldBe "Ad cannot be activated until title, description, price, location and stock are all set. Stock must be greater than 0."
+    }
+})

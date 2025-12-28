@@ -1,14 +1,17 @@
 package com.gimlee.orders.domain
 
+import com.gimlee.ads.domain.AdService
+import com.gimlee.events.OrderEvent
+import com.gimlee.orders.domain.model.OrderStatus
 import com.gimlee.events.PaymentEvent
 import com.gimlee.orders.domain.model.Order
-import com.gimlee.orders.domain.model.OrderStatus
 import com.gimlee.orders.persistence.OrderRepository
 import com.gimlee.payments.domain.PaymentService
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -17,9 +20,32 @@ import java.time.Instant
 @Service
 class OrderService(
     private val orderRepository: OrderRepository,
-    private val paymentService: PaymentService
+    private val paymentService: PaymentService,
+    private val adService: AdService,
+    private val eventPublisher: ApplicationEventPublisher
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
+
+    fun placeOrder(
+        buyerId: ObjectId,
+        adId: ObjectId,
+        amount: BigDecimal
+    ): Order {
+        val ad = adService.getAd(adId.toHexString())
+            ?: throw IllegalArgumentException("Ad not found: $adId")
+
+        val availableStock = ad.stock - ad.lockedStock
+        if (availableStock <= 0) {
+            throw IllegalStateException("Ad $adId has no available stock.")
+        }
+
+        return initOrder(
+            buyerId = buyerId,
+            sellerId = ObjectId(ad.userId),
+            adId = adId,
+            amount = amount
+        )
+    }
 
     fun initOrder(
         buyerId: ObjectId,
@@ -41,6 +67,7 @@ class OrderService(
         )
         
         orderRepository.save(order)
+        publishOrderEvent(order)
 
         // Initialize payment
         paymentService.initPayment(
@@ -53,7 +80,10 @@ class OrderService(
 
         // Update status to AWAITING_PAYMENT
         val activeOrder = order.copy(status = OrderStatus.AWAITING_PAYMENT)
-        return orderRepository.save(activeOrder)
+        val savedOrder = orderRepository.save(activeOrder)
+        publishOrderEvent(savedOrder)
+
+        return savedOrder
     }
     
     @EventListener
@@ -71,8 +101,23 @@ class OrderService(
 
         if (newStatus != null && order.status != newStatus) {
             log.info("Updating order ${order.id} status to $newStatus based on payment event.")
-            orderRepository.save(order.copy(status = newStatus))
+            val updatedOrder = order.copy(status = newStatus)
+            orderRepository.save(updatedOrder)
+            publishOrderEvent(updatedOrder)
         }
+    }
+
+    private fun publishOrderEvent(order: Order) {
+        val event = OrderEvent(
+            orderId = order.id,
+            adId = order.adId,
+            buyerId = order.buyerId,
+            sellerId = order.sellerId,
+            status = order.status.id,
+            amount = order.amount,
+            timestamp = Instant.now()
+        )
+        eventPublisher.publishEvent(event)
     }
     
     fun getOrder(orderId: ObjectId): Order? = orderRepository.findById(orderId)

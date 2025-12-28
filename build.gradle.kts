@@ -87,6 +87,10 @@ subprojects {
     tasks.named("check") {
         dependsOn("integration")
     }
+
+    tasks.withType<Copy>().configureEach {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 }
 
 tasks.named("bootJar") {

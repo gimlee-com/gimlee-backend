@@ -30,7 +30,9 @@ data class UpdateAdRequestDto(
     val mediaPaths: List<@Size(max = 255, message = "Media path too long.") String>?,
 
     @field:Size(max = 255, message = "Main photo path too long.")
-    val mainPhotoPath: String?
+    val mainPhotoPath: String?,
+
+    val stock: Int?
 ) {
     fun toDomain(): UpdateAdRequest {
         return UpdateAdRequest(
@@ -45,6 +47,7 @@ data class UpdateAdRequestDto(
             },
             mediaPaths = mediaPaths,
             mainPhotoPath = mainPhotoPath,
+            stock = stock
         )
     }
 }

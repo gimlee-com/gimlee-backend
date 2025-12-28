@@ -1,18 +1,20 @@
 package com.gimlee.orders.domain
 
+import com.gimlee.events.OrderEvent
+import com.gimlee.orders.domain.model.OrderStatus
 import com.gimlee.events.PaymentEvent
 import com.gimlee.orders.domain.model.Order
-import com.gimlee.orders.domain.model.OrderStatus
 import com.gimlee.orders.persistence.OrderRepository
 import com.gimlee.payments.domain.PaymentService
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import io.kotest.core.spec.style.StringSpec
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.verify
+import io.mockk.*
 import org.bson.types.ObjectId
+import org.springframework.context.ApplicationEventPublisher
+import com.gimlee.ads.domain.AdService
+import com.gimlee.ads.domain.model.Ad
+import com.gimlee.ads.domain.model.AdStatus
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -20,9 +22,11 @@ class OrderServiceTest : StringSpec({
 
     val orderRepository = mockk<OrderRepository>(relaxed = true)
     val paymentService = mockk<PaymentService>(relaxed = true)
-    val service = OrderService(orderRepository, paymentService)
+    val adService = mockk<AdService>(relaxed = true)
+    val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
+    val service = OrderService(orderRepository, paymentService, adService, eventPublisher)
 
-    "should init order and payment" {
+    "should init order and payment and publish events" {
         val buyerId = ObjectId.get()
         val sellerId = ObjectId.get()
         val adId = ObjectId.get()
@@ -34,7 +38,34 @@ class OrderServiceTest : StringSpec({
         service.initOrder(buyerId, sellerId, adId, amount)
 
         verify { paymentService.initPayment(any(), buyerId, sellerId, amount, PaymentMethod.PIRATE_CHAIN) }
-        verify(exactly = 2) { orderRepository.save(any()) } // Once created, once status update
+        verify(exactly = 2) { orderRepository.save(any()) } 
+        verify(exactly = 2) { eventPublisher.publishEvent(any<OrderEvent>()) }
+    }
+
+    "should place order successfully if stock available" {
+        val buyerId = ObjectId.get()
+        val adId = ObjectId.get()
+        val sellerId = ObjectId.get()
+        val ad = Ad(
+            id = adId.toHexString(),
+            userId = sellerId.toHexString(),
+            title = "Test Ad",
+            description = "Desc",
+            price = null,
+            status = AdStatus.ACTIVE,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            location = null,
+            mainPhotoPath = null,
+            stock = 5,
+            lockedStock = 0
+        )
+
+        every { adService.getAd(adId.toHexString()) } returns ad
+        
+        service.placeOrder(buyerId, adId, BigDecimal.TEN)
+
+        verify { orderRepository.save(match { it.status == OrderStatus.CREATED }) }
     }
 
     "should update order status on payment complete event" {

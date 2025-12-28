@@ -19,7 +19,9 @@ data class AdDocument(
     val cityId: String?,
     val location: GeoJsonPoint?,
     val mediaPaths: List<String>? = emptyList(),
-    val mainPhotoPath: String?
+    val mainPhotoPath: String?,
+    val stock: Int = 0,
+    val lockedStock: Int = 0
 ) {
     companion object {
         const val FIELD_ID = "_id"
@@ -35,6 +37,8 @@ data class AdDocument(
         const val FIELD_LOCATION = "loc"
         const val FIELD_MEDIA_PATHS = "mep"
         const val FIELD_MAIN_PHOTO_PATH = "mpp"
+        const val FIELD_STOCK = "stk"
+        const val FIELD_LOCKED_STOCK = "lstk"
     }
 
     /**
@@ -57,7 +61,9 @@ data class AdDocument(
                 null
             },
             mediaPaths = mediaPaths,
-            mainPhotoPath = mainPhotoPath
+            mainPhotoPath = mainPhotoPath,
+            stock = stock,
+            lockedStock = lockedStock
         )
     }
 }

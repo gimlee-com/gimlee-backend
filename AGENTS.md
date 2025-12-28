@@ -29,6 +29,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **Migrations:** Indexes must be managed via Flyway migrations, never in code.
 *   **Timestamps:** All timestamps must be stored as **epoch microseconds** (Long). Use `Instant.toMicros` extension from `gimlee-common`.
 *   **Field Names:** Use abbreviations for all field names to minimize storage size.
+*   **Index Optimization:** Only index fields used in queries. Use partial indexes for low-cardinality statuses.
 
 ### 2. Testing (`docs/development/testing-guidelines.md`)
 *   **Framework:** Use **Kotest** for all tests.
@@ -47,6 +48,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **SRP:** Maintain strict separation between business logic (`gimlee-orders`) and technical implementation (`gimlee-payments`).
 *   **Events:** Use `ApplicationEventPublisher` and `gimlee-events` for loose coupling between modules.
 *   **Roles:** Grant roles (e.g., `PIRATE`) dynamically based on user actions.
+*   **DTO Intent:** Design creation DTOs with minimal fields to capture user intent early.
 
 ### 5. Configuration (`docs/development/configuration-guidelines.md`)
 *   **Externalize Everything:** Timeouts, prefixes, and monitoring delays must be configurable via `application.yaml`.

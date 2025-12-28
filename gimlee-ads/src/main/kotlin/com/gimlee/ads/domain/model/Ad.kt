@@ -17,4 +17,6 @@ data class Ad(
     val location: Location?,
     val mediaPaths: List<String>? = emptyList(),
     val mainPhotoPath: String?,
+    val stock: Int = 0,
+    val lockedStock: Int = 0,
 )

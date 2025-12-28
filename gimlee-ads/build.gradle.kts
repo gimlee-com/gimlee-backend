@@ -19,6 +19,13 @@ dependencies {
     implementation(libs.commons.codec)
     implementation(libs.jakarta.validation)
     implementation(libs.jackson.module.kotlin)
+
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(platform(libs.kotest.bom))
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.property)
+    testImplementation(libs.mockk)
 }
 
 sourceSets {
@@ -38,8 +45,4 @@ tasks.named("bootJar") {
 
 tasks.named("jar") {
     enabled = true
-}
-
-tasks.processResources {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

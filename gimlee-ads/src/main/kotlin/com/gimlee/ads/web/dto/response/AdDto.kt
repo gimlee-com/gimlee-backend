@@ -19,6 +19,8 @@ data class AdDto(
     val location: LocationWithCityDetailsDto?, // Changed type here
     val mediaPaths: List<String>?,
     val mainPhotoPath: String?,
+    val stock: Int,
+    val availableStock: Int,
 ) {
     companion object {
         fun fromDomain(ad: Ad): AdDto = with(ad) {
@@ -34,6 +36,8 @@ data class AdDto(
                 location = LocationWithCityDetailsDto.fromDomain(ad.location),
                 mediaPaths = mediaPaths,
                 mainPhotoPath = mainPhotoPath,
+                stock = stock,
+                availableStock = (stock - lockedStock).coerceAtLeast(0)
             )
         }
     }
