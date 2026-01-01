@@ -48,7 +48,7 @@ class UserVerificationService(
         val verificationCode = RandomStringUtils.randomNumeric(VERIFICATION_CODE_LENGTH)
         val verificationCodeParts = verificationCode.chunked(3)
 
-        val emailData = getEmailData(verificationCodeParts)
+        val emailData = getEmailData(user, verificationCodeParts)
         val emailWriter = StringWriter()
         emailTemplate.execute(emailWriter, emailData).flush()
 
@@ -86,7 +86,7 @@ class UserVerificationService(
         )
     }
 
-    private fun getEmailData(verificationCodeParts: List<String>): HashMap<String, String> {
+    private fun getEmailData(user: User, verificationCodeParts: List<String>): HashMap<String, String> {
         val emailData = HashMap<String, String>()
         emailData["verificationCodePart1"] = verificationCodeParts[0]
         emailData["verificationCodePart2"] = verificationCodeParts[1]
@@ -94,7 +94,11 @@ class UserVerificationService(
         emailData["title"] =
             messageSource.getMessage("gimlee.user.verification.email.title", null, LocaleContextHolder.getLocale())
         emailData["summary"] =
-            messageSource.getMessage("gimlee.user.verification.email.summary", null, LocaleContextHolder.getLocale())
+            messageSource.getMessage(
+                "gimlee.user.verification.email.summary",
+                arrayOf(user.username),
+                LocaleContextHolder.getLocale()
+            )
         emailData["content"] =
             messageSource.getMessage("gimlee.user.verification.email.content", null, LocaleContextHolder.getLocale())
         emailData["sentBy"] =
