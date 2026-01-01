@@ -62,6 +62,11 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **Detailed Commentary:** These files must contain commentary explaining what is supposed to happen when calling the endpoint and describing expected responses.
 *   **Stay in Sync:** Any addition or modification to Controllers requires corresponding updates to their respective `.http` files to ensure examples and commentary remain accurate.
 
+### 7. Docker & Infrastructure
+*   **Module Synchronization:** This is a multi-module Gradle project where the `Dockerfile` explicitly copies each module's source directory to maintain a clean build context.
+*   **Stay in Sync:** When adding a new module to the project, you **MUST** update the `Dockerfile` by adding a corresponding `COPY` command for that module before the build step.
+*   **CI/CD Awareness:** Always verify that Docker builds succeed locally after project structure changes, as the GitHub Actions pipeline relies on the `Dockerfile` being perfectly in sync with the module list.
+
 ## Setup & Configuration
 *   **Local Config:** Copy `gimlee-api/src/main/resources/application-local-EXAMPLE.yaml` to `application-local.yaml` and fill in details (PirateChain RPC, SMTP, etc.).
 *   **Run Command:** `./gradlew :gimlee-api:bootRun --args='--spring.profiles.active=local'`
