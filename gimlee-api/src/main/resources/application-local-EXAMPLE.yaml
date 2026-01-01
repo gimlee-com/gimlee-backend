@@ -45,6 +45,7 @@ gimlee:
       memo-prefix: "gimlee:"
       monitor-delay-ms: 60000
       min-confirmations: 1
+      monitor-threads: 5
       client:
         rpc-url: <fillme>
         user: <fillme>

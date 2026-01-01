@@ -15,16 +15,23 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import com.gimlee.payments.piratechain.client.PirateChainRpcClient
 import com.gimlee.payments.piratechain.config.PirateChainClientProperties
+import com.gimlee.payments.config.PaymentProperties
 import java.net.URI
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.atomic.AtomicInteger
 
 @Configuration
-@EnableConfigurationProperties(PirateChainClientProperties::class)
+@EnableConfigurationProperties(PirateChainClientProperties::class, PaymentProperties::class)
 class PirateChainClientConfig(
-    private val properties: PirateChainClientProperties
+    private val properties: PirateChainClientProperties,
+    private val paymentProperties: PaymentProperties
 ) {
 
     companion object {
         const val PIRATE_CHAIN_HTTP_CLIENT = "pirateChainHttpClient"
+        const val PIRATE_CHAIN_MONITOR_EXECUTOR = "pirateChainMonitorExecutor"
         const val DEFAULT_KEEP_ALIVE_MINUTES = 3L
     }
 
@@ -61,4 +68,15 @@ class PirateChainClientConfig(
     fun pirateChainRpcClient(
         @Qualifier(PIRATE_CHAIN_HTTP_CLIENT) httpClient: HttpClient
     ) = PirateChainRpcClient(httpClient, properties)
+
+    @Bean(name = [PIRATE_CHAIN_MONITOR_EXECUTOR])
+    fun pirateChainMonitorExecutor(): ExecutorService {
+        val threads = paymentProperties.pirateChain.monitorThreads
+        return Executors.newFixedThreadPool(threads, object : ThreadFactory {
+            private val counter = AtomicInteger(1)
+            override fun newThread(r: Runnable): Thread {
+                return Thread(r, "pc-monitor-${counter.getAndIncrement()}")
+            }
+        })
+    }
 }

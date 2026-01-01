@@ -53,6 +53,7 @@ gimlee:
   # gimlee-payments properties
   payments:
     pirate-chain:
+      monitor-threads: 1
       client:
         max-connections: 2
         response-timeout-millis: 1000

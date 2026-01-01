@@ -17,6 +17,7 @@ import org.bson.types.ObjectId
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.Executors
 
 class PirateChainPaymentMonitorTest : StringSpec({
 
@@ -24,7 +25,8 @@ class PirateChainPaymentMonitorTest : StringSpec({
     val paymentService = mockk<PaymentService>(relaxed = true)
     val rpcClient = mockk<PirateChainRpcClient>(relaxed = true)
     val paymentProperties = PaymentProperties(timeoutHours = 1)
-    val monitor = PirateChainPaymentMonitor(paymentRepository, paymentService, rpcClient, paymentProperties)
+    val executorService = Executors.newSingleThreadExecutor()
+    val monitor = PirateChainPaymentMonitor(paymentRepository, paymentService, rpcClient, paymentProperties, executorService)
 
     "should complete payment when full payment is received" {
         val paymentId = ObjectId.get()

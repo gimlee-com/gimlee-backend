@@ -44,6 +44,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
     *   **Do NOT** use the `@Cacheable` annotation.
     *   Implement caching explicitly using **Caffeine** and **Kryo**.
     *   Each cache must be configured via properties to ensure resource visibility.
+*   **Thread Pools:** All thread pools must have the same core and maximum pool size to ensure consistent performance and avoid unexpected overhead. This should be configurable via a single application property.
 
 ### 4. Architecture (`docs/development/architecture-guidelines.md`)
 *   **SRP:** Maintain strict separation between the modules and avoid circular dependencies.

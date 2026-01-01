@@ -16,5 +16,7 @@ data class PirateChainProperties(
     @DefaultValue("60000")
     val monitorDelayMs: Long = 60000,
     @DefaultValue("1")
-    val minConfirmations: Int = 1
+    val minConfirmations: Int = 1,
+    @DefaultValue("5")
+    val monitorThreads: Int = 5
 )

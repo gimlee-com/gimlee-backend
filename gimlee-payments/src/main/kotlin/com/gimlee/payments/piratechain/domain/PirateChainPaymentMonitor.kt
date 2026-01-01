@@ -7,18 +7,24 @@ import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.payments.persistence.PaymentRepository
 import com.gimlee.payments.piratechain.client.PirateChainRpcClient
 import com.gimlee.payments.piratechain.client.model.ReceivedTransaction
+import com.gimlee.payments.piratechain.config.PirateChainClientConfig.Companion.PIRATE_CHAIN_MONITOR_EXECUTOR
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.Instant
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
 
 @Component
 class PirateChainPaymentMonitor(
     private val paymentRepository: PaymentRepository,
     private val paymentService: PaymentService,
     private val pirateChainRpcClient: PirateChainRpcClient,
-    private val paymentProperties: PaymentProperties
+    private val paymentProperties: PaymentProperties,
+    @Qualifier(PIRATE_CHAIN_MONITOR_EXECUTOR)
+    private val executorService: ExecutorService
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -35,13 +41,17 @@ class PirateChainPaymentMonitor(
         val paymentsByAddress = activePayments
             .groupBy { it.receivingAddress }
 
-        paymentsByAddress.forEach { (address, payments) ->
-            try {
-                processAddress(address, payments)
-            } catch (e: Exception) {
-                log.error("Error monitoring address $address: ${e.message}", e)
-            }
+        val futures = paymentsByAddress.map { (address, payments) ->
+            CompletableFuture.runAsync({
+                try {
+                    processAddress(address, payments)
+                } catch (e: Exception) {
+                    log.error("Error monitoring address $address: ${e.message}", e)
+                }
+            }, executorService)
         }
+
+        CompletableFuture.allOf(*futures.toTypedArray()).join()
         log.info("Payment monitoring cycle completed.")
     }
 
