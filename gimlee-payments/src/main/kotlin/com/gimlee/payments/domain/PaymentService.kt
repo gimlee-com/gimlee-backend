@@ -77,6 +77,8 @@ class PaymentService(
             publishEvent(updatedPayment)
         }
     }
+
+    fun getPaymentByOrderId(orderId: ObjectId): Payment? = paymentRepository.findByOrderId(orderId)
     
     private fun publishEvent(payment: Payment) {
         val paymentEvent = PaymentEvent(

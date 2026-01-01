@@ -56,7 +56,7 @@ class OrderFlowIntegrationTest(
             val buyerId = ObjectId.get()
 
             When("the buyer places an order") {
-                val order = orderService.placeOrder(buyerId, ObjectId(ad.id), BigDecimal("10.00"))
+                val order = orderService.placeOrder(buyerId, ObjectId(ad.id), BigDecimal("10.00"), Currency.ARRR)
 
                 Then("the order status should be AWAITING_PAYMENT") {
                     val savedOrder = orderService.getOrder(order.id)

@@ -1,49 +1,133 @@
 ### Register User
-# @name /auth/register
-# Replace "ema... " with real email
+# Creates a new user account. The account will initially be unverified.
+# Registration requires a unique username and email.
+# @name register
 POST {{host}}/api/auth/register
 Content-Type: application/json
 
 {
-  "username": "test",
-  "password": "Password1",
-  "email": "ema..."
+  "username": "testuser",
+  "password": "Password123!",
+  "email": "test@example.com"
 }
 
+### Expected Response (Success - 201 Created):
+# Content-Type: application/json
+#
+# {
+#   "status": "SUCCESS",
+#   "code": 0,
+#   "message": "Success"
+# }
+
+
 ### Login User
-# @name /auth/login
+# Authenticates a user and returns a session token (usually via a JWT cookie).
+# If the user is unverified, the response will indicate that verification is required.
+# @name login
 POST {{host}}/api/auth/login
 Content-Type: application/json
 
 {
-  "username": "admin",
-  "password": "Password1"
+  "username": "testuser",
+  "password": "Password123!"
 }
 
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "verificationRequired": true,
+#   "username": "testuser"
+# }
+
+
 ### Verify User
-# @name /auth/verifyUser
+# Verifies the user's account using a code sent to their email.
+# Requires a valid (but possibly unverified) session.
+# @name verifyUser
 POST {{host}}/api/auth/verifyUser
 Content-Type: application/json
 
 {
-  "code": "111378"
+  "code": "123456"
 }
 
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "verificationRequired": false,
+#   "username": "testuser"
+# }
+
+
 ### Check Username Availability
-# @name /auth/register/usernameAvailable
+# Checks if a username is already taken.
+# @name checkUsername
 POST {{host}}/api/auth/register/usernameAvailable
 Content-Type: application/json
 
 {
-  "username": "test"
+  "username": "testuser"
 }
 
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "available": false
+# }
+
+
 ### Check Email Availability
-# @name /auth/register/emailAvailable
-# Replace "ema... " with real email
+# Checks if an email is already associated with an account.
+# @name checkEmail
 POST {{host}}/api/auth/register/emailAvailable
 Content-Type: application/json
 
 {
-  "email": "ema..."
+  "email": "test@example.com"
 }
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "available": false
+# }
+
+
+### Init Session
+# Checks the current authentication status based on the JWT cookie.
+# @name initSession
+GET {{host}}/api/auth/session/init
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "success": true,
+#   "accessToken": "..."
+# }
+
+
+### Change Password
+# Allows an authenticated user to change their password.
+# @name changePassword
+POST {{host}}/api/auth/changePassword
+Content-Type: application/json
+
+{
+  "oldPassword": "OldPassword123!",
+  "newPassword": "NewPassword456!"
+}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "status": "SUCCESS",
+#   "code": 0,
+#   "message": "Success"
+# }

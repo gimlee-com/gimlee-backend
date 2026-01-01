@@ -1,6 +1,8 @@
 package com.gimlee.orders.domain
 
 import com.gimlee.ads.domain.AdService
+import com.gimlee.ads.domain.model.Currency
+import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.events.OrderEvent
 import com.gimlee.orders.domain.model.OrderStatus
 import com.gimlee.events.PaymentEvent
@@ -29,10 +31,22 @@ class OrderService(
     fun placeOrder(
         buyerId: ObjectId,
         adId: ObjectId,
-        amount: BigDecimal
+        amount: BigDecimal,
+        currency: Currency
     ): Order {
         val ad = adService.getAd(adId.toHexString())
             ?: throw IllegalArgumentException("Ad not found: $adId")
+
+        val adPrice = ad.price
+        if (adPrice == null) {
+            throw IllegalStateException("Ad $adId has no price set.")
+        }
+
+        if (adPrice.currency != currency || adPrice.amount.compareTo(amount) != 0) {
+            log.warn("Order placement rejected for ad {}: Price mismatch. Requested: {} {}, Actual: {} {}",
+                adId, amount, currency, adPrice.amount, adPrice.currency)
+            throw AdPriceMismatchException(adPrice)
+        }
 
         val availableStock = ad.stock - ad.lockedStock
         if (availableStock <= 0) {
@@ -46,6 +60,8 @@ class OrderService(
             amount = amount
         )
     }
+
+    class AdPriceMismatchException(val currentPrice: CurrencyAmount) : RuntimeException("Price has changed.")
 
     fun initOrder(
         buyerId: ObjectId,

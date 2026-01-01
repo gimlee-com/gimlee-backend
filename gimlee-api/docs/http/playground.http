@@ -1,11 +1,28 @@
 ### Create Playground Users
+# Populates the database with a set of test users.
+# Only available in local, dev, or test profiles.
 # @name createUsers
 POST {{host}}/api/playground/createUsers
 
+### Expected Response (Success - 200 OK):
+# { "status": "SUCCESS", "code": 0, "message": "Success" }
+
+
 ### Create Playground Media
+# Populates the media store with test images.
+# Only available in local, dev, or test profiles.
 # @name createMedia
 POST {{host}}/api/playground/createMedia
 
+### Expected Response (Success - 200 OK):
+# { "status": "SUCCESS", "code": 0, "message": "Success" }
+
+
 ### Create Playground Ads
+# Populates the database with test advertisements.
+# Only available in local, dev, or test profiles.
 # @name createAds
 POST {{host}}/api/playground/createAds
+
+### Expected Response (Success - 200 OK):
+# { "status": "SUCCESS", "code": 0, "message": "Success" }

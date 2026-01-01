@@ -56,6 +56,12 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **Externalize Everything:** Timeouts, prefixes, and monitoring delays must be configurable via `application.yaml`.
 *   **Documentation:** Maintain `application-local-EXAMPLE.yaml` with all available properties.
 
+### 6. API Documentation (`docs/development/api-documentation-guidelines.md`)
+For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ HTTP Client format) to document and test the API.
+*   **Supplement Controllers:** Every Controller must be supplemented with `.http` files that explore its full functionality with example requests.
+*   **Detailed Commentary:** These files must contain commentary explaining what is supposed to happen when calling the endpoint and describing expected responses.
+*   **Stay in Sync:** Any addition or modification to Controllers requires corresponding updates to their respective `.http` files to ensure examples and commentary remain accurate.
+
 ## Setup & Configuration
 *   **Local Config:** Copy `gimlee-api/src/main/resources/application-local-EXAMPLE.yaml` to `application-local.yaml` and fill in details (PirateChain RPC, SMTP, etc.).
 *   **Run Command:** `./gradlew :gimlee-api:bootRun --args='--spring.profiles.active=local'`

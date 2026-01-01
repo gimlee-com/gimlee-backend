@@ -15,6 +15,8 @@ import org.springframework.context.ApplicationEventPublisher
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.Ad
 import com.gimlee.ads.domain.model.AdStatus
+import com.gimlee.ads.domain.model.Currency
+import com.gimlee.ads.domain.model.CurrencyAmount
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -51,7 +53,7 @@ class OrderServiceTest : StringSpec({
             userId = sellerId.toHexString(),
             title = "Test Ad",
             description = "Desc",
-            price = null,
+            price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
             status = AdStatus.ACTIVE,
             createdAt = Instant.now(),
             updatedAt = Instant.now(),
@@ -63,9 +65,35 @@ class OrderServiceTest : StringSpec({
 
         every { adService.getAd(adId.toHexString()) } returns ad
         
-        service.placeOrder(buyerId, adId, BigDecimal.TEN)
+        service.placeOrder(buyerId, adId, BigDecimal.TEN, Currency.ARRR)
 
         verify { orderRepository.save(match { it.status == OrderStatus.CREATED }) }
+    }
+
+    "should throw AdPriceMismatchException if price mismatch" {
+        val buyerId = ObjectId.get()
+        val adId = ObjectId.get()
+        val sellerId = ObjectId.get()
+        val ad = Ad(
+            id = adId.toHexString(),
+            userId = sellerId.toHexString(),
+            title = "Test Ad",
+            description = "Desc",
+            price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            status = AdStatus.ACTIVE,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            location = null,
+            mainPhotoPath = null,
+            stock = 5,
+            lockedStock = 0
+        )
+
+        every { adService.getAd(adId.toHexString()) } returns ad
+        
+        io.kotest.assertions.throwables.shouldThrow<OrderService.AdPriceMismatchException> {
+            service.placeOrder(buyerId, adId, BigDecimal.ONE, Currency.ARRR)
+        }
     }
 
     "should update order status on payment complete event" {

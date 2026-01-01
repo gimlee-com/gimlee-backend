@@ -3,11 +3,35 @@
 # @name GetAdsBasic
 GET {{host}}/api/ads/
 
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "content": [
+#     {
+#       "id": "60f8f9b3a9d9e8f8a8b8c8d8",
+#       "title": "Ad Title",
+#       "status": "ACTIVE",
+#       ...
+#     }
+#   ],
+#   "totalPages": 5,
+#   "totalElements": 50,
+#   "last": false,
+#   ...
+# }
+
+
 ### Fetch Ads - With Text Search and Page
 # t: text search query
 # p: page number (0-indexed)
 # @name GetAdsTextSearch
 GET {{host}}/api/ads/?t=Searched%20Keyword&p=1
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+# (Paged response containing ads matching the keyword)
+
 
 ### Fetch Ads - With City, Price Range, and Sorting
 # cty: city ID
@@ -18,6 +42,11 @@ GET {{host}}/api/ads/?t=Searched%20Keyword&p=1
 # @name GetAdsFilteredAndSorted
 GET {{host}}/api/ads/?cty=city-id-123&minp=100&maxp=500&by=CREATED_DATE&dir=ASC
 
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+# (Paged response containing ads within the price range in the specified city)
+
+
 ### Fetch Ads - With Geographic Circle Filter
 # x: longitude
 # y: latitude
@@ -25,10 +54,19 @@ GET {{host}}/api/ads/?cty=city-id-123&minp=100&maxp=500&by=CREATED_DATE&dir=ASC
 # @name GetAdsGeoFilter
 GET {{host}}/api/ads/?x=-73.985130&y=40.758896&r=10
 
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+# (Paged response containing ads within 10km of the specified coordinates)
+
+
 ### Fetch Ads - Combined Filters
 # Example combining text search, price range, city, and specific page, sorted ascending by price.
 # @name GetAdsCombinedFilters
 GET {{host}}/api/ads/?t=Vintage%20Bike&minp=50&maxp=250&cty=another-city-id&by=PRICE&dir=ASC&p=0
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+
 
 ### Fetch Featured Ads
 # Fetches featured ads. Currently, these are the most recently added ads.
@@ -36,13 +74,22 @@ GET {{host}}/api/ads/?t=Vintage%20Bike&minp=50&maxp=250&cty=another-city-id&by=P
 # @name GetFeaturedAds
 GET {{host}}/api/ads/featured
 
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+# (List of featured ads)
+
+
 ### Fetch My Ads
 # Fetches ads belonging to the authenticated user.
-# Requires USER role authentication. Replace <YOUR_AUTH_TOKEN_HERE> with a valid token.
+# Requires USER role authentication.
 # Returns all ads for the user (unpaged), sorted by created date descending.
 # @name GetMyAds
 GET {{host}}/api/ads/my
-Authorization: Bearer <YOUR_AUTH_TOKEN_HERE>
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+# (List of ads belonging to the authenticated user)
+
 
 ### Fetch Single Ad Details
 # Fetches details for a specific ad by its ID.
@@ -50,8 +97,22 @@ Authorization: Bearer <YOUR_AUTH_TOKEN_HERE>
 # @name GetAdById
 GET {{host}}/api/ads/some-ad-id-12345
 
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "id": "some-ad-id-12345",
+#   "title": "Ad Title",
+#   "status": "ACTIVE",
+#   ...
+# }
+
+
 ### Fetch Single Ad Details - Non-Existent Ad
 # Example for an ad ID that is not expected to exist, to test 404 response.
 # Replace {adId} with an ID that is unlikely to exist.
 # @name GetAdByIdNotFound
 GET {{host}}/api/ads/non-existent-ad-id-999
+
+### Expected Response (Not Found - 404 Not Found):
+# HTTP/1.1 404 Not Found

@@ -1,6 +1,8 @@
-### Add a Pirate Chain View Key (Successful)
-# Requires authentication (e.g., a valid jwt cookie)
-# Replace "zv..." with a real Pirate Chain viewing key
+### Add a Pirate Chain View Key
+# Associates a Pirate Chain viewing key with the authenticated user's account.
+# This allows the system to monitor incoming transactions for this user.
+# The system will attempt to import the key into the Pirate Chain node.
+# @name addViewKey
 POST {{host}}/api/payments/piratechain/addresses/view-key
 Content-Type: application/json
 
@@ -8,13 +10,13 @@ Content-Type: application/json
   "viewKey": "zxview..."
 }
 
-### Expected Response (Success):
-# HTTP/1.1 200 OK
+### Expected Response (Success - 200 OK):
 # (No response body)
 
 
 ### Add a Pirate Chain View Key (Validation Error - Empty Key)
-# Requires authentication
+# Example showing a 400 Bad Request when validation fails.
+# @name addViewKeyValidationError
 POST {{host}}/api/payments/piratechain/addresses/view-key
 Content-Type: application/json
 
@@ -22,31 +24,22 @@ Content-Type: application/json
   "viewKey": ""
 }
 
-### Expected Response (Validation Error):
-# HTTP/1.1 400 Bad Request
+### Expected Response (Validation Error - 400 Bad Request):
 # Content-Type: application/json
 #
 # {
 #   "timestamp": "...",
 #   "status": 400,
 #   "error": "Bad Request",
-#   "errors": [
-#     {
-#       "codes": [ ... ],
-#       "arguments": [ ... ],
-#       "defaultMessage": "Viewing key cannot be empty.",
-#       "objectName": "addViewKeyRequest",
-#       "field": "viewKey",
-#       "rejectedValue": "",
-#       "bindingFailure": false,
-#       "code": "NotEmpty"
-#     }
-#   ],
+#   "errors": [ ... ],
 #   "path": "/api/payments/piratechain/addresses/view-key"
 # }
 
 
-### Get User's Pirate Chain Transactions (Successful)
+### Get User's Pirate Chain Transactions
+# Retrieves all incoming Pirate Chain transactions for the authenticated user.
+# This currently requires the user to have the ADMIN role.
+# @name getUserTransactions
 GET {{host}}/api/payments/piratechain/transactions
 Accept: application/json
 
@@ -56,17 +49,9 @@ Accept: application/json
 # [
 #   {
 #     "txid": "a1b2c3d4...",
-#     "memo": "test", // Example memo
+#     "memo": "GIMLEE_ORDER_...",
 #     "amount": 10.5,
 #     "confirmations": 15,
 #     "zAddress": "zs1abcdefg..."
-#   },
-#   {
-#     "txid": "e5f6g7h8...",
-#     "memo": null, // Memo might be null or empty
-#     "amount": 2.75,
-#     "confirmations": 5,
-#     "zAddress": "zs1hijklmnop..."
 #   }
-#   // ... more transactions
 # ]

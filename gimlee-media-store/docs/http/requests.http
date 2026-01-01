@@ -1,5 +1,7 @@
 ### Upload Media (JPEG Example)
-# @name /media/upload [image/jpeg]
+# Uploads a JPEG image to the media store.
+# The system generates medium and small thumbnails automatically.
+# @name uploadMediaJpeg
 POST {{host}}/api/media/upload
 Content-Type: multipart/form-data; boundary=boundary
 
@@ -10,17 +12,42 @@ Content-Disposition: form-data; name="files[]"; filename="image.jpg"
 < /path/to/your/image.jpg
 --boundary--
 
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "full": "/api/media?p=/path/to/image.jpg",
+#   "medium": "/api/media?p=/path/to/image_m.jpg",
+#   "small": "/api/media?p=/path/to/image_s.jpg"
+# }
+
+
 ### Upload Media (PNG Example)
-# @name /media/upload [image/png]
+# Uploads a PNG image to the media store.
+# @name uploadMediaPng
 POST {{host}}/api/media/upload
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
-Content-Disposition: form-data; name="files[]"; filename="photo2pixel_download.png"
+Content-Disposition: form-data; name="files[]"; filename="photo.png"
 
 # Replace "< /path/to/your/image.png" with the actual path to your file
-< /home/q/landscape-lake-surrounded-by-mountains.jpg
+< /path/to/your/image.png
 --boundary--
 
-### Get media
-GET {{host}}/api/media?p=/123.png
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+
+
+### Get Media File
+# Retrieves a media file (original or thumbnail) from the store.
+# @name getMedia
+GET {{host}}/api/media?p=/path/to/image.jpg
+
+### Expected Response (Success - 200 OK):
+# Content-Type: image/jpeg (or appropriate mimetype)
+# (Binary image data)
+
+### Expected Response (Error - 404 Not Found):
+# If the file does not exist.
+# HTTP/1.1 404 Not Found

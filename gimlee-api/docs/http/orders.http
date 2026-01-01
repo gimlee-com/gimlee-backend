@@ -1,0 +1,83 @@
+### Place a New Order
+# This endpoint allows an authenticated user to place an order for a specific advertisement.
+# It acts as a facade, coordinating between OrderService and PaymentService.
+# 
+# Pre-requisites:
+# 1. User must be authenticated (logged in).
+# 2. The Ad must exist and have enough stock.
+# 3. If it's a Pirate Chain (ARRR) purchase, the seller must have a wallet linked.
+#
+# @name placeOrder
+POST {{host}}/api/orders
+Content-Type: application/json
+
+{
+  "adId": "60f8f9b3a9d9e8f8a8b8c8d8",
+  "amount": 1.5,
+  "currency": "ARRR"
+}
+
+### Expected Response (Success - 201 Created):
+# Returns the created order details and payment information.
+# Content-Type: application/json
+#
+# {
+#   "orderId": "60f8f9b3a9d9e8f8a8b8c8d8",
+#   "status": "AWAITING_PAYMENT",
+#   "payment": {
+#     "address": "zs1...",
+#     "amount": 1.5,
+#     "memo": "GIMLEE_ORDER_60f8f9b3a9d9e8f8a8b8c8d8",
+#     "qrCodeUri": "pirate:zs1...?amount=1.5"
+#   }
+# }
+
+### Expected Response (Error - 400 Bad Request):
+# Occurs if the Ad is not found, stock is insufficient, or seller lacks a wallet.
+# Content-Type: application/json
+#
+# {
+#   "error": "Ad not found: 60f8f9b3a9d9e8f8a8b8c8d8"
+# }
+#
+
+### Expected Response (Error - 409 Conflict):
+# Occurs if the provided price or currency does not match the actual Ad price.
+# This informs the front-end that the price has changed.
+# Content-Type: application/json
+#
+# {
+#   "error": "PRICE_MISMATCH",
+#   "message": "The price of this item has changed.",
+#   "currentPrice": {
+#     "amount": 2.0,
+#     "currency": "ARRR"
+#   }
+# }
+
+
+### Get Order and Payment Status
+# Poll this endpoint to check the current status of an order and its associated payment.
+# The front-end should typically call this every 10 seconds after an order is placed.
+#
+# @name getOrderStatus
+GET {{host}}/api/orders/60f8f9b3a9d9e8f8a8b8c8d8/status
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "orderId": "60f8f9b3a9d9e8f8a8b8c8d8",
+#   "status": "AWAITING_PAYMENT",
+#   "paymentStatus": "AWAITING_CONFIRMATION"
+# }
+
+### Expected Response (Error - 404 Not Found):
+# Occurs if the orderId does not exist.
+#
+# HTTP/1.1 404 Not Found
+
+### Expected Response (Error - 403 Forbidden):
+# Occurs if the authenticated user is neither the buyer nor the seller of the order.
+#
+# HTTP/1.1 403 Forbidden

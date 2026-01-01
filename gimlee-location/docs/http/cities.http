@@ -1,0 +1,34 @@
+### Get City Suggestions
+# Searches for cities matching the provided phrase.
+# Returns a list of city suggestions including their IDs and names.
+# @name getCitySuggestions
+GET {{host}}/api/cities/suggestions?p=New%20York
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# [
+#   {
+#     "id": "city-123",
+#     "name": "New York, NY"
+#   }
+# ]
+
+
+### Get City by ID
+# Retrieves detailed information about a specific city by its ID.
+# @name getCityById
+GET {{host}}/api/cities/city-123
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "id": "city-123",
+#   "name": "New York",
+#   "location": [ -74.006, 40.7128 ]
+# }
+
+### Expected Response (Error - 404 Not Found):
+# If the city ID does not exist.
+# HTTP/1.1 404 Not Found

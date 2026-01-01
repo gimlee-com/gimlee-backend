@@ -52,6 +52,11 @@ class PaymentRepository(
         return collection.find(filter).firstOrNull()?.toPayment()
     }
 
+    fun findByOrderId(orderId: ObjectId): Payment? {
+        val filter = Filters.eq(FIELD_ORDER_ID, orderId)
+        return collection.find(filter).firstOrNull()?.toPayment()
+    }
+
     fun findAllByStatus(status: PaymentStatus): List<Payment> {
         val filter = Filters.eq(FIELD_STATUS, status.id)
         return collection.find(filter).map { it.toPayment() }.toList()
