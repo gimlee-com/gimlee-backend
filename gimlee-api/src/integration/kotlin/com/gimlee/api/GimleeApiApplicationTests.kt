@@ -1,5 +1,6 @@
 package com.gimlee.api
 
+import com.gimlee.common.BaseIntegrationTest
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.env.Environment
 

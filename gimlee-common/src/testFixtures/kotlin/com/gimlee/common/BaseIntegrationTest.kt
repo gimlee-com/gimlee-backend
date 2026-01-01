@@ -1,8 +1,10 @@
-package com.gimlee.api
+package com.gimlee.common
 
+import com.gimlee.common.config.MongoClientConfig
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
@@ -10,6 +12,7 @@ import org.testcontainers.containers.MongoDBContainer
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("integration")
+@Import(MongoClientConfig::class)
 abstract class BaseIntegrationTest(body: BehaviorSpec.() -> Unit) : BehaviorSpec({
     extensions(SpringExtension)
     body()

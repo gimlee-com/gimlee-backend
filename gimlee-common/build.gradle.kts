@@ -5,6 +5,18 @@ dependencies {
 
     // Dependencies
     implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.data.mongodb)
+    implementation(libs.jakarta.validation)
+    
+    testFixturesApi(libs.spring.boot.starter.test)
+    testFixturesApi(platform(libs.kotest.bom))
+    testFixturesApi(libs.kotest.runner.junit5)
+    testFixturesApi(libs.kotest.assertions.core)
+    testFixturesApi(libs.kotest.property)
+    testFixturesApi(libs.kotest.extensions.spring)
+    
+    testFixturesApi(platform(libs.testcontainers.bom))
+    testFixturesApi(libs.testcontainers.mongodb)
 }
 
 sourceSets {

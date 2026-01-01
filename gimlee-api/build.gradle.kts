@@ -15,10 +15,12 @@ dependencies {
     implementation(project(":gimlee-ads"))
     implementation(project(":gimlee-location"))
     implementation(project(":gimlee-orders"))
+    implementation(project(":gimlee-user"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)
     implementation(libs.spring.boot.starter.actuator)
+    implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.web) {
         exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
     }
@@ -51,6 +53,7 @@ dependencies {
     integrationImplementation(libs.spring.boot.starter.test)
     integrationImplementation(platform(libs.testcontainers.bom))
     integrationImplementation(libs.testcontainers.mongodb)
+    integrationImplementation(testFixtures(project(":gimlee-common")))
 }
 
 sourceSets {

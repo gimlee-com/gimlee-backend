@@ -1,5 +1,6 @@
 package com.gimlee.api
 
+import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount

@@ -1,5 +1,6 @@
 package com.gimlee.api
 
+import com.gimlee.common.BaseIntegrationTest
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain

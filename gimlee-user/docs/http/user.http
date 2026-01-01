@@ -1,0 +1,32 @@
+### Add Delivery Address
+POST {{host}}/user/delivery-addresses
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "name": "Home",
+  "fullName": "John Doe",
+  "street": "123 Main St",
+  "city": "New York",
+  "postalCode": "10001",
+  "country": "US",
+  "phoneNumber": "+1234567890",
+  "isDefault": true
+}
+
+### Get Delivery Addresses
+GET {{host}}/user/delivery-addresses
+Authorization: Bearer {{auth_token}}
+
+### Get User Preferences
+GET {{host}}/user/preferences
+Authorization: Bearer {{auth_token}}
+
+### Update User Preferences
+PUT {{host}}/user/preferences
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "language": "en-US"
+}

@@ -20,6 +20,7 @@ COPY gimlee-location gimlee-location
 COPY gimlee-payments gimlee-payments
 COPY gimlee-ads gimlee-ads
 COPY gimlee-orders gimlee-orders
+COPY gimlee-user gimlee-user
 COPY gimlee-api gimlee-api
 
 # Build the application

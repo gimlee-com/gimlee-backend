@@ -1,0 +1,12 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/gimlee
+
+gimlee:
+  auth:
+    rest:
+      unsecured-paths: /auth/login,/auth/register
+      jwt:
+        issuer: gimlee
+        key: testkey

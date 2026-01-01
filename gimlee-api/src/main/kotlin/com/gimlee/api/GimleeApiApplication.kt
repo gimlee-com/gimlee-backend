@@ -11,6 +11,8 @@ import org.springframework.boot.runApplication
 	"com.gimlee.payments",
 	"com.gimlee.location",
 	"com.gimlee.orders",
+	"com.gimlee.user",
+	"com.gimlee.common",
 	"com.gimlee.api",
 ])
 class GimleeApiApplication

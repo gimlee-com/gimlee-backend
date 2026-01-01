@@ -19,6 +19,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   `gimlee-notifications`: Email and notification services.
 *   `gimlee-location`: Location-based services.
 *   `gimlee-orders`: Order management and coordination between ads and payments.
+*   `gimlee-user`: User preferences and user profile settings.
 *   `gimlee-events`: Internal event definitions.
 *   `gimlee-common`: Shared utilities and extensions.
 
@@ -69,6 +70,11 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **Module Synchronization:** This is a multi-module Gradle project where the `Dockerfile` explicitly copies each module's source directory to maintain a clean build context.
 *   **Stay in Sync:** When adding a new module to the project, you **MUST** update the `Dockerfile` by adding a corresponding `COPY` command for that module before the build step.
 *   **CI/CD Awareness:** Always verify that Docker builds succeed locally after project structure changes, as the GitHub Actions pipeline relies on the `Dockerfile` being perfectly in sync with the module list.
+
+### 8. Standards & Internationalization
+*   **Country Codes:** Always use **ISO 3166-1 alpha-2** codes (e.g., `US`, `PL`).
+*   **Language Tags:** Strictly apply the **IETF standard** (ISO 639-1 language code combined with ISO 3166-1 alpha-2 country code, e.g., `en-US`, `pl-PL`).
+*   **Validation:** Use `@IsoCountryCode` and `@IetfLanguageTag` annotations from `gimlee-common` for DTO validation.
 
 ## Setup & Configuration
 *   **Local Config:** Copy `gimlee-api/src/main/resources/application-local-EXAMPLE.yaml` to `application-local.yaml` and fill in details (PirateChain RPC, SMTP, etc.).

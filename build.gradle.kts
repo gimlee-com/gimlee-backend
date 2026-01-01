@@ -25,6 +25,7 @@ subprojects {
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "jvm-test-suite")
+    apply(plugin = "java-test-fixtures")
 
     configure<JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_21
