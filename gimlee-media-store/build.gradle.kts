@@ -18,6 +18,7 @@ dependencies {
     implementation(libs.jakarta.activation.api)
     implementation(libs.commons.io)
     implementation(libs.thumbnailator)
+    implementation(libs.springdoc.openapi.starter.webmvc.api)
 
     // --- Add the common dependencies moved from the root project ---
     implementation(libs.kotlin.stdlib)

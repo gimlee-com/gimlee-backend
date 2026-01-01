@@ -5,33 +5,40 @@ import com.gimlee.api.playground.media.data.MediaPopulator
 import com.gimlee.api.playground.users.data.UsersPopulator
 import com.gimlee.common.domain.model.StatusCode
 import com.gimlee.common.web.dto.StatusResponseDto
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Lazy
 import org.springframework.context.annotation.Profile
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 
 @Profile("local", "dev", "test")
+@Tag(name = "Playground", description = "Endpoints for populating test data (only available in local/dev/test profiles)")
 @RestController
 class PlaygroundController(
     @Lazy private val usersPopulator: UsersPopulator,
     @Lazy private val mediaPopulator: MediaPopulator,
     @Lazy private val adsPopulator: AdsPopulator
 ) {
-    //@Privileged(role = "ADMIN")
+    @Operation(summary = "Create Playground Users", description = "Populates the database with a set of test users.")
+    @ApiResponse(responseCode = "200", description = "Users created successfully")
     @PostMapping("/playground/createUsers")
     fun createUsers(): StatusResponseDto {
         usersPopulator.populateUsers()
         return StatusResponseDto.fromStatusCode(StatusCode.SUCCESS)
     }
 
-    // @Privileged(role = "ADMIN")
+    @Operation(summary = "Create Playground Media", description = "Populates the media store with test images.")
+    @ApiResponse(responseCode = "200", description = "Media created successfully")
     @PostMapping("/playground/createMedia")
     fun createMedia(): StatusResponseDto {
         mediaPopulator.populateMedia()
         return StatusResponseDto.fromStatusCode(StatusCode.SUCCESS)
     }
 
-    // @Privileged(role = "ADMIN")
+    @Operation(summary = "Create Playground Ads", description = "Populates the database with test advertisements.")
+    @ApiResponse(responseCode = "200", description = "Ads created successfully")
     @PostMapping("/playground/createAds")
     fun createAds(): StatusResponseDto {
         adsPopulator.populateAds()

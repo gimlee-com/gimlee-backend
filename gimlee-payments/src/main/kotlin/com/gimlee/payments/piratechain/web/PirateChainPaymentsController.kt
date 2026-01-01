@@ -1,5 +1,8 @@
 package com.gimlee.payments.piratechain.web
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -15,6 +18,7 @@ import com.gimlee.payments.piratechain.domain.PirateChainAddressService
 import com.gimlee.payments.piratechain.domain.PirateChainPaymentService
 import com.gimlee.payments.piratechain.web.dto.AddViewKeyRequest
 
+@Tag(name = "Payments - Pirate Chain", description = "Endpoints for Pirate Chain payment integration")
 @RestController
 class PirateChainPaymentsController(
     private val pirateChainAddressService: PirateChainAddressService,
@@ -23,11 +27,13 @@ class PirateChainPaymentsController(
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    /**
-     * Endpoint for authenticated users to add a Pirate Chain viewing key.
-     * The system will attempt to import the key via RPC and associate
-     * the derived z-address with the user's account.
-     */
+    @Operation(
+        summary = "Add a Pirate Chain View Key",
+        description = "Associates a Pirate Chain viewing key with the authenticated user's account. This allows the system to monitor incoming transactions for this user. The system will attempt to import the key into the Pirate Chain node."
+    )
+    @ApiResponse(responseCode = "200", description = "View key added successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid view key or state error")
+    @ApiResponse(responseCode = "500", description = "Internal server error or RPC failure")
     @PostMapping("/payments/piratechain/addresses/view-key")
     @Privileged(role = "USER")
     fun addViewKey(@Valid @RequestBody request: AddViewKeyRequest): ResponseEntity<Any> {
@@ -55,6 +61,12 @@ class PirateChainPaymentsController(
     }
 
 
+    @Operation(
+        summary = "Get User's Pirate Chain Transactions",
+        description = "Retrieves all incoming Pirate Chain transactions for the authenticated user. This currently requires the user to have the ADMIN role."
+    )
+    @ApiResponse(responseCode = "200", description = "List of Pirate Chain transactions")
+    @ApiResponse(responseCode = "500", description = "Internal server error or RPC failure")
     @GetMapping("/payments/piratechain/transactions")
     @Privileged(role = "ADMIN")
     fun getUserTransactions(): ResponseEntity<Any> { // Use ResponseEntity<Any> for flexible success/error responses

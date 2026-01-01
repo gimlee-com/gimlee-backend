@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.commons.io)
     implementation(libs.mustache.java)
     implementation(libs.jakarta.validation)
+    implementation(libs.springdoc.openapi.starter.webmvc.api)
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(platform(libs.kotest.bom))

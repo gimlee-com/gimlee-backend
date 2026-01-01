@@ -8,6 +8,12 @@ import com.gimlee.payments.domain.PaymentService
 import com.gimlee.api.web.dto.OrderResponseDto
 import com.gimlee.api.web.dto.PaymentDetailsDto
 import com.gimlee.api.web.dto.OrderStatusResponseDto
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
@@ -15,6 +21,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
+@Tag(name = "Orders", description = "Endpoints for placing and tracking orders")
 @RestController
 @RequestMapping("/orders")
 class OrderFacadeController(
@@ -23,6 +30,17 @@ class OrderFacadeController(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
+    @Operation(
+        summary = "Place a New Order",
+        description = "This endpoint allows an authenticated user to place an order for a specific advertisement. It acts as a facade, coordinating between OrderService and PaymentService."
+    )
+    @ApiResponse(
+        responseCode = "201",
+        description = "Order placed successfully",
+        content = [Content(schema = Schema(implementation = OrderResponseDto::class))]
+    )
+    @ApiResponse(responseCode = "400", description = "Ad not found, stock is insufficient, or seller lacks a wallet")
+    @ApiResponse(responseCode = "409", description = "Price or currency does not match the actual Ad price")
     @PostMapping
     @Privileged(role = "USER")
     fun placeOrder(@Valid @RequestBody request: PlaceOrderRequestDto): ResponseEntity<Any> {
@@ -76,9 +94,23 @@ class OrderFacadeController(
         }
     }
 
+    @Operation(
+        summary = "Get Order and Payment Status",
+        description = "Poll this endpoint to check the current status of an order and its associated payment."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Current order status",
+        content = [Content(schema = Schema(implementation = OrderStatusResponseDto::class))]
+    )
+    @ApiResponse(responseCode = "404", description = "Order not found")
+    @ApiResponse(responseCode = "403", description = "User is neither the buyer nor the seller")
     @GetMapping("/{orderId}/status")
     @Privileged(role = "USER")
-    fun getOrderStatus(@PathVariable orderId: String): ResponseEntity<Any> {
+    fun getOrderStatus(
+        @Parameter(description = "Unique ID of the order")
+        @PathVariable orderId: String
+    ): ResponseEntity<Any> {
         val principal = HttpServletRequestAuthUtil.getPrincipal()
         val order = orderService.getOrder(ObjectId(orderId))
             ?: return ResponseEntity.notFound().build()

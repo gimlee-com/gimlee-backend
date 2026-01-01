@@ -9,20 +9,33 @@ import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import jakarta.validation.Valid
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
+@Tag(name = "Ad Management", description = "Endpoints for creating, updating, and activating ads")
 @RestController
 @RequestMapping("/ads")
 class ManageAdController(private val adService: AdService) {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    /**
-     * Endpoint for authenticated users to create a new (INACTIVE) ad.
-     */
+    @Operation(
+        summary = "Create a New Ad",
+        description = "Creates an ad in an INACTIVE state. Requires USER role authentication."
+    )
+    @ApiResponse(
+        responseCode = "201",
+        description = "Ad created successfully",
+        content = [Content(schema = Schema(implementation = AdDto::class))]
+    )
     @PostMapping
     @Privileged(role = "USER")
     fun createAd(@Valid @RequestBody request: CreateAdRequestDto): ResponseEntity<Any> {
@@ -38,12 +51,22 @@ class ManageAdController(private val adService: AdService) {
         }
     }
 
-    /**
-     * Endpoint for authenticated users to update an INACTIVE ad.
-     */
+    @Operation(
+        summary = "Update an Existing Ad",
+        description = "Allows updating an INACTIVE ad. Requires USER role authentication."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Ad updated successfully",
+        content = [Content(schema = Schema(implementation = AdDto::class))]
+    )
+    @ApiResponse(responseCode = "404", description = "Ad not found for this user")
+    @ApiResponse(responseCode = "400", description = "Invalid ad status or ID format")
+    @ApiResponse(responseCode = "403", description = "Forbidden (e.g., using ARRR without PIRATE role)")
     @PutMapping("/{adId}")
     @Privileged(role = "USER")
     fun updateAd(
+        @Parameter(description = "Unique ID of the ad to update")
         @PathVariable adId: String,
         @Valid @RequestBody request: UpdateAdRequestDto
     ): ResponseEntity<Any> {
@@ -79,12 +102,23 @@ class ManageAdController(private val adService: AdService) {
         }
     }
 
-    /**
-     * Endpoint for authenticated users to activate an INACTIVE ad.
-     */
+    @Operation(
+        summary = "Activate an Ad",
+        description = "Changes the status of an INACTIVE ad to ACTIVE. Requires USER role authentication."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Ad activated successfully",
+        content = [Content(schema = Schema(implementation = AdDto::class))]
+    )
+    @ApiResponse(responseCode = "404", description = "Ad not found for this user")
+    @ApiResponse(responseCode = "400", description = "Ad is already ACTIVE or invalid ID format")
     @PostMapping("/{adId}/activate")
     @Privileged(role = "USER")
-    fun activateAd(@PathVariable adId: String): ResponseEntity<Any> {
+    fun activateAd(
+        @Parameter(description = "Unique ID of the ad to activate")
+        @PathVariable adId: String
+    ): ResponseEntity<Any> {
         val principal = HttpServletRequestAuthUtil.Companion.getPrincipal()
         log.info("User {} attempting to activate ad {}", principal.userId, adId)
         return try {

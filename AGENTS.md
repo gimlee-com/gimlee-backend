@@ -18,6 +18,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   `gimlee-media-store`: Media storage handling (Local Filesystem or S3).
 *   `gimlee-notifications`: Email and notification services.
 *   `gimlee-location`: Location-based services.
+*   `gimlee-orders`: Order management and coordination between ads and payments.
 *   `gimlee-events`: Internal event definitions.
 *   `gimlee-common`: Shared utilities and extensions.
 
@@ -57,10 +58,12 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **Documentation:** Maintain `application-local-EXAMPLE.yaml` with all available properties.
 
 ### 6. API Documentation (`docs/development/api-documentation-guidelines.md`)
-For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ HTTP Client format) to document and test the API.
+For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ HTTP Client format) and OpenAPI annotations to document and test the API.
 *   **Supplement Controllers:** Every Controller must be supplemented with `.http` files that explore its full functionality with example requests.
-*   **Detailed Commentary:** These files must contain commentary explaining what is supposed to happen when calling the endpoint and describing expected responses.
-*   **Stay in Sync:** Any addition or modification to Controllers requires corresponding updates to their respective `.http` files to ensure examples and commentary remain accurate.
+*   **OpenAPI Annotations:** All controller methods must be documented with OpenAPI annotations (`@Operation`, `@ApiResponse`, `@Parameter`, etc.).
+*   **Source of Truth:** The `.http` files serve as the source of truth for OpenAPI documentation. Descriptions and expected responses in annotations must match those in the `.http` files.
+*   **Security & Roles:** Do not manually document security or roles in OpenAPI annotations. The `OpenApiConfig` automatically appends this information to the documentation based on the `@Privileged` annotation and path configurations.
+*   **Stay in Sync:** Any addition or modification to Controllers requires corresponding updates to both their respective `.http` files and OpenAPI annotations to ensure consistency across all documentation formats.
 
 ### 7. Docker & Infrastructure
 *   **Module Synchronization:** This is a multi-module Gradle project where the `Dockerfile` explicitly copies each module's source directory to maintain a clean build context.

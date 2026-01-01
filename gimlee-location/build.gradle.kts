@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.caffeine)
     implementation(libs.jakarta.validation)
     implementation(libs.jackson.dataformat.csv)
+    implementation(libs.springdoc.openapi.starter.webmvc.api)
 }
 
 sourceSets {
