@@ -3,7 +3,9 @@ package com.gimlee.ads.event
 import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.events.OrderEvent
 import com.gimlee.ads.domain.model.OrderStatus
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.bson.types.ObjectId
@@ -46,7 +48,7 @@ class OrderEventListenerTest : StringSpec({
 
         listener.onOrderEvent(event)
 
-        verify { adRepository.completeSale(adId) }
+        verify { adRepository.decrementStockAndLockedStock(adId) }
     }
 
     "should decrement locked stock on FAILED_PAYMENT_TIMEOUT event" {
@@ -64,5 +66,24 @@ class OrderEventListenerTest : StringSpec({
         listener.onOrderEvent(event)
 
         verify { adRepository.decrementLockedStock(adId) }
+    }
+
+    "should propagate exception when incrementLockedStock fails" {
+        val adId = ObjectId.get()
+        val event = OrderEvent(
+            orderId = ObjectId.get(),
+            adId = adId,
+            buyerId = ObjectId.get(),
+            sellerId = ObjectId.get(),
+            status = OrderStatus.CREATED.id,
+            amount = BigDecimal.TEN,
+            timestamp = Instant.now()
+        )
+
+        every { adRepository.incrementLockedStock(adId) } throws IllegalStateException("Cannot lock more stock")
+
+        shouldThrow<IllegalStateException> {
+            listener.onOrderEvent(event)
+        }
     }
 })

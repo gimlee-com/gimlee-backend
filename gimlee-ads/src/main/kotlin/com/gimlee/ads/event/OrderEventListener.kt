@@ -23,7 +23,7 @@ class OrderEventListener(private val adRepository: AdRepository) {
             }
             OrderStatus.COMPLETE.id -> {
                 log.info("Completing sale for ad ${event.adId}")
-                adRepository.completeSale(event.adId)
+                adRepository.decrementStockAndLockedStock(event.adId)
             }
             OrderStatus.FAILED_PAYMENT_TIMEOUT.id,
             OrderStatus.FAILED_PAYMENT_UNDERPAID.id,

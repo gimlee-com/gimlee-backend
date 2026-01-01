@@ -106,4 +106,37 @@ class AdServiceTest : StringSpec({
 
         exception.message shouldBe "Ad cannot be activated until title, description, price, location and stock are all set. Stock must be greater than 0."
     }
+
+    "updateAd should fail if repository throws IllegalStateException (stock constraint)" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Title",
+            description = null,
+            price = null,
+            currency = null,
+            status = AdStatus.INACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = null,
+            location = null,
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 10,
+            lockedStock = 5
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+        every { adRepository.save(any()) } throws IllegalStateException("Stock (4) cannot be lower than locked stock (5).")
+
+        val updateRequest = UpdateAdRequest(stock = 4)
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+            adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+        }
+
+        exception.message shouldBe "Stock (4) cannot be lower than locked stock (5)."
+    }
 })

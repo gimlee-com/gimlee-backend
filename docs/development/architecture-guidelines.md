@@ -24,6 +24,6 @@
 *   **Locked Stock Pattern:** For systems managing finite resources (like marketplace inventory), use a `lockedStock` attribute. 
     *   When an order is initiated, increment `lockedStock`.
     *   When an order is completed, decrement `lockedStock` and decrement total `stock`.
-    *   When an order is cancelled or times out, simply decrement `lockedStock`.
+    *   When an order is canceled or times out, simply decrement `lockedStock`.
     *   `availableStock` is always calculated as `stock - lockedStock`.
 *   **Atomic Operations:** Always use atomic MongoDB operations (`$inc`, `$set`, `$push`) in repositories to ensure thread-safe updates without requiring heavy application-level locking or transactions where possible.

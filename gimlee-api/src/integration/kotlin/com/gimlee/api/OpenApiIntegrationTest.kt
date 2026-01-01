@@ -12,11 +12,9 @@ import org.springframework.test.context.ActiveProfiles
 
 @SpringBootTest(properties = ["gimlee.auth.jwt.enabled=false"])
 @AutoConfigureMockMvc
-@ActiveProfiles("integration")
 class OpenApiIntegrationTest(
     private val mockMvc: MockMvc
-) : BehaviorSpec({
-    extension(SpringExtension)
+) : BaseIntegrationTest({
 
     Given("the application is running") {
         When("GET /v3/api-docs") {

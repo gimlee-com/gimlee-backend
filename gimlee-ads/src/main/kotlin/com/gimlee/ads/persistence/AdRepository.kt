@@ -7,6 +7,8 @@ import com.gimlee.ads.domain.model.Direction
 import com.gimlee.ads.domain.model.AdStatus
 import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.persistence.model.AdDocument
+import com.gimlee.common.persistence.mongo.MongoExceptionUtils
+import com.mongodb.MongoException
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Filters
@@ -45,13 +47,42 @@ class AdRepository(mongoDatabase: MongoDatabase) {
 
     /**
      * Saves a new AdDocument or replaces an existing one with the same ID.
+     * Atomically ensures that the new stock value is not lower than the current locked stock.
      */
     fun save(ad: AdDocument): AdDocument {
         val doc = mapToDocument(ad)
         val filter = Filters.eq(AdDocument.FIELD_ID, ad.id)
-        // Use replaceOne with upsert=true to handle both insert and update based on _id
-        collection.replaceOne(filter, doc, ReplaceOptions().upsert(true))
+
+        // Atomic check: ensure new stock is >= current locked stock
+        val atomicFilter = Filters.and(
+            filter,
+            Filters.lte(AdDocument.FIELD_LOCKED_STOCK, ad.stock)
+        )
+
+        try {
+            val result = collection.replaceOne(atomicFilter, doc, ReplaceOptions().upsert(true))
+            if (result.matchedCount == 0L && result.upsertedId == null) {
+                // If it didn't match and didn't upsert, it means the document exists but lstk > stock.
+                // However, with upsert=true, MongoDB might try to insert and fail with DuplicateKey.
+                // We handle that in the catch block.
+                handleConstraintViolation(ad)
+            }
+        } catch (e: MongoException) {
+            // Check if it's a duplicate key error (code 11000)
+            if (MongoExceptionUtils.isDuplicateKeyException(e)) {
+                handleConstraintViolation(ad)
+            }
+            throw e
+        }
+
         return ad
+    }
+
+    private fun handleConstraintViolation(ad: AdDocument) {
+        val existing = findById(ad.id)
+        if (existing != null && existing.lockedStock > ad.stock) {
+            throw IllegalStateException("Stock (${ad.stock}) cannot be lower than locked stock (${existing.lockedStock}).")
+        }
     }
 
     /**
@@ -129,9 +160,19 @@ class AdRepository(mongoDatabase: MongoDatabase) {
      * Increments the locked stock count by 1.
      */
     fun incrementLockedStock(adId: ObjectId) {
-        val filter = Filters.eq(AdDocument.FIELD_ID, adId)
+        val filter = Filters.and(
+            Filters.eq(AdDocument.FIELD_ID, adId),
+            Filters.expr(Document("\$lt", listOf("$${AdDocument.FIELD_LOCKED_STOCK}", "$${AdDocument.FIELD_STOCK}")))
+        )
         val update = Updates.inc(AdDocument.FIELD_LOCKED_STOCK, 1)
-        collection.updateOne(filter, update)
+        val result = collection.updateOne(filter, update)
+
+        if (result.matchedCount == 0L) {
+            val existing = findById(adId)
+            if (existing != null && existing.lockedStock >= existing.stock) {
+                throw IllegalStateException("Cannot lock more stock. All stock is already locked (Stock: ${existing.stock}, Locked: ${existing.lockedStock}).")
+            }
+        }
     }
 
     /**
@@ -146,7 +187,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
     /**
      * Decrements both stock and locked stock by 1 (used when order is complete).
      */
-    fun completeSale(adId: ObjectId) {
+    fun decrementStockAndLockedStock(adId: ObjectId) {
         val filter = Filters.eq(AdDocument.FIELD_ID, adId)
         val update = Updates.combine(
             Updates.inc(AdDocument.FIELD_STOCK, -1),

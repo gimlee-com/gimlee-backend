@@ -47,7 +47,11 @@ class AdService(private val adRepository: AdRepository) {
             stock = stock
         )
         log.info("Creating new ad with title '{}' for user {}", title, userId)
-        val savedDocument = adRepository.save(adDocument)
+        val savedDocument = try {
+            adRepository.save(adDocument)
+        } catch (e: IllegalStateException) {
+            throw AdOperationException(e.message ?: "Failed to create ad.")
+        }
         return savedDocument.toDomain()
     }
 
@@ -116,7 +120,11 @@ class AdService(private val adRepository: AdRepository) {
         )
 
         log.info("Updating ad {} for user {}", adId, userId)
-        val savedDocument = adRepository.save(updatedAdDoc)
+        val savedDocument = try {
+            adRepository.save(updatedAdDoc)
+        } catch (e: IllegalStateException) {
+            throw AdOperationException(e.message ?: "Failed to update ad.")
+        }
         return savedDocument.toDomain()
     }
 
@@ -188,7 +196,11 @@ class AdService(private val adRepository: AdRepository) {
         )
 
         log.info("Activating ad {} for user {}", adId, userId)
-        val savedDocument = adRepository.save(activatedAdDoc)
+        val savedDocument = try {
+            adRepository.save(activatedAdDoc)
+        } catch (e: IllegalStateException) {
+            throw AdOperationException(e.message ?: "Failed to activate ad.")
+        }
         return savedDocument.toDomain()
     }
 

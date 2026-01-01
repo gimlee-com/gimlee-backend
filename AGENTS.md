@@ -34,6 +34,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 ### 2. Testing (`docs/development/testing-guidelines.md`)
 *   **Framework:** Use **Kotest** for all tests.
 *   **Priority:** Integration tests are the primary focus.
+*   **Database:** Use **Testcontainers** with MongoDB for integration tests via `BaseIntegrationTest`.
 *   **Unit Tests:** Use sparingly, only for quirky internal logic. Keep them simple with minimal context/mocking.
 
 ### 3. Performance (`docs/development/performance-guidelines.md`)
@@ -45,7 +46,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
     *   Each cache must be configured via properties to ensure resource visibility.
 
 ### 4. Architecture (`docs/development/architecture-guidelines.md`)
-*   **SRP:** Maintain strict separation between business logic (`gimlee-orders`) and technical implementation (`gimlee-payments`).
+*   **SRP:** Maintain strict separation between the modules and avoid circular dependencies.
 *   **Events:** Use `ApplicationEventPublisher` and `gimlee-events` for loose coupling between modules.
 *   **Roles:** Grant roles (e.g., `PIRATE`) dynamically based on user actions.
 *   **DTO Intent:** Design creation DTOs with minimal fields to capture user intent early.

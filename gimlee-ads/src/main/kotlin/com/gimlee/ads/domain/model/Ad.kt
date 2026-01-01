@@ -19,4 +19,6 @@ data class Ad(
     val mainPhotoPath: String?,
     val stock: Int = 0,
     val lockedStock: Int = 0,
-)
+) {
+    val availableStock: Int get() = (stock - lockedStock).coerceAtLeast(0)
+}

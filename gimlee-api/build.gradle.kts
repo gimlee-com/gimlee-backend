@@ -49,6 +49,8 @@ dependencies {
 
     // Integration test dependencies
     integrationImplementation(libs.spring.boot.starter.test)
+    integrationImplementation(platform(libs.testcontainers.bom))
+    integrationImplementation(libs.testcontainers.mongodb)
 }
 
 sourceSets {
