@@ -1,6 +1,7 @@
 package com.gimlee.api.playground.web
 
 import com.gimlee.api.playground.ads.data.AdsPopulator
+import com.gimlee.api.playground.data.DatabaseCleaner
 import com.gimlee.api.playground.media.data.MediaPopulator
 import com.gimlee.api.playground.users.data.UsersPopulator
 import com.gimlee.common.domain.model.StatusCode
@@ -19,7 +20,8 @@ import org.springframework.web.bind.annotation.RestController
 class PlaygroundController(
     @Lazy private val usersPopulator: UsersPopulator,
     @Lazy private val mediaPopulator: MediaPopulator,
-    @Lazy private val adsPopulator: AdsPopulator
+    @Lazy private val adsPopulator: AdsPopulator,
+    @Lazy private val databaseCleaner: DatabaseCleaner
 ) {
     @Operation(summary = "Create Playground Users", description = "Populates the database with a set of test users.")
     @ApiResponse(responseCode = "200", description = "Users created successfully")
@@ -42,6 +44,14 @@ class PlaygroundController(
     @PostMapping("/playground/createAds")
     fun createAds(): StatusResponseDto {
         adsPopulator.populateAds()
+        return StatusResponseDto.fromStatusCode(StatusCode.SUCCESS)
+    }
+
+    @Operation(summary = "Clear Database", description = "Empties all collections in the database (preserving indexes).")
+    @ApiResponse(responseCode = "200", description = "Database cleared successfully")
+    @PostMapping("/playground/clearDatabase")
+    fun clearDatabase(): StatusResponseDto {
+        databaseCleaner.clearAll()
         return StatusResponseDto.fromStatusCode(StatusCode.SUCCESS)
     }
 }

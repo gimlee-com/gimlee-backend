@@ -26,3 +26,13 @@ POST {{host}}/api/playground/createAds
 
 ### Expected Response (Success - 200 OK):
 # { "status": "SUCCESS", "code": 0, "message": "Success" }
+
+
+### Clear Database
+# Empties all collections in the database (preserving indexes).
+# Only available in local, dev, or test profiles.
+# @name clearDatabase
+POST {{host}}/api/playground/clearDatabase
+
+### Expected Response (Success - 200 OK):
+# { "status": "SUCCESS", "code": 0, "message": "Success" }
