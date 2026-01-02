@@ -141,6 +141,22 @@ class AdService(private val adRepository: AdRepository) {
         return adRepository.findById(adObjectId)?.toDomain()
     }
 
+    /**
+     * Retrieves multiple ads by their IDs.
+     */
+    fun getAds(adIds: List<String>): List<Ad> {
+        val objectIds = adIds.mapNotNull {
+            try {
+                ObjectId(it)
+            } catch (e: IllegalArgumentException) {
+                log.warn("Invalid ad ID format received: {}", it)
+                null
+            }
+        }
+        if (objectIds.isEmpty()) return emptyList()
+        return adRepository.findAllByIds(objectIds).map { it.toDomain() }
+    }
+
     fun getAds(filters: AdFilters, sorting: AdSorting, pageRequest: Pageable): Page<Ad> {
         val effectiveFilters = if (filters.createdBy != null) {
             filters

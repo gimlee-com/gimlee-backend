@@ -46,6 +46,15 @@ class AdRepository(mongoDatabase: MongoDatabase) {
     }
 
     /**
+     * Finds multiple AdDocuments by their IDs.
+     */
+    fun findAllByIds(ids: List<ObjectId>): List<AdDocument> {
+        if (ids.isEmpty()) return emptyList()
+        val query = Filters.`in`(AdDocument.FIELD_ID, ids)
+        return collection.find(query).map { mapToAdDocument(it) }.toList()
+    }
+
+    /**
      * Saves a new AdDocument or replaces an existing one with the same ID.
      * Atomically ensures that the new stock value is not lower than the current locked stock.
      */

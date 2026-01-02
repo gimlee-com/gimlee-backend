@@ -121,7 +121,7 @@ class PurchaseFacadeIntegrationTest(
                 }.andExpect {
                     status { isConflict() }
                     jsonPath("$.error") { value("PRICE_MISMATCH") }
-                    jsonPath("$.currentPrice.amount") { value(10.0) }
+                    jsonPath("$.currentPrices['${ad.id}'].amount") { value(10.0) }
                 }
             }
 
@@ -184,6 +184,8 @@ class PurchaseFacadeIntegrationTest(
                 }.andExpect {
                     status { isConflict() }
                     jsonPath("$.error") { value("PRICE_MISMATCH") }
+                    jsonPath("$.currentPrices['${ad.id}'].amount") { value(10.0) }
+                    jsonPath("$.currentPrices['${ad2.id}'].amount") { value(20.0) }
                 }
             }
         }

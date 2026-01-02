@@ -75,10 +75,12 @@ class PurchaseFacadeController(
             ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf(
                 "error" to "PRICE_MISMATCH",
                 "message" to "The price of one or more items has changed.",
-                "currentPrice" to mapOf(
-                    "amount" to e.currentPrice.amount,
-                    "currency" to e.currentPrice.currency
-                )
+                "currentPrices" to e.currentPrices.mapValues { (_, amount) ->
+                    mapOf(
+                        "amount" to amount.amount,
+                        "currency" to amount.currency
+                    )
+                }
             ))
         } catch (e: IllegalArgumentException) {
             log.warn("Invalid purchase request by user {}: {}", principal.userId, e.message)

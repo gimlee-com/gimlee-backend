@@ -3,6 +3,7 @@ package com.gimlee.purchases.domain
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
+import com.gimlee.ads.domain.model.Ad
 import com.gimlee.events.PaymentEvent
 import com.gimlee.payments.domain.PaymentService
 import com.gimlee.payments.domain.model.PaymentMethod
@@ -10,6 +11,7 @@ import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.purchases.domain.model.Purchase
 import com.gimlee.purchases.domain.model.PurchaseItem
 import com.gimlee.purchases.domain.model.PurchaseStatus
+import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import com.gimlee.purchases.persistence.PurchaseRepository
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
@@ -30,45 +32,17 @@ class PurchaseService(
 
     fun purchase(
         buyerId: ObjectId,
-        items: List<com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto>,
+        items: List<PurchaseItemRequestDto>,
         currency: Currency
     ): Purchase {
-        val purchasedItemDetails = items.map { itemRequest ->
-            val ad = adService.getAd(itemRequest.adId)
-                ?: throw IllegalArgumentException("Ad not found: ${itemRequest.adId}")
+        val ads = adService.getAds(items.map { it.adId }).associateBy { it.id }
 
-            val adPrice = ad.price
-                ?: throw IllegalStateException("Ad ${itemRequest.adId} has no price set.")
+        validateAdsExist(items, ads)
+        validatePrices(items, ads, currency)
 
-            if (adPrice.currency != currency || adPrice.amount.compareTo(itemRequest.unitPrice) != 0) {
-                log.warn("Purchase initialization rejected for ad {}: Price mismatch. Requested: {} {}, Actual: {} {}",
-                    itemRequest.adId, itemRequest.unitPrice, currency, adPrice.amount, adPrice.currency)
-                throw AdPriceMismatchException(adPrice)
-            }
-
-            val availableStock = ad.stock - ad.lockedStock
-            if (availableStock < itemRequest.quantity) {
-                throw IllegalStateException("Ad ${itemRequest.adId} has insufficient stock. Requested: ${itemRequest.quantity}, Available: $availableStock")
-            }
-
-            PurchasedItemDetails(
-                adId = ObjectId(ad.id),
-                quantity = itemRequest.quantity,
-                unitPrice = adPrice.amount,
-                currency = adPrice.currency,
-                sellerId = ObjectId(ad.userId) // Helper to collect sellerId
-            )
-        }
-
-        val sellerIds = purchasedItemDetails.map { it.sellerId }.toSet()
-        if (sellerIds.size > 1) {
-            throw IllegalArgumentException("All items in a purchase must belong to the same seller.")
-        }
-        val sellerId = sellerIds.first()
-
-        val totalAmount = purchasedItemDetails.fold(BigDecimal.ZERO) { acc, item ->
-            acc.add(item.unitPrice.multiply(BigDecimal(item.quantity)))
-        }
+        val purchasedItemDetails = collectPurchasedItemDetails(items, ads)
+        val sellerId = getAndValidateSingleSeller(purchasedItemDetails)
+        val totalAmount = calculateTotalAmount(purchasedItemDetails)
 
         return initPurchase(
             buyerId = buyerId,
@@ -85,6 +59,67 @@ class PurchaseService(
         )
     }
 
+    private fun validateAdsExist(items: List<PurchaseItemRequestDto>, ads: Map<String, Ad>) {
+        val missingAdIds = items.map { it.adId }.filter { !ads.containsKey(it) }.distinct()
+        if (missingAdIds.isNotEmpty()) {
+            throw IllegalArgumentException("Ads not found: ${missingAdIds.joinToString()}")
+        }
+    }
+
+    private fun validatePrices(items: List<PurchaseItemRequestDto>, ads: Map<String, Ad>, currency: Currency) {
+        val anyPriceMismatch = items.any { itemRequest ->
+            val ad = ads[itemRequest.adId]!!
+            val adPrice = ad.price ?: throw IllegalStateException("Ad ${itemRequest.adId} has no price set.")
+            adPrice.currency != currency || adPrice.amount.compareTo(itemRequest.unitPrice) != 0
+        }
+
+        if (anyPriceMismatch) {
+            val currentPrices = items.associate { itemRequest ->
+                val ad = ads[itemRequest.adId]!!
+                itemRequest.adId to ad.price!!
+            }
+            log.warn("Purchase initialization rejected: Price mismatch detected for one or more items.")
+            throw AdPriceMismatchException(currentPrices)
+        }
+    }
+
+    private fun collectPurchasedItemDetails(
+        items: List<PurchaseItemRequestDto>,
+        ads: Map<String, Ad>
+    ): List<PurchasedItemDetails> {
+        return items.map { itemRequest ->
+            val ad = ads[itemRequest.adId]!!
+            val adPrice = ad.price!!
+
+            val availableStock = ad.stock - ad.lockedStock
+            if (availableStock < itemRequest.quantity) {
+                throw IllegalStateException("Ad ${itemRequest.adId} has insufficient stock. Requested: ${itemRequest.quantity}, Available: $availableStock")
+            }
+
+            PurchasedItemDetails(
+                adId = ObjectId(ad.id),
+                quantity = itemRequest.quantity,
+                unitPrice = adPrice.amount,
+                currency = adPrice.currency,
+                sellerId = ObjectId(ad.userId)
+            )
+        }
+    }
+
+    private fun getAndValidateSingleSeller(purchasedItemDetails: List<PurchasedItemDetails>): ObjectId {
+        val sellerIds = purchasedItemDetails.map { it.sellerId }.toSet()
+        if (sellerIds.size > 1) {
+            throw IllegalArgumentException("All items in a purchase must belong to the same seller.")
+        }
+        return sellerIds.first()
+    }
+
+    private fun calculateTotalAmount(purchasedItemDetails: List<PurchasedItemDetails>): BigDecimal {
+        return purchasedItemDetails.fold(BigDecimal.ZERO) { acc, item ->
+            acc.add(item.unitPrice.multiply(BigDecimal(item.quantity)))
+        }
+    }
+
     private data class PurchasedItemDetails(
         val adId: ObjectId,
         val quantity: Int,
@@ -93,7 +128,7 @@ class PurchaseService(
         val sellerId: ObjectId
     )
 
-    class AdPriceMismatchException(val currentPrice: CurrencyAmount) : RuntimeException("Price has changed.")
+    class AdPriceMismatchException(val currentPrices: Map<String, CurrencyAmount>) : RuntimeException("Price has changed for one or more items.")
 
     fun initPurchase(
         buyerId: ObjectId,

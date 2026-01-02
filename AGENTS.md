@@ -50,6 +50,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 
 ### 4. Architecture (`docs/development/architecture-guidelines.md`)
 *   **SRP:** Maintain strict separation between the modules and avoid circular dependencies.
+*   **Self-Documenting Code:** Prefer extracting complex logic into well-named private methods over using inline comments. This makes the high-level flow of a method clear and self-explanatory.
 *   **Events:** Use `ApplicationEventPublisher` and `gimlee-events` for loose coupling between modules.
 *   **Roles:** Grant roles (e.g., `PIRATE`) dynamically based on user actions.
 *   **DTO Intent:** Design creation DTOs with minimal fields to capture user intent early.

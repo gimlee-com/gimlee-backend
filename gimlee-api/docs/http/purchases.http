@@ -58,9 +58,11 @@ Content-Type: application/json
 # {
 #   "error": "PRICE_MISMATCH",
 #   "message": "The price of one or more items has changed.",
-#   "currentPrice": {
-#     "amount": 2.0,
-#     "currency": "ARRR"
+#   "currentPrices": {
+#     "60f8f9b3a9d9e8f8a8b8c8d8": {
+#       "amount": 2.0,
+#       "currency": "ARRR"
+#     }
 #   }
 # }
 

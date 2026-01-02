@@ -65,7 +65,7 @@ class PurchaseServiceTest : StringSpec({
             lockedStock = 0
         )
 
-        every { adService.getAd(adId.toHexString()) } returns ad
+        every { adService.getAds(listOf(adId.toHexString())) } returns listOf(ad)
         
         service.purchase(buyerId, listOf(com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.TEN)), Currency.ARRR)
 
@@ -91,11 +91,12 @@ class PurchaseServiceTest : StringSpec({
             lockedStock = 0
         )
 
-        every { adService.getAd(adId.toHexString()) } returns ad
+        every { adService.getAds(listOf(adId.toHexString())) } returns listOf(ad)
         
-        io.kotest.assertions.throwables.shouldThrow<PurchaseService.AdPriceMismatchException> {
+        val exception = io.kotest.assertions.throwables.shouldThrow<PurchaseService.AdPriceMismatchException> {
             service.purchase(buyerId, listOf(com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.ONE)), Currency.ARRR)
         }
+        exception.currentPrices[adId.toHexString()]?.amount?.compareTo(BigDecimal.TEN) shouldBe 0
     }
 
     "should throw IllegalArgumentException if items from multiple sellers" {
@@ -134,8 +135,7 @@ class PurchaseServiceTest : StringSpec({
             lockedStock = 0
         )
 
-        every { adService.getAd(adId1.toHexString()) } returns ad1
-        every { adService.getAd(adId2.toHexString()) } returns ad2
+        every { adService.getAds(match { it.containsAll(listOf(adId1.toHexString(), adId2.toHexString())) }) } returns listOf(ad1, ad2)
 
         val items = listOf(
             com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId1.toHexString(), 1, BigDecimal.TEN),
@@ -183,8 +183,7 @@ class PurchaseServiceTest : StringSpec({
             lockedStock = 0
         )
 
-        every { adService.getAd(adId1.toHexString()) } returns ad1
-        every { adService.getAd(adId2.toHexString()) } returns ad2
+        every { adService.getAds(match { it.containsAll(listOf(adId1.toHexString(), adId2.toHexString())) }) } returns listOf(ad1, ad2)
 
         // Total would be 30.0. Requesting 15+15=30.0 should still fail because individually they don't match.
         val items = listOf(
@@ -192,9 +191,12 @@ class PurchaseServiceTest : StringSpec({
             com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId2.toHexString(), 1, BigDecimal("15.0"))
         )
 
-        io.kotest.assertions.throwables.shouldThrow<PurchaseService.AdPriceMismatchException> {
+        val exception = io.kotest.assertions.throwables.shouldThrow<PurchaseService.AdPriceMismatchException> {
             service.purchase(buyerId, items, Currency.ARRR)
         }
+        exception.currentPrices.size shouldBe 2
+        exception.currentPrices[adId1.toHexString()]?.amount?.compareTo(BigDecimal.TEN) shouldBe 0
+        exception.currentPrices[adId2.toHexString()]?.amount?.compareTo(BigDecimal("20.0")) shouldBe 0
     }
 
     "should update purchase status on payment complete event" {
