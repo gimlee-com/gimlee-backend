@@ -15,20 +15,22 @@ class PurchaseEventListener(private val adRepository: AdRepository) {
     fun onPurchaseEvent(event: PurchaseEvent) {
         log.info("Received PurchaseEvent for purchase ${event.purchaseId}, status ID: ${event.status}")
         
-        when (event.status) {
-            PurchaseStatus.CREATED.id -> {
-                log.info("Incrementing locked stock for ad ${event.adId}")
-                adRepository.incrementLockedStock(event.adId)
-            }
-            PurchaseStatus.COMPLETE.id -> {
-                log.info("Completing sale for ad ${event.adId}")
-                adRepository.decrementStockAndLockedStock(event.adId)
-            }
-            PurchaseStatus.FAILED_PAYMENT_TIMEOUT.id,
-            PurchaseStatus.FAILED_PAYMENT_UNDERPAID.id,
-            PurchaseStatus.CANCELLED.id -> {
-                log.info("Decrementing locked stock for ad ${event.adId}")
-                adRepository.decrementLockedStock(event.adId)
+        event.items.forEach { item ->
+            when (event.status) {
+                PurchaseStatus.CREATED.id -> {
+                    log.info("Incrementing locked stock for ad ${item.adId} by ${item.quantity}")
+                    adRepository.incrementLockedStock(item.adId, item.quantity)
+                }
+                PurchaseStatus.COMPLETE.id -> {
+                    log.info("Completing sale for ad ${item.adId} with quantity ${item.quantity}")
+                    adRepository.decrementStockAndLockedStock(item.adId, item.quantity)
+                }
+                PurchaseStatus.FAILED_PAYMENT_TIMEOUT.id,
+                PurchaseStatus.FAILED_PAYMENT_UNDERPAID.id,
+                PurchaseStatus.CANCELLED.id -> {
+                    log.info("Decrementing locked stock for ad ${item.adId} by ${item.quantity}")
+                    adRepository.decrementLockedStock(item.adId, item.quantity)
+                }
             }
         }
     }

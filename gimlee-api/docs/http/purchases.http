@@ -1,5 +1,5 @@
 ### Place a New Purchase
-# This endpoint allows an authenticated user to place a purchase for a specific advertisement.
+# This endpoint allows an authenticated user to place a purchase for one or more advertisements from the same seller.
 # It acts as a facade, coordinating between PurchaseService and PaymentService.
 # 
 # Pre-requisites:
@@ -12,8 +12,13 @@ POST {{host}}/api/purchases
 Content-Type: application/json
 
 {
-  "adId": "60f8f9b3a9d9e8f8a8b8c8d8",
-  "amount": 1.5,
+  "items": [
+    {
+      "adId": "60f8f9b3a9d9e8f8a8b8c8d8",
+      "quantity": 1,
+      "unitPrice": 1.5
+    }
+  ],
   "currency": "ARRR"
 }
 
@@ -33,22 +38,26 @@ Content-Type: application/json
 # }
 
 ### Expected Response (Error - 400 Bad Request):
-# Occurs if the Ad is not found, stock is insufficient, or seller lacks a wallet.
+# Occurs if the Ad is not found, stock is insufficient, seller lacks a wallet, or multiple sellers are involved.
 # Content-Type: application/json
 #
 # {
 #   "error": "Ad not found: 60f8f9b3a9d9e8f8a8b8c8d8"
 # }
+# or
+# {
+#   "error": "All items in a purchase must belong to the same seller."
+# }
 #
 
 ### Expected Response (Error - 409 Conflict):
-# Occurs if the provided price or currency does not match the actual Ad price.
+# Occurs if the provided price or currency does not match the actual Ad price for any item.
 # This informs the front-end that the price has changed.
 # Content-Type: application/json
 #
 # {
 #   "error": "PRICE_MISMATCH",
-#   "message": "The price of this item has changed.",
+#   "message": "The price of one or more items has changed.",
 #   "currentPrice": {
 #     "amount": 2.0,
 #     "currency": "ARRR"

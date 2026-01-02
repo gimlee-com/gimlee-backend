@@ -1,17 +1,20 @@
 package com.gimlee.purchases.persistence
 
+import com.gimlee.ads.domain.model.Currency
 import com.gimlee.common.InstantUtils.fromMicros
 import com.gimlee.common.toMicros
 import com.gimlee.purchases.domain.model.Purchase
+import com.gimlee.purchases.domain.model.PurchaseItem
 import com.gimlee.purchases.domain.model.PurchaseStatus
 import com.gimlee.purchases.persistence.model.PurchaseDocument
-import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_AD_ID
-import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_AMOUNT
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_BUYER_ID
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_CREATED_AT
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_ID
+import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_ITEMS
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_SELLER_ID
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_STATUS
+import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_TOTAL_AMOUNT
+import com.gimlee.purchases.persistence.model.PurchaseItemDocument
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Filters
@@ -57,10 +60,18 @@ class PurchaseRepository(
             id = id,
             buyerId = buyerId,
             sellerId = sellerId,
-            adId = adId,
-            amount = Decimal128(amount),
+            items = items.map { it.toDocument() },
+            totalAmount = Decimal128(totalAmount),
             status = status.id,
             createdAtMicros = createdAt.toMicros()
+        )
+
+    private fun PurchaseItem.toDocument(): PurchaseItemDocument =
+        PurchaseItemDocument(
+            adId = adId,
+            quantity = quantity,
+            unitPrice = Decimal128(unitPrice),
+            currency = currency.name
         )
 
     private fun mapToBsonDocument(doc: PurchaseDocument): Document {
@@ -68,8 +79,14 @@ class PurchaseRepository(
             .append(FIELD_ID, doc.id)
             .append(FIELD_BUYER_ID, doc.buyerId)
             .append(FIELD_SELLER_ID, doc.sellerId)
-            .append(FIELD_AD_ID, doc.adId)
-            .append(FIELD_AMOUNT, doc.amount)
+            .append(FIELD_ITEMS, doc.items.map { item ->
+                Document()
+                    .append(PurchaseItemDocument.FIELD_AD_ID, item.adId)
+                    .append(PurchaseItemDocument.FIELD_QUANTITY, item.quantity)
+                    .append(PurchaseItemDocument.FIELD_UNIT_PRICE, item.unitPrice)
+                    .append(PurchaseItemDocument.FIELD_CURRENCY, item.currency)
+            })
+            .append(FIELD_TOTAL_AMOUNT, doc.totalAmount)
             .append(FIELD_STATUS, doc.status)
             .append(FIELD_CREATED_AT, doc.createdAtMicros)
     }
@@ -78,9 +95,16 @@ class PurchaseRepository(
         id = getObjectId(FIELD_ID),
         buyerId = getObjectId(FIELD_BUYER_ID),
         sellerId = getObjectId(FIELD_SELLER_ID),
-        adId = getObjectId(FIELD_AD_ID),
-        amount = get(FIELD_AMOUNT, Decimal128::class.java).bigDecimalValue(),
+        items = getList(FIELD_ITEMS, Document::class.java).map { it.toPurchaseItem() },
+        totalAmount = get(FIELD_TOTAL_AMOUNT, Decimal128::class.java).bigDecimalValue(),
         status = PurchaseStatus.entries.first { it.id == getInteger(FIELD_STATUS) },
         createdAt = fromMicros(getLong(FIELD_CREATED_AT))
+    )
+
+    private fun Document.toPurchaseItem(): PurchaseItem = PurchaseItem(
+        adId = getObjectId(PurchaseItemDocument.FIELD_AD_ID),
+        quantity = getInteger(PurchaseItemDocument.FIELD_QUANTITY),
+        unitPrice = get(PurchaseItemDocument.FIELD_UNIT_PRICE, Decimal128::class.java).bigDecimalValue(),
+        currency = Currency.valueOf(getString(PurchaseItemDocument.FIELD_CURRENCY))
     )
 }

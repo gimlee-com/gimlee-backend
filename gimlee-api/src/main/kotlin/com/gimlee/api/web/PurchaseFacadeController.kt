@@ -45,13 +45,12 @@ class PurchaseFacadeController(
     @Privileged(role = "USER")
     fun purchase(@Valid @RequestBody request: PurchaseRequestDto): ResponseEntity<Any> {
         val principal = HttpServletRequestAuthUtil.getPrincipal()
-        log.info("User {} making a purchase via facade for ad {}", principal.userId, request.adId)
+        log.info("User {} making a purchase via facade for {} items", principal.userId, request.items.size)
 
         return try {
             val purchase = purchaseService.purchase(
                 buyerId = ObjectId(principal.userId),
-                adId = ObjectId(request.adId),
-                amount = request.amount,
+                items = request.items,
                 currency = request.currency
             )
             
@@ -72,20 +71,20 @@ class PurchaseFacadeController(
             
             ResponseEntity.status(HttpStatus.CREATED).body(response)
         } catch (e: PurchaseService.AdPriceMismatchException) {
-            log.warn("Price mismatch for ad {}: {}", request.adId, e.message)
+            log.warn("Price mismatch: {}", e.message)
             ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf(
                 "error" to "PRICE_MISMATCH",
-                "message" to "The price of this item has changed.",
+                "message" to "The price of one or more items has changed.",
                 "currentPrice" to mapOf(
                     "amount" to e.currentPrice.amount,
                     "currency" to e.currentPrice.currency
                 )
             ))
         } catch (e: IllegalArgumentException) {
-            log.warn("Invalid purchase request for ad {} by user {}: {}", request.adId, principal.userId, e.message)
+            log.warn("Invalid purchase request by user {}: {}", principal.userId, e.message)
             ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to e.message))
         } catch (e: IllegalStateException) {
-            log.warn("Purchase creation state error for ad {} by user {}: {}", request.adId, principal.userId, e.message)
+            log.warn("Purchase creation state error by user {}: {}", principal.userId, e.message)
             ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to e.message))
         } catch (e: Exception) {
             log.error("Error initializing a purchase for user {}: {}", principal.userId, e.message, e)

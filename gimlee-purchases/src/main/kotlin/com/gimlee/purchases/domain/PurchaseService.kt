@@ -3,14 +3,14 @@ package com.gimlee.purchases.domain
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
-import com.gimlee.events.PurchaseEvent
-import com.gimlee.purchases.domain.model.PurchaseStatus
 import com.gimlee.events.PaymentEvent
-import com.gimlee.purchases.domain.model.Purchase
-import com.gimlee.purchases.persistence.PurchaseRepository
 import com.gimlee.payments.domain.PaymentService
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
+import com.gimlee.purchases.domain.model.Purchase
+import com.gimlee.purchases.domain.model.PurchaseItem
+import com.gimlee.purchases.domain.model.PurchaseStatus
+import com.gimlee.purchases.persistence.PurchaseRepository
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
@@ -30,44 +30,76 @@ class PurchaseService(
 
     fun purchase(
         buyerId: ObjectId,
-        adId: ObjectId,
-        amount: BigDecimal,
+        items: List<com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto>,
         currency: Currency
     ): Purchase {
-        val ad = adService.getAd(adId.toHexString())
-            ?: throw IllegalArgumentException("Ad not found: $adId")
+        val purchasedItemDetails = items.map { itemRequest ->
+            val ad = adService.getAd(itemRequest.adId)
+                ?: throw IllegalArgumentException("Ad not found: ${itemRequest.adId}")
 
-        val adPrice = ad.price
-        if (adPrice == null) {
-            throw IllegalStateException("Ad $adId has no price set.")
+            val adPrice = ad.price
+                ?: throw IllegalStateException("Ad ${itemRequest.adId} has no price set.")
+
+            if (adPrice.currency != currency || adPrice.amount.compareTo(itemRequest.unitPrice) != 0) {
+                log.warn("Purchase initialization rejected for ad {}: Price mismatch. Requested: {} {}, Actual: {} {}",
+                    itemRequest.adId, itemRequest.unitPrice, currency, adPrice.amount, adPrice.currency)
+                throw AdPriceMismatchException(adPrice)
+            }
+
+            val availableStock = ad.stock - ad.lockedStock
+            if (availableStock < itemRequest.quantity) {
+                throw IllegalStateException("Ad ${itemRequest.adId} has insufficient stock. Requested: ${itemRequest.quantity}, Available: $availableStock")
+            }
+
+            PurchasedItemDetails(
+                adId = ObjectId(ad.id),
+                quantity = itemRequest.quantity,
+                unitPrice = adPrice.amount,
+                currency = adPrice.currency,
+                sellerId = ObjectId(ad.userId) // Helper to collect sellerId
+            )
         }
 
-        if (adPrice.currency != currency || adPrice.amount.compareTo(amount) != 0) {
-            log.warn("Purchase initialization rejected for ad {}: Price mismatch. Requested: {} {}, Actual: {} {}",
-                adId, amount, currency, adPrice.amount, adPrice.currency)
-            throw AdPriceMismatchException(adPrice)
+        val sellerIds = purchasedItemDetails.map { it.sellerId }.toSet()
+        if (sellerIds.size > 1) {
+            throw IllegalArgumentException("All items in a purchase must belong to the same seller.")
         }
+        val sellerId = sellerIds.first()
 
-        val availableStock = ad.stock - ad.lockedStock
-        if (availableStock <= 0) {
-            throw IllegalStateException("Ad $adId has no available stock.")
+        val totalAmount = purchasedItemDetails.fold(BigDecimal.ZERO) { acc, item ->
+            acc.add(item.unitPrice.multiply(BigDecimal(item.quantity)))
         }
 
         return initPurchase(
             buyerId = buyerId,
-            sellerId = ObjectId(ad.userId),
-            adId = adId,
-            amount = amount
+            sellerId = sellerId,
+            items = purchasedItemDetails.map {
+                PurchaseItem(
+                    adId = it.adId,
+                    quantity = it.quantity,
+                    unitPrice = it.unitPrice,
+                    currency = it.currency
+                )
+            },
+            totalAmount = totalAmount
         )
     }
+
+    private data class PurchasedItemDetails(
+        val adId: ObjectId,
+        val quantity: Int,
+        val unitPrice: BigDecimal,
+        val currency: Currency,
+        val sellerId: ObjectId
+    )
 
     class AdPriceMismatchException(val currentPrice: CurrencyAmount) : RuntimeException("Price has changed.")
 
     fun initPurchase(
         buyerId: ObjectId,
         sellerId: ObjectId,
-        adId: ObjectId,
-        amount: BigDecimal
+        items: List<PurchaseItem>,
+        totalAmount: BigDecimal
     ): Purchase {
         val purchaseId = ObjectId.get()
         val now = Instant.now()
@@ -76,8 +108,8 @@ class PurchaseService(
             id = purchaseId,
             buyerId = buyerId,
             sellerId = sellerId,
-            adId = adId,
-            amount = amount,
+            items = items,
+            totalAmount = totalAmount,
             status = PurchaseStatus.CREATED,
             createdAt = now
         )
@@ -90,7 +122,7 @@ class PurchaseService(
             purchaseId = purchaseId,
             buyerId = buyerId,
             sellerId = sellerId,
-            amount = amount,
+            amount = totalAmount,
             paymentMethod = PaymentMethod.PIRATE_CHAIN
         )
 
@@ -124,13 +156,13 @@ class PurchaseService(
     }
 
     private fun publishPurchaseEvent(purchase: Purchase) {
-        val event = PurchaseEvent(
+        val event = com.gimlee.events.PurchaseEvent(
             purchaseId = purchase.id,
-            adId = purchase.adId,
+            items = purchase.items.map { com.gimlee.events.PurchaseEventItem(it.adId, it.quantity) },
             buyerId = purchase.buyerId,
             sellerId = purchase.sellerId,
             status = purchase.status.id,
-            amount = purchase.amount,
+            totalAmount = purchase.totalAmount,
             timestamp = Instant.now()
         )
         eventPublisher.publishEvent(event)

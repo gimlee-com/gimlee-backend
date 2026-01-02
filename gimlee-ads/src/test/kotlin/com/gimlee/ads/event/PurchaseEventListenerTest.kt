@@ -3,6 +3,7 @@ package com.gimlee.ads.event
 import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.events.PurchaseEvent
 import com.gimlee.ads.domain.model.PurchaseStatus
+import com.gimlee.events.PurchaseEventItem
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.mockk.every
@@ -21,66 +22,66 @@ class PurchaseEventListenerTest : StringSpec({
         val adId = ObjectId.get()
         val event = PurchaseEvent(
             purchaseId = ObjectId.get(),
-            adId = adId,
+            items = listOf(PurchaseEventItem(adId, 1)),
             buyerId = ObjectId.get(),
             sellerId = ObjectId.get(),
             status = PurchaseStatus.CREATED.id,
-            amount = BigDecimal.TEN,
+            totalAmount = BigDecimal.TEN,
             timestamp = Instant.now()
         )
 
         listener.onPurchaseEvent(event)
 
-        verify { adRepository.incrementLockedStock(adId) }
+        verify { adRepository.incrementLockedStock(adId, 1) }
     }
 
     "should complete sale on COMPLETE event" {
         val adId = ObjectId.get()
         val event = PurchaseEvent(
             purchaseId = ObjectId.get(),
-            adId = adId,
+            items = listOf(PurchaseEventItem(adId, 2)),
             buyerId = ObjectId.get(),
             sellerId = ObjectId.get(),
             status = PurchaseStatus.COMPLETE.id,
-            amount = BigDecimal.TEN,
+            totalAmount = BigDecimal.TEN,
             timestamp = Instant.now()
         )
 
         listener.onPurchaseEvent(event)
 
-        verify { adRepository.decrementStockAndLockedStock(adId) }
+        verify { adRepository.decrementStockAndLockedStock(adId, 2) }
     }
 
     "should decrement locked stock on FAILED_PAYMENT_TIMEOUT event" {
         val adId = ObjectId.get()
         val event = PurchaseEvent(
             purchaseId = ObjectId.get(),
-            adId = adId,
+            items = listOf(PurchaseEventItem(adId, 1)),
             buyerId = ObjectId.get(),
             sellerId = ObjectId.get(),
             status = PurchaseStatus.FAILED_PAYMENT_TIMEOUT.id,
-            amount = BigDecimal.TEN,
+            totalAmount = BigDecimal.TEN,
             timestamp = Instant.now()
         )
 
         listener.onPurchaseEvent(event)
 
-        verify { adRepository.decrementLockedStock(adId) }
+        verify { adRepository.decrementLockedStock(adId, 1) }
     }
 
     "should propagate exception when incrementLockedStock fails" {
         val adId = ObjectId.get()
         val event = PurchaseEvent(
             purchaseId = ObjectId.get(),
-            adId = adId,
+            items = listOf(PurchaseEventItem(adId, 1)),
             buyerId = ObjectId.get(),
             sellerId = ObjectId.get(),
             status = PurchaseStatus.CREATED.id,
-            amount = BigDecimal.TEN,
+            totalAmount = BigDecimal.TEN,
             timestamp = Instant.now()
         )
 
-        every { adRepository.incrementLockedStock(adId) } throws IllegalStateException("Cannot lock more stock")
+        every { adRepository.incrementLockedStock(adId, 1) } throws IllegalStateException("Cannot lock more stock")
 
         shouldThrow<IllegalStateException> {
             listener.onPurchaseEvent(event)

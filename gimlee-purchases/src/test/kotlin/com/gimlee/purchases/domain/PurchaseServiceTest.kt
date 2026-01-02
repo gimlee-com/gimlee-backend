@@ -9,6 +9,7 @@ import com.gimlee.payments.domain.PaymentService
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import io.mockk.*
 import org.bson.types.ObjectId
 import org.springframework.context.ApplicationEventPublisher
@@ -33,11 +34,12 @@ class PurchaseServiceTest : StringSpec({
         val sellerId = ObjectId.get()
         val adId = ObjectId.get()
         val amount = BigDecimal("10.0")
+        val items = listOf(com.gimlee.purchases.domain.model.PurchaseItem(adId, 1, amount, Currency.ARRR))
 
         val purchaseSlot = slot<Purchase>()
         every { purchaseRepository.save(capture(purchaseSlot)) } answers { purchaseSlot.captured }
 
-        service.initPurchase(buyerId, sellerId, adId, amount)
+        service.initPurchase(buyerId, sellerId, items, amount)
 
         verify { paymentService.initPayment(any(), buyerId, sellerId, amount, PaymentMethod.PIRATE_CHAIN) }
         verify(exactly = 2) { purchaseRepository.save(any()) } 
@@ -65,7 +67,7 @@ class PurchaseServiceTest : StringSpec({
 
         every { adService.getAd(adId.toHexString()) } returns ad
         
-        service.purchase(buyerId, adId, BigDecimal.TEN, Currency.ARRR)
+        service.purchase(buyerId, listOf(com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.TEN)), Currency.ARRR)
 
         verify { purchaseRepository.save(match { it.status == PurchaseStatus.CREATED }) }
     }
@@ -92,7 +94,106 @@ class PurchaseServiceTest : StringSpec({
         every { adService.getAd(adId.toHexString()) } returns ad
         
         io.kotest.assertions.throwables.shouldThrow<PurchaseService.AdPriceMismatchException> {
-            service.purchase(buyerId, adId, BigDecimal.ONE, Currency.ARRR)
+            service.purchase(buyerId, listOf(com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.ONE)), Currency.ARRR)
+        }
+    }
+
+    "should throw IllegalArgumentException if items from multiple sellers" {
+        val buyerId = ObjectId.get()
+        val adId1 = ObjectId.get()
+        val adId2 = ObjectId.get()
+        val sellerId1 = ObjectId.get()
+        val sellerId2 = ObjectId.get()
+
+        val ad1 = Ad(
+            id = adId1.toHexString(),
+            userId = sellerId1.toHexString(),
+            title = "Ad 1",
+            description = "Desc 1",
+            price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            status = AdStatus.ACTIVE,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            location = null,
+            mainPhotoPath = null,
+            stock = 5,
+            lockedStock = 0
+        )
+        val ad2 = Ad(
+            id = adId2.toHexString(),
+            userId = sellerId2.toHexString(),
+            title = "Ad 2",
+            description = "Desc 2",
+            price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            status = AdStatus.ACTIVE,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            location = null,
+            mainPhotoPath = null,
+            stock = 5,
+            lockedStock = 0
+        )
+
+        every { adService.getAd(adId1.toHexString()) } returns ad1
+        every { adService.getAd(adId2.toHexString()) } returns ad2
+
+        val items = listOf(
+            com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId1.toHexString(), 1, BigDecimal.TEN),
+            com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId2.toHexString(), 1, BigDecimal.TEN)
+        )
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<IllegalArgumentException> {
+            service.purchase(buyerId, items, Currency.ARRR)
+        }
+        exception.message shouldBe "All items in a purchase must belong to the same seller."
+    }
+
+    "should throw AdPriceMismatchException if one of multiple items has price mismatch" {
+        val buyerId = ObjectId.get()
+        val adId1 = ObjectId.get()
+        val adId2 = ObjectId.get()
+        val sellerId = ObjectId.get()
+
+        val ad1 = Ad(
+            id = adId1.toHexString(),
+            userId = sellerId.toHexString(),
+            title = "Ad 1",
+            description = "Desc 1",
+            price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            status = AdStatus.ACTIVE,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            location = null,
+            mainPhotoPath = null,
+            stock = 5,
+            lockedStock = 0
+        )
+        val ad2 = Ad(
+            id = adId2.toHexString(),
+            userId = sellerId.toHexString(),
+            title = "Ad 2",
+            description = "Desc 2",
+            price = CurrencyAmount(BigDecimal("20.0"), Currency.ARRR),
+            status = AdStatus.ACTIVE,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            location = null,
+            mainPhotoPath = null,
+            stock = 5,
+            lockedStock = 0
+        )
+
+        every { adService.getAd(adId1.toHexString()) } returns ad1
+        every { adService.getAd(adId2.toHexString()) } returns ad2
+
+        // Total would be 30.0. Requesting 15+15=30.0 should still fail because individually they don't match.
+        val items = listOf(
+            com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId1.toHexString(), 1, BigDecimal("15.0")),
+            com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId2.toHexString(), 1, BigDecimal("15.0"))
+        )
+
+        io.kotest.assertions.throwables.shouldThrow<PurchaseService.AdPriceMismatchException> {
+            service.purchase(buyerId, items, Currency.ARRR)
         }
     }
 
@@ -102,8 +203,8 @@ class PurchaseServiceTest : StringSpec({
             id = purchaseId,
             buyerId = ObjectId.get(),
             sellerId = ObjectId.get(),
-            adId = ObjectId.get(),
-            amount = BigDecimal("10.0"),
+            items = listOf(com.gimlee.purchases.domain.model.PurchaseItem(ObjectId.get(), 1, BigDecimal("10.0"), Currency.ARRR)),
+            totalAmount = BigDecimal("10.0"),
             status = PurchaseStatus.AWAITING_PAYMENT,
             createdAt = Instant.now()
         )
@@ -116,7 +217,7 @@ class PurchaseServiceTest : StringSpec({
             sellerId = purchase.sellerId,
             status = PaymentStatus.COMPLETE.id,
             paymentMethod = PaymentMethod.PIRATE_CHAIN.id,
-            amount = purchase.amount,
+            amount = purchase.totalAmount,
             timestamp = Instant.now()
         )
 

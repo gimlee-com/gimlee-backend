@@ -157,41 +157,41 @@ class AdRepository(mongoDatabase: MongoDatabase) {
     }
 
     /**
-     * Increments the locked stock count by 1.
+     * Increments the locked stock count by the specified quantity.
      */
-    fun incrementLockedStock(adId: ObjectId) {
+    fun incrementLockedStock(adId: ObjectId, quantity: Int = 1) {
         val filter = Filters.and(
             Filters.eq(AdDocument.FIELD_ID, adId),
-            Filters.expr(Document("\$lt", listOf("$${AdDocument.FIELD_LOCKED_STOCK}", "$${AdDocument.FIELD_STOCK}")))
+            Filters.expr(Document("\$lte", listOf(Document("\$add", listOf("$${AdDocument.FIELD_LOCKED_STOCK}", quantity)), "$${AdDocument.FIELD_STOCK}")))
         )
-        val update = Updates.inc(AdDocument.FIELD_LOCKED_STOCK, 1)
+        val update = Updates.inc(AdDocument.FIELD_LOCKED_STOCK, quantity)
         val result = collection.updateOne(filter, update)
 
         if (result.matchedCount == 0L) {
             val existing = findById(adId)
-            if (existing != null && existing.lockedStock >= existing.stock) {
-                throw IllegalStateException("Cannot lock more stock. All stock is already locked (Stock: ${existing.stock}, Locked: ${existing.lockedStock}).")
+            if (existing != null && existing.lockedStock + quantity > existing.stock) {
+                throw IllegalStateException("Cannot lock more stock. Stock: ${existing.stock}, Current Locked: ${existing.lockedStock}, Requested: $quantity.")
             }
         }
     }
 
     /**
-     * Decrements the locked stock count by 1.
+     * Decrements the locked stock count by the specified quantity.
      */
-    fun decrementLockedStock(adId: ObjectId) {
+    fun decrementLockedStock(adId: ObjectId, quantity: Int = 1) {
         val filter = Filters.eq(AdDocument.FIELD_ID, adId)
-        val update = Updates.inc(AdDocument.FIELD_LOCKED_STOCK, -1)
+        val update = Updates.inc(AdDocument.FIELD_LOCKED_STOCK, -quantity)
         collection.updateOne(filter, update)
     }
 
     /**
-     * Decrements both stock and locked stock by 1 (used when purchase is complete).
+     * Decrements both stock and locked stock by the specified quantity (used when purchase is complete).
      */
-    fun decrementStockAndLockedStock(adId: ObjectId) {
+    fun decrementStockAndLockedStock(adId: ObjectId, quantity: Int = 1) {
         val filter = Filters.eq(AdDocument.FIELD_ID, adId)
         val update = Updates.combine(
-            Updates.inc(AdDocument.FIELD_STOCK, -1),
-            Updates.inc(AdDocument.FIELD_LOCKED_STOCK, -1)
+            Updates.inc(AdDocument.FIELD_STOCK, -quantity),
+            Updates.inc(AdDocument.FIELD_LOCKED_STOCK, -quantity)
         )
         collection.updateOne(filter, update)
     }

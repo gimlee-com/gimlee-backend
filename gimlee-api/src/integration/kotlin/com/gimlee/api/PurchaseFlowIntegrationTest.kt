@@ -16,6 +16,7 @@ import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.payments.piratechain.persistence.UserPirateChainAddressRepository
 import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo
+import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
 import org.springframework.context.ApplicationEventPublisher
@@ -57,7 +58,11 @@ class PurchaseFlowIntegrationTest(
             val buyerId = ObjectId.get()
 
             When("the buyer makes a purchase") {
-                val purchase = purchaseService.purchase(buyerId, ObjectId(ad.id), BigDecimal("10.00"), Currency.ARRR)
+                val purchase = purchaseService.purchase(
+                    buyerId,
+                    listOf(PurchaseItemRequestDto(ad.id, 1, BigDecimal("10.00"))),
+                    Currency.ARRR
+                )
 
                 Then("the purchase status should be AWAITING_PAYMENT") {
                     val savedPurchase = purchaseService.getPurchase(purchase.id)

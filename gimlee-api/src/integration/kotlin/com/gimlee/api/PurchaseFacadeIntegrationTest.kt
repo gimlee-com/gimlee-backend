@@ -13,6 +13,7 @@ import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.toMicros
 import com.gimlee.purchases.domain.model.PurchaseStatus
+import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import com.gimlee.purchases.web.dto.request.PurchaseRequestDto
 import com.gimlee.payments.piratechain.persistence.UserPirateChainAddressRepository
 import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo
@@ -65,7 +66,10 @@ class PurchaseFacadeIntegrationTest(
             val principal = Principal(userId = buyerId.toHexString(), username = "buyer", roles = listOf(Role.USER))
 
             When("the buyer makes a purchase through the facade") {
-                val request = PurchaseRequestDto(adId = ad.id, amount = BigDecimal("10.00"), currency = Currency.ARRR)
+                val request = PurchaseRequestDto(
+                    items = listOf(PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("10.00"))),
+                    currency = Currency.ARRR
+                )
                 
                 val result = mockMvc.post("/purchases") {
                     requestAttr("principal", principal)
@@ -105,7 +109,10 @@ class PurchaseFacadeIntegrationTest(
             }
 
             When("the buyer attempts to make a purchase with a mismatched amount") {
-                val maliciousRequest = PurchaseRequestDto(adId = ad.id, amount = BigDecimal("1.00"), currency = Currency.ARRR)
+                val maliciousRequest = PurchaseRequestDto(
+                    items = listOf(PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("1.00"))),
+                    currency = Currency.ARRR
+                )
 
                 mockMvc.post("/purchases") {
                     requestAttr("principal", principal)
@@ -115,6 +122,68 @@ class PurchaseFacadeIntegrationTest(
                     status { isConflict() }
                     jsonPath("$.error") { value("PRICE_MISMATCH") }
                     jsonPath("$.currentPrice.amount") { value(10.0) }
+                }
+            }
+
+            When("the buyer attempts to make a purchase with items from multiple sellers") {
+                val anotherSellerId = ObjectId.get()
+                userRoleRepository.add(anotherSellerId, Role.USER)
+                userRoleRepository.add(anotherSellerId, Role.PIRATE)
+
+                val ad2 = adService.createAd(anotherSellerId.toHexString(), "Another Seller Item", 5)
+                adService.updateAd(ad2.id, anotherSellerId.toHexString(), UpdateAdRequest(
+                    description = "Another Description",
+                    price = CurrencyAmount(BigDecimal("5.00"), Currency.ARRR),
+                    location = Location("city2", doubleArrayOf(3.0, 4.0)),
+                    stock = 5
+                ))
+                adService.activateAd(ad2.id, anotherSellerId.toHexString())
+
+                val request = PurchaseRequestDto(
+                    items = listOf(
+                        PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("10.00")),
+                        PurchaseItemRequestDto(adId = ad2.id, quantity = 1, unitPrice = BigDecimal("5.00"))
+                    ),
+                    currency = Currency.ARRR
+                )
+
+                mockMvc.post("/purchases") {
+                    requestAttr("principal", principal)
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.error") { value("All items in a purchase must belong to the same seller.") }
+                }
+            }
+
+            When("the buyer attempts to purchase multiple items with individual price mismatches but same total") {
+                val ad2 = adService.createAd(sellerId.toHexString(), "Same Seller Item", 5)
+                adService.updateAd(ad2.id, sellerId.toHexString(), UpdateAdRequest(
+                    description = "Same Seller Item Description",
+                    price = CurrencyAmount(BigDecimal("20.00"), Currency.ARRR),
+                    location = Location("city1", doubleArrayOf(1.0, 2.0)),
+                    stock = 5
+                ))
+                adService.activateAd(ad2.id, sellerId.toHexString())
+
+                // Actual: ad1=10.00, ad2=20.00 (Total 30.00)
+                // Request: ad1=15.00, ad2=15.00 (Total 30.00)
+                val request = PurchaseRequestDto(
+                    items = listOf(
+                        PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("15.00")),
+                        PurchaseItemRequestDto(adId = ad2.id, quantity = 1, unitPrice = BigDecimal("15.00"))
+                    ),
+                    currency = Currency.ARRR
+                )
+
+                mockMvc.post("/purchases") {
+                    requestAttr("principal", principal)
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isConflict() }
+                    jsonPath("$.error") { value("PRICE_MISMATCH") }
                 }
             }
         }
