@@ -71,7 +71,7 @@ class PirateChainPaymentsController(
     @Privileged(role = "ADMIN")
     fun getUserTransactions(): ResponseEntity<Any> { // Use ResponseEntity<Any> for flexible success/error responses
         val userId = HttpServletRequestAuthUtil.getPrincipal().userId
-        log.info("Received request to fetch transactions for user ID: {}", userId)
+        log.debug("Received request to fetch transactions for user ID: {}", userId)
 
         return try {
             val transactions = pirateChainPaymentService.getUserTransactions(userId)

@@ -79,7 +79,7 @@ class PirateChainPaymentService(
 
         allTransactions.sortByDescending { it.confirmations }
 
-        log.info("Returning {} total transactions across {} addresses for user ID: {}",
+        log.debug("Returning {} total transactions across {} addresses for user ID: {}",
                  allTransactions.size, userAddressesDoc.addresses.size, userId)
         return allTransactions
     }
