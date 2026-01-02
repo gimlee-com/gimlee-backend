@@ -188,6 +188,25 @@ class PurchaseFacadeIntegrationTest(
                     jsonPath("$.currentPrices['${ad2.id}'].amount") { value(20.0) }
                 }
             }
+
+            When("the buyer attempts to purchase an inactive ad") {
+                val inactiveAd = adService.createAd(sellerId.toHexString(), "Inactive Item", 5)
+                // We don't activate it
+
+                val request = PurchaseRequestDto(
+                    items = listOf(PurchaseItemRequestDto(adId = inactiveAd.id, quantity = 1, unitPrice = BigDecimal("10.00"))),
+                    currency = Currency.ARRR
+                )
+
+                mockMvc.post("/purchases") {
+                    requestAttr("principal", principal)
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.error") { value("One or more ads are not active: ${inactiveAd.id}") }
+                }
+            }
         }
     }
 })

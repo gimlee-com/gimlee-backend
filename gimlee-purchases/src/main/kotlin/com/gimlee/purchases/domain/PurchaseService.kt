@@ -4,6 +4,7 @@ import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Ad
+import com.gimlee.ads.domain.model.AdStatus
 import com.gimlee.events.PaymentEvent
 import com.gimlee.payments.domain.PaymentService
 import com.gimlee.payments.domain.model.PaymentMethod
@@ -38,6 +39,7 @@ class PurchaseService(
         val ads = adService.getAds(items.map { it.adId }).associateBy { it.id }
 
         validateAdsExist(items, ads)
+        validateAdsAreActive(ads)
         validatePrices(items, ads, currency)
 
         val purchasedItemDetails = collectPurchasedItemDetails(items, ads)
@@ -63,6 +65,13 @@ class PurchaseService(
         val missingAdIds = items.map { it.adId }.filter { !ads.containsKey(it) }.distinct()
         if (missingAdIds.isNotEmpty()) {
             throw IllegalArgumentException("Ads not found: ${missingAdIds.joinToString()}")
+        }
+    }
+
+    private fun validateAdsAreActive(ads: Map<String, Ad>) {
+        val inactiveAdIds = ads.values.filter { it.status != AdStatus.ACTIVE }.map { it.id }
+        if (inactiveAdIds.isNotEmpty()) {
+            throw IllegalStateException("One or more ads are not active: ${inactiveAdIds.joinToString()}")
         }
     }
 

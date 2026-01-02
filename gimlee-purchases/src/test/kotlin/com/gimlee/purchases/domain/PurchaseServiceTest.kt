@@ -199,6 +199,33 @@ class PurchaseServiceTest : StringSpec({
         exception.currentPrices[adId2.toHexString()]?.amount?.compareTo(BigDecimal("20.0")) shouldBe 0
     }
 
+    "should throw IllegalStateException if ad is not ACTIVE" {
+        val buyerId = ObjectId.get()
+        val adId = ObjectId.get()
+        val sellerId = ObjectId.get()
+        val ad = Ad(
+            id = adId.toHexString(),
+            userId = sellerId.toHexString(),
+            title = "Inactive Ad",
+            description = "Desc",
+            price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            status = AdStatus.INACTIVE,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            location = null,
+            mainPhotoPath = null,
+            stock = 5,
+            lockedStock = 0
+        )
+
+        every { adService.getAds(listOf(adId.toHexString())) } returns listOf(ad)
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<IllegalStateException> {
+            service.purchase(buyerId, listOf(com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.TEN)), Currency.ARRR)
+        }
+        exception.message shouldBe "One or more ads are not active: ${adId.toHexString()}"
+    }
+
     "should update purchase status on payment complete event" {
         val purchaseId = ObjectId.get()
         val purchase = Purchase(
