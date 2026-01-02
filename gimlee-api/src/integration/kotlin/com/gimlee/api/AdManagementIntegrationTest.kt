@@ -73,7 +73,7 @@ class AdManagementIntegrationTest(
 
         When("the seller attempts to set stock to a level lower than locked stock") {
             // First deactivate it
-            mockMvc.post("/ads/${ad.id}/deactivate") {
+            mockMvc.post("/sales/ads/${ad.id}/deactivate") {
                 requestAttr("principal", principal)
             }.andExpect {
                 status { isOk() }
@@ -90,7 +90,7 @@ class AdManagementIntegrationTest(
                 stock = 2 // Lower than locked stock 3
             )
 
-            mockMvc.put("/ads/${ad.id}") {
+            mockMvc.put("/sales/ads/${ad.id}") {
                 requestAttr("principal", principal)
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(updateRequest)
@@ -112,7 +112,7 @@ class AdManagementIntegrationTest(
                 stock = 5 // >= locked stock 3
             )
 
-            mockMvc.put("/ads/${ad.id}") {
+            mockMvc.put("/sales/ads/${ad.id}") {
                 requestAttr("principal", principal)
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(updateRequest)

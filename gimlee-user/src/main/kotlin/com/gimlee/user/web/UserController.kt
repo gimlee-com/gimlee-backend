@@ -126,7 +126,7 @@ class UserController(
         responseCode = "200",
         description = "Addresses retrieved successfully"
     )
-    @GetMapping("/delivery-addresses")
+    @GetMapping("/delivery-addresses/")
     @Privileged(role = "USER")
     fun getDeliveryAddresses(): ResponseEntity<Any> {
         val principal = HttpServletRequestAuthUtil.getPrincipal()

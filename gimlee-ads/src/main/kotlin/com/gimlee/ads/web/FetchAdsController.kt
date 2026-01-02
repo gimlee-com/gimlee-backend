@@ -54,30 +54,12 @@ class FetchAdsController(
         description = "Fetches featured ads. Currently, these are the most recently added ads."
     )
     @ApiResponse(responseCode = "200", description = "Paged list of featured ads")
-    @GetMapping(path = ["/ads/featured"])
+    @GetMapping(path = ["/ads/featured/"])
     fun fetchFeaturedAds(): Page<AdPreviewDto> {
         val pageOfFeaturedAds = adService.getFeaturedAds()
         return pageOfFeaturedAds.map { AdPreviewDto.fromAd(it) }
     }
 
-    @Operation(
-        summary = "Fetch My Ads",
-        description = "Fetches ads belonging to the authenticated user. Requires USER role authentication."
-    )
-    @ApiResponse(responseCode = "200", description = "List of user's ads")
-    @GetMapping(path = ["/ads/my"])
-    @Privileged("USER")
-    fun fetchMyAds(): Page<AdPreviewDto> {
-        val pageOfMyAds = adService.getAds(
-            filters = AdFilters(
-                createdBy = HttpServletRequestAuthUtil.getPrincipal().userId,
-                statuses = listOf(AdStatus.ACTIVE, AdStatus.INACTIVE)
-            ),
-            sorting = AdSorting(by = By.CREATED_DATE, direction = Direction.DESC),
-            pageRequest = Pageable.unpaged() // This will result in a Page with all user's ads
-        )
-        return pageOfMyAds.map { AdPreviewDto.fromAd(it) }
-    }
 
     @Operation(
         summary = "Fetch Single Ad Details",

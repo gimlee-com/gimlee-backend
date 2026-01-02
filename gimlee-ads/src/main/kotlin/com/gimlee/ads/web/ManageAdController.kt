@@ -1,8 +1,9 @@
 package com.gimlee.ads.web
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.Currency
+import com.gimlee.ads.domain.model.*
 import com.gimlee.ads.web.dto.request.CreateAdRequestDto
+import com.gimlee.ads.web.dto.request.SalesAdsRequestDto
 import com.gimlee.ads.web.dto.request.UpdateAdRequestDto
 import com.gimlee.ads.web.dto.response.AdDto
 import com.gimlee.auth.annotation.Privileged
@@ -16,16 +17,65 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @Tag(name = "Ad Management", description = "Endpoints for creating, updating, and activating ads")
 @RestController
-@RequestMapping("/ads")
+@RequestMapping("/sales/ads")
 class ManageAdController(private val adService: AdService) {
 
     private val log = LoggerFactory.getLogger(javaClass)
+
+    companion object {
+        private const val PAGE_SIZE = 60
+    }
+
+    @Operation(
+        summary = "Fetch My Ads",
+        description = "Fetches ads belonging to the authenticated user. Supports filtering and pagination."
+    )
+    @ApiResponse(responseCode = "200", description = "Paged list of user's ads")
+    @GetMapping("/")
+    @Privileged("USER")
+    fun getMyAds(@Valid request: SalesAdsRequestDto): Page<AdDto> {
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
+        val pageOfMyAds = adService.getAds(
+            filters = AdFilters(
+                createdBy = principal.userId,
+                text = request.t,
+                statuses = request.s ?: listOf(AdStatus.ACTIVE, AdStatus.INACTIVE)
+            ),
+            sorting = AdSorting(by = request.by, direction = request.dir),
+            pageRequest = PageRequest.of(request.p, PAGE_SIZE)
+        )
+        return pageOfMyAds.map { AdDto.fromDomain(it) }
+    }
+
+    @Operation(
+        summary = "Fetch Single Ad for Seller",
+        description = "Fetches full details for a specific ad owned by the seller."
+    )
+    @ApiResponse(responseCode = "200", description = "Detailed ad information")
+    @ApiResponse(responseCode = "404", description = "Ad not found or not owned by the user")
+    @GetMapping("/{adId}")
+    @Privileged("USER")
+    fun getAd(
+        @Parameter(description = "Unique ID of the ad")
+        @PathVariable adId: String
+    ): ResponseEntity<Any> {
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
+        val ad = adService.getAd(adId)
+
+        if (ad == null || ad.userId != principal.userId) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("error" to "Ad not found."))
+        }
+
+        return ResponseEntity.ok(AdDto.fromDomain(ad))
+    }
 
     @Operation(
         summary = "Create a New Ad",

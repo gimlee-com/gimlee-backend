@@ -63,8 +63,8 @@ class AdVisibilityIntegrationTest(
             }
         }
 
-        When("fetching featured ads via /ads/featured") {
-            val result = mockMvc.get("/ads/featured") {
+        When("fetching featured ads via /ads/featured/") {
+            val result = mockMvc.get("/ads/featured/") {
             }.andExpect {
                 status { isOk() }
             }.andReturn()
@@ -77,9 +77,9 @@ class AdVisibilityIntegrationTest(
             }
         }
 
-        When("fetching my ads via /ads/my") {
+        When("fetching my ads via /sales/ads/") {
             val principal = Principal(userId = sellerIdStr, username = "seller", roles = listOf(Role.USER))
-            val result = mockMvc.get("/ads/my") {
+            val result = mockMvc.get("/sales/ads/") {
                 requestAttr("principal", principal)
             }.andExpect {
                 status { isOk() }

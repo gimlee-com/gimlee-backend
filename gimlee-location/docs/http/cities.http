@@ -2,7 +2,7 @@
 # Searches for cities matching the provided phrase.
 # Returns a list of city suggestions including their IDs and names.
 # @name getCitySuggestions
-GET {{host}}/api/cities/suggestions?p=New%20York
+GET {{host}}/api/cities/suggestions/?p=New%20York
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json

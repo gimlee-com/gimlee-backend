@@ -20,6 +20,7 @@ data class AdDto(
     val mediaPaths: List<String>?,
     val mainPhotoPath: String?,
     val stock: Int,
+    val lockedStock: Int,
     val availableStock: Int,
 ) {
     companion object {
@@ -37,6 +38,7 @@ data class AdDto(
                 mediaPaths = mediaPaths,
                 mainPhotoPath = mainPhotoPath,
                 stock = stock,
+                lockedStock = lockedStock,
                 availableStock = (stock - lockedStock).coerceAtLeast(0)
             )
         }

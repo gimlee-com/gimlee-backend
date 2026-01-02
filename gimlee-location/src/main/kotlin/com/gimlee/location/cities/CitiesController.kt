@@ -24,7 +24,7 @@ class CitiesController(
         description = "Searches for cities matching the provided phrase. Returns a list of city suggestions including their IDs and names."
     )
     @ApiResponse(responseCode = "200", description = "List of city suggestions")
-    @GetMapping(path = ["/cities/suggestions"])
+    @GetMapping(path = ["/cities/suggestions/"])
     fun getCitySuggestions(
         @Parameter(description = "Search phrase for city name")
         @RequestParam(name = "p") phrase: String

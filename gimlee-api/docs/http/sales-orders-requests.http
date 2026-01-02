@@ -1,0 +1,36 @@
+### Fetch My Orders
+# Requires USER role authentication
+# Fetches orders for the authenticated seller.
+# @name /sales/orders/ [GET]
+GET {{host}}/api/sales/orders/?p=0
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "content": [
+#     {
+#       "id": "60f8f9b3a9d9e8f8a8b8c8d8",
+#       "status": "AWAITING_PAYMENT",
+#       "paymentStatus": "PENDING",
+#       "createdAt": "2023-01-01T10:00:00Z",
+#       "totalAmount": 100.0,
+#       "currency": "ARRR",
+#       "items": [
+#         {
+#           "adId": "60f8f9b3a9d9e8f8a8b8c8d7",
+#           "title": "Ad Title",
+#           "quantity": 1,
+#           "unitPrice": 100.0
+#         }
+#       ],
+#       "buyer": {
+#         "id": "5f8f8f8f8f8f8f8f8f8f8f8f",
+#         "username": "buyer_username"
+#       }
+#     }
+#   ],
+#   "totalPages": 1,
+#   "totalElements": 1,
+#   ...
+# }

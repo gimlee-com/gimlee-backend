@@ -72,23 +72,13 @@ GET {{host}}/api/ads/?t=Vintage%20Bike&minp=50&maxp=250&cty=another-city-id&by=P
 # Fetches featured ads. Currently, these are the most recently added ads.
 # No client-side filtering or pagination parameters.
 # @name GetFeaturedAds
-GET {{host}}/api/ads/featured
+GET {{host}}/api/ads/featured/
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
 # (List of featured ads)
 
 
-### Fetch My Ads
-# Fetches ads belonging to the authenticated user.
-# Requires USER role authentication.
-# Returns all ads for the user (unpaged), sorted by created date descending.
-# @name GetMyAds
-GET {{host}}/api/ads/my
-
-### Expected Response (Success - 200 OK):
-# Content-Type: application/json
-# (List of ads belonging to the authenticated user)
 
 
 ### Fetch Single Ad Details

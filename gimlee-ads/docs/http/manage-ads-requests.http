@@ -1,8 +1,8 @@
 ### Create a New Ad
 # Requires USER role authentication
 # Creates an ad in an INACTIVE state.
-# @name /ads [POST]
-POST {{host}}/api/ads
+# @name /sales/ads [POST]
+POST {{host}}/api/sales/ads
 Content-Type: application/json
 
 {
@@ -23,6 +23,9 @@ Content-Type: application/json
 #   "location": null,
 #   "mediaPaths": [],
 #   "mainPhotoPath": null,
+#   "stock": 0,
+#   "lockedStock": 0,
+#   "availableStock": 0,
 #   "createdAt": "2023-01-01T10:00:00Z",
 #   "updatedAt": "2023-01-01T10:00:00Z"
 # }
@@ -32,8 +35,8 @@ Content-Type: application/json
 # Requires USER role authentication
 # Can only update INACTIVE ads.
 # Replace {adId} with the actual ID of the ad you want to update.
-# @name /ads/{adId} [PUT]
-PUT {{host}}/api/ads/{adId}
+# @name /sales/ads/{adId} [PUT]
+PUT {{host}}/api/sales/ads/{adId}
 Content-Type: application/json
 
 {
@@ -52,7 +55,8 @@ Content-Type: application/json
     "path/to/media/image1.jpg",
     "path/to/media/details/image2.png"
   ],
-  "mainPhotoPath": "path/to/media/image1.jpg"
+  "mainPhotoPath": "path/to/media/image1.jpg",
+  "stock": 10
 }
 
 ### Expected Response (Success - 200 OK):
@@ -78,6 +82,9 @@ Content-Type: application/json
 #     "path/to/media/details/image2.png"
 #   ],
 #   "mainPhotoPath": "path/to/media/image1.jpg",
+#   "stock": 10,
+#   "lockedStock": 0,
+#   "availableStock": 10,
 #   "createdAt": "2023-01-01T10:00:00Z",
 #   "updatedAt": "2023-01-01T10:05:00Z"
 # }
@@ -105,8 +112,8 @@ Content-Type: application/json
 # Requires USER role authentication
 # Changes the status of an INACTIVE ad to ACTIVE.
 # Replace {adId} with the actual ID of the ad you want to activate.
-# @name /ads/{adId}/activate [POST]
-POST {{host}}/api/ads/{adId}/activate
+# @name /sales/ads/{adId}/activate [POST]
+POST {{host}}/api/sales/ads/{adId}/activate
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
@@ -131,6 +138,9 @@ POST {{host}}/api/ads/{adId}/activate
 #     "path/to/media/details/image2.png"
 #   ],
 #   "mainPhotoPath": "path/to/media/image1.jpg", // Or null/previous value
+#   "stock": 10,
+#   "lockedStock": 0,
+#   "availableStock": 10,
 #   "createdAt": "2023-01-01T10:00:00Z",
 #   "updatedAt": "2023-01-01T10:10:00Z"
 # }
@@ -154,8 +164,8 @@ POST {{host}}/api/ads/{adId}/activate
 # Requires USER role authentication
 # Changes the status of an ACTIVE ad to INACTIVE.
 # Replace {adId} with the actual ID of the ad you want to deactivate.
-# @name /ads/{adId}/deactivate [POST]
-POST {{host}}/api/ads/{adId}/deactivate
+# @name /sales/ads/{adId}/deactivate [POST]
+POST {{host}}/api/sales/ads/{adId}/deactivate
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
@@ -178,4 +188,49 @@ POST {{host}}/api/ads/{adId}/deactivate
 #
 # {
 #   "error": "Ad can only be deactivated when in ACTIVE state."
+# }
+
+### Fetch My Ads
+# Requires USER role authentication
+# Fetches ads belonging to the authenticated user.
+# @name /sales/ads/ [GET]
+GET {{host}}/api/sales/ads/?p=0&t=Awesome&s=ACTIVE,INACTIVE
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "content": [
+#     {
+#       "id": "60f8f9b3a9d9e8f8a8b8c8d8",
+#       "title": "My Awesome New Ad Title",
+#       "status": "ACTIVE",
+#       "stock": 10,
+#       "lockedStock": 2,
+#       "availableStock": 8,
+#       ...
+#     }
+#   ],
+#   "totalPages": 1,
+#   "totalElements": 1,
+#   ...
+# }
+
+### Fetch Single Ad for Seller
+# Requires USER role authentication
+# Fetches full details for a specific ad owned by the seller.
+# @name /sales/ads/{adId} [GET]
+GET {{host}}/api/sales/ads/{adId}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "id": "{adId}",
+#   "title": "Updated Ad Title",
+#   "status": "ACTIVE",
+#   "stock": 10,
+#   "lockedStock": 2,
+#   "availableStock": 8,
+#   ...
 # }

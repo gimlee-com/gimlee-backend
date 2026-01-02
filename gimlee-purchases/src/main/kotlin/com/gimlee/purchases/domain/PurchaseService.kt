@@ -18,6 +18,8 @@ import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.event.EventListener
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.Instant
@@ -213,4 +215,12 @@ class PurchaseService(
     }
     
     fun getPurchase(purchaseId: ObjectId): Purchase? = purchaseRepository.findById(purchaseId)
+
+    fun getPurchasesForSeller(sellerId: ObjectId, pageable: Pageable): Page<Purchase> {
+        return purchaseRepository.findAllBySellerId(sellerId, pageable)
+    }
+
+    fun getPurchasesForBuyer(buyerId: ObjectId, pageable: Pageable): Page<Purchase> {
+        return purchaseRepository.findAllByBuyerId(buyerId, pageable)
+    }
 }

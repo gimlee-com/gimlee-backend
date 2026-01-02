@@ -92,3 +92,40 @@ GET {{host}}/api/purchases/60f8f9b3a9d9e8f8a8b8c8d8/status
 # Occurs if the authenticated user is neither the buyer nor the seller of the purchase.
 #
 # HTTP/1.1 403 Forbidden
+
+
+### Get My Purchases
+# Requires USER role authentication
+# Fetches purchase history for the authenticated buyer.
+# @name /purchases/ [GET]
+GET {{host}}/api/purchases/?p=0
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "content": [
+#     {
+#       "id": "60f8f9b3a9d9e8f8a8b8c8d8",
+#       "status": "AWAITING_PAYMENT",
+#       "paymentStatus": "PENDING",
+#       "createdAt": "2023-01-01T10:00:00Z",
+#       "totalAmount": 100.0,
+#       "currency": "ARRR",
+#       "items": [
+#         {
+#           "adId": "60f8f9b3a9d9e8f8a8b8c8d7",
+#           "title": "Ad Title",
+#           "quantity": 1,
+#           "unitPrice": 100.0
+#         }
+#       ],
+#       "seller": {
+#         "id": "5f8f8f8f8f8f8f8f8f8f8f8f",
+#         "username": "seller_username"
+#       }
+#     }
+#   ],
+#   "totalPages": 1,
+#   "totalElements": 1
+# }

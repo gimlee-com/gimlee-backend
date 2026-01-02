@@ -18,9 +18,13 @@ import com.gimlee.purchases.persistence.model.PurchaseItemDocument
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.Sorts
 import org.bson.Document
 import org.bson.types.Decimal128
 import org.bson.types.ObjectId
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -49,7 +53,37 @@ class PurchaseRepository(
         val filter = Filters.eq(FIELD_ID, id)
         return collection.find(filter).firstOrNull()?.toPurchase()
     }
-    
+
+    fun findAllBySellerId(sellerId: ObjectId, pageable: Pageable): Page<Purchase> {
+        return findByField(FIELD_SELLER_ID, sellerId, pageable)
+    }
+
+    fun findAllByBuyerId(buyerId: ObjectId, pageable: Pageable): Page<Purchase> {
+        return findByField(FIELD_BUYER_ID, buyerId, pageable)
+    }
+
+    private fun findByField(fieldName: String, value: Any, pageable: Pageable): Page<Purchase> {
+        val filter = Filters.eq(fieldName, value)
+        val total = collection.countDocuments(filter)
+        val sort = Sorts.descending(FIELD_CREATED_AT)
+
+        val purchases = if (pageable.isPaged) {
+            collection.find(filter)
+                .sort(sort)
+                .skip(pageable.offset.toInt())
+                .limit(pageable.pageSize)
+                .map { it.toPurchase() }
+                .toList()
+        } else {
+            collection.find(filter)
+                .sort(sort)
+                .map { it.toPurchase() }
+                .toList()
+        }
+
+        return PageImpl(purchases, pageable, total)
+    }
+
     fun findAllByStatus(status: PurchaseStatus): List<Purchase> {
         val filter = Filters.eq(FIELD_STATUS, status.id)
         return collection.find(filter).map { it.toPurchase() }.toList()

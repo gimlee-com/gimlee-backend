@@ -9,6 +9,7 @@ import com.gimlee.auth.domain.User.Companion.FIELD_PASSWORD
 import com.gimlee.auth.domain.User.Companion.FIELD_PASSWORD_SALT
 import com.gimlee.auth.domain.User.Companion.FIELD_USERNAME
 import com.gimlee.auth.domain.User.Companion.FIELD_VERIFICATION_CODE
+import org.bson.types.ObjectId
 
 @Component
 class UserRepository(
@@ -39,6 +40,17 @@ class UserRepository(
 
     fun findOneByField(field: String, value: Any, includeCredentials: Boolean = false): User? {
         return findOneByFields(Pair(field, value), includeCredentials = includeCredentials)
+    }
+
+    fun findAllByIds(ids: Collection<ObjectId>, includeCredentials: Boolean = false): List<User> {
+        val query = Query(Criteria.where(User.FIELD_ID).`in`(ids))
+        if (!includeCredentials) {
+            query.fields()
+                .exclude(FIELD_PASSWORD)
+                .exclude(FIELD_PASSWORD_SALT)
+                .exclude(FIELD_VERIFICATION_CODE)
+        }
+        return mongoTemplate.find(query, User::class.java, USERS_COLLECTION_NAME)
     }
 
     fun findAll(): List<User> =
