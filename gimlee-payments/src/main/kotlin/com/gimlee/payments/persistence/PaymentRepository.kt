@@ -12,7 +12,7 @@ import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_CRE
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_DEADLINE
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_ID
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_MEMO
-import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_ORDER_ID
+import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_PURCHASE_ID
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_PAYMENT_METHOD
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_RECEIVING_ADDRESS
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_SELLER_ID
@@ -52,8 +52,8 @@ class PaymentRepository(
         return collection.find(filter).firstOrNull()?.toPayment()
     }
 
-    fun findByOrderId(orderId: ObjectId): Payment? {
-        val filter = Filters.eq(FIELD_ORDER_ID, orderId)
+    fun findByPurchaseId(purchaseId: ObjectId): Payment? {
+        val filter = Filters.eq(FIELD_PURCHASE_ID, purchaseId)
         return collection.find(filter).firstOrNull()?.toPayment()
     }
 
@@ -65,7 +65,7 @@ class PaymentRepository(
     private fun Payment.toDocument(): PaymentDocument =
         PaymentDocument(
             id = id,
-            orderId = orderId,
+            purchaseId = purchaseId,
             buyerId = buyerId,
             sellerId = sellerId,
             amount = Decimal128(amount),
@@ -80,7 +80,7 @@ class PaymentRepository(
     private fun mapToBsonDocument(doc: PaymentDocument): Document {
         return Document()
             .append(FIELD_ID, doc.id)
-            .append(FIELD_ORDER_ID, doc.orderId)
+            .append(FIELD_PURCHASE_ID, doc.purchaseId)
             .append(FIELD_BUYER_ID, doc.buyerId)
             .append(FIELD_SELLER_ID, doc.sellerId)
             .append(FIELD_AMOUNT, doc.amount)
@@ -94,7 +94,7 @@ class PaymentRepository(
 
     private fun Document.toPayment(): Payment = Payment(
         id = getObjectId(FIELD_ID),
-        orderId = getObjectId(FIELD_ORDER_ID),
+        purchaseId = getObjectId(FIELD_PURCHASE_ID),
         buyerId = getObjectId(FIELD_BUYER_ID),
         sellerId = getObjectId(FIELD_SELLER_ID),
         amount = get(FIELD_AMOUNT, Decimal128::class.java).bigDecimalValue(),

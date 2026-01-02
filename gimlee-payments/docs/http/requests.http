@@ -49,7 +49,7 @@ Accept: application/json
 # [
 #   {
 #     "txid": "a1b2c3d4...",
-#     "memo": "GIMLEE_ORDER_...",
+#     "memo": "gimlee:<purchaseId>",
 #     "amount": 10.5,
 #     "confirmations": 15,
 #     "zAddress": "zs1abcdefg..."

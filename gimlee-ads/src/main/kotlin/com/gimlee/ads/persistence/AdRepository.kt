@@ -185,7 +185,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
     }
 
     /**
-     * Decrements both stock and locked stock by 1 (used when order is complete).
+     * Decrements both stock and locked stock by 1 (used when purchase is complete).
      */
     fun decrementStockAndLockedStock(adId: ObjectId) {
         val filter = Filters.eq(AdDocument.FIELD_ID, adId)

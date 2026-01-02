@@ -18,7 +18,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   `gimlee-media-store`: Media storage handling (Local Filesystem or S3).
 *   `gimlee-notifications`: Email and notification services.
 *   `gimlee-location`: Location-based services.
-*   `gimlee-orders`: Order management and coordination between ads and payments.
+*   `gimlee-purchases`: Purchase management.
 *   `gimlee-user`: User preferences and user profile settings.
 *   `gimlee-events`: Internal event definitions.
 *   `gimlee-common`: Shared utilities and extensions.

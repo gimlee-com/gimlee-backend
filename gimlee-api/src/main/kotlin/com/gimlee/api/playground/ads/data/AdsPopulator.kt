@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import java.io.InputStream
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -152,7 +153,7 @@ class AdsPopulator(
 
                         val template = adTemplates.random()
                         val price = BigDecimal.valueOf(Random.nextDouble(MIN_PRICE, MAX_PRICE))
-                            .setScale(2, BigDecimal.ROUND_HALF_UP)
+                            .setScale(2, RoundingMode.HALF_UP)
                         val currency = if (Random.nextBoolean()) Currency.USD else Currency.ARRR
                         val location = Location(city.id, doubleArrayOf(city.lon, city.lat))
 

@@ -13,7 +13,7 @@ import com.gimlee.payments.persistence.model.PaymentEventDocument
 import com.gimlee.payments.persistence.model.PaymentEventDocument.Companion.FIELD_AMOUNT
 import com.gimlee.payments.persistence.model.PaymentEventDocument.Companion.FIELD_BUYER_ID
 import com.gimlee.payments.persistence.model.PaymentEventDocument.Companion.FIELD_ID
-import com.gimlee.payments.persistence.model.PaymentEventDocument.Companion.FIELD_ORDER_ID
+import com.gimlee.payments.persistence.model.PaymentEventDocument.Companion.FIELD_PURCHASE_ID
 import com.gimlee.payments.persistence.model.PaymentEventDocument.Companion.FIELD_PAYMENT_METHOD
 import com.gimlee.payments.persistence.model.PaymentEventDocument.Companion.FIELD_SELLER_ID
 import com.gimlee.payments.persistence.model.PaymentEventDocument.Companion.FIELD_STATUS
@@ -49,7 +49,7 @@ class PaymentEventRepository(
     private fun PaymentEvent.toDocument(): PaymentEventDocument =
         PaymentEventDocument(
             id = ObjectId.get(),
-            orderId = orderId,
+            purchaseId = purchaseId,
             buyerId = buyerId,       // Map buyerId
             sellerId = sellerId,     // Map sellerId
             status = status,
@@ -64,7 +64,7 @@ class PaymentEventRepository(
     private fun mapToBsonDocument(eventDoc: PaymentEventDocument): Document {
         return Document()
             .append(FIELD_ID, eventDoc.id)
-            .append(FIELD_ORDER_ID, eventDoc.orderId)
+            .append(FIELD_PURCHASE_ID, eventDoc.purchaseId)
             .append(FIELD_BUYER_ID, eventDoc.buyerId)
             .append(FIELD_SELLER_ID, eventDoc.sellerId)
             .append(FIELD_STATUS, eventDoc.status)
@@ -77,7 +77,7 @@ class PaymentEventRepository(
      * Maps BSON Document to a PaymentEvent.
      */
     private fun Document.toPaymentEvent(): PaymentEvent = PaymentEvent(
-        orderId = getObjectId(FIELD_ORDER_ID),
+        purchaseId = getObjectId(FIELD_PURCHASE_ID),
         buyerId = getObjectId(FIELD_BUYER_ID),
         sellerId = getObjectId(FIELD_SELLER_ID),
         status = getInteger(FIELD_STATUS),

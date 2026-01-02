@@ -25,11 +25,11 @@ class PaymentService(
 ) {
 
     /**
-     * Initializes a new payment process for a given order.
+     * Initializes a new payment process for a given purchase.
      * Creates the Payment entity, saves it, and publishes the initial event.
      */
     fun initPayment(
-        orderId: ObjectId,
+        purchaseId: ObjectId,
         buyerId: ObjectId,
         sellerId: ObjectId,
         amount: BigDecimal,
@@ -46,11 +46,11 @@ class PaymentService(
 
         val now = Instant.now()
         val deadline = now.plus(paymentProperties.timeoutHours, ChronoUnit.HOURS)
-        val memo = "${paymentProperties.pirateChain.memoPrefix}${orderId.toHexString()}"
+        val memo = "${paymentProperties.pirateChain.memoPrefix}${purchaseId.toHexString()}"
 
         val payment = Payment(
             id = ObjectId.get(),
-            orderId = orderId,
+            purchaseId = purchaseId,
             buyerId = buyerId,
             sellerId = sellerId,
             amount = amount,
@@ -78,11 +78,11 @@ class PaymentService(
         }
     }
 
-    fun getPaymentByOrderId(orderId: ObjectId): Payment? = paymentRepository.findByOrderId(orderId)
+    fun getPaymentByPurchaseId(purchaseId: ObjectId): Payment? = paymentRepository.findByPurchaseId(purchaseId)
     
     private fun publishEvent(payment: Payment) {
         val paymentEvent = PaymentEvent(
-            orderId = payment.orderId,
+            purchaseId = payment.purchaseId,
             buyerId = payment.buyerId,
             sellerId = payment.sellerId,
             status = payment.status.id,

@@ -14,7 +14,7 @@ dependencies {
     implementation(project(":gimlee-payments"))
     implementation(project(":gimlee-ads"))
     implementation(project(":gimlee-location"))
-    implementation(project(":gimlee-orders"))
+    implementation(project(":gimlee-purchases"))
     implementation(project(":gimlee-user"))
 
     // Spring Boot dependencies

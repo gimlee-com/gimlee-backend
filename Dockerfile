@@ -19,7 +19,7 @@ COPY gimlee-media-store gimlee-media-store
 COPY gimlee-location gimlee-location
 COPY gimlee-payments gimlee-payments
 COPY gimlee-ads gimlee-ads
-COPY gimlee-orders gimlee-orders
+COPY gimlee-purchases gimlee-purchases
 COPY gimlee-user gimlee-user
 COPY gimlee-api gimlee-api
 

@@ -10,7 +10,7 @@ import org.springframework.boot.runApplication
 	"com.gimlee.ads",
 	"com.gimlee.payments",
 	"com.gimlee.location",
-	"com.gimlee.orders",
+	"com.gimlee.purchases",
 	"com.gimlee.user",
 	"com.gimlee.common",
 	"com.gimlee.api",

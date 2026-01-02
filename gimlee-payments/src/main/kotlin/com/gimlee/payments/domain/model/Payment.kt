@@ -6,7 +6,7 @@ import java.time.Instant
 
 data class Payment(
     val id: ObjectId,
-    val orderId: ObjectId,
+    val purchaseId: ObjectId,
     val buyerId: ObjectId,
     val sellerId: ObjectId,
     val amount: BigDecimal,

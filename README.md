@@ -26,8 +26,8 @@ This mechanism facilitates:
 2. Automated confirmation upon successful receipt of order payments.
 
 These capabilities are beneficial in many ways, including:
-1. Enhanced User Experience: The platform delivers comprehensive order status visibility throughout the entire
-   purchasing process, from the point of order initiation to the successful delivery of the item to the buyer.
+1. Enhanced User Experience: The platform delivers comprehensive purchase status visibility throughout the entire
+   purchasing process, from the point of purchase initiation to the successful delivery of the item to the buyer.
 2. Integrity of Reputation System: Buyer feedback, submitted post-transaction, combined with the system's verification
    of legitimate payment, contributes to more authentic and reliable seller ratings. This, in turn, underpins
    the development of a robust reputation system by mitigating manipulative or fraudulent activities.

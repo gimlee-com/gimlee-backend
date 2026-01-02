@@ -30,16 +30,16 @@ class PirateChainPaymentMonitorTest : StringSpec({
 
     "should complete payment when full payment is received" {
         val paymentId = ObjectId.get()
-        val orderId = ObjectId.get()
+        val purchaseId = ObjectId.get()
         val payment = Payment(
             id = paymentId,
-            orderId = orderId,
+            purchaseId = purchaseId,
             buyerId = ObjectId.get(),
             sellerId = ObjectId.get(),
             amount = BigDecimal("10.0"),
             status = PaymentStatus.AWAITING_CONFIRMATION,
             paymentMethod = PaymentMethod.PIRATE_CHAIN,
-            memo = "gimlee:${orderId.toHexString()}",
+            memo = "gimlee:${purchaseId.toHexString()}",
             deadline = Instant.now().plus(1, ChronoUnit.HOURS),
             receivingAddress = "zs1seller",
             createdAt = Instant.now()
@@ -47,7 +47,7 @@ class PirateChainPaymentMonitorTest : StringSpec({
 
         every { paymentRepository.findAllByStatus(PaymentStatus.AWAITING_CONFIRMATION) } returns listOf(payment)
         
-        val memoString = "gimlee:${orderId.toHexString()}"
+        val memoString = "gimlee:${purchaseId.toHexString()}"
         val memoHex = memoString.toByteArray().joinToString("") { "%02x".format(it) }
         
         val tx = RawReceivedTransaction(
@@ -66,16 +66,16 @@ class PirateChainPaymentMonitorTest : StringSpec({
 
     "should mark as underpaid if deadline passed and partial payment" {
         val paymentId = ObjectId.get()
-        val orderId = ObjectId.get()
+        val purchaseId = ObjectId.get()
         val payment = Payment(
             id = paymentId,
-            orderId = orderId,
+            purchaseId = purchaseId,
             buyerId = ObjectId.get(),
             sellerId = ObjectId.get(),
             amount = BigDecimal("10.0"),
             status = PaymentStatus.AWAITING_CONFIRMATION,
             paymentMethod = PaymentMethod.PIRATE_CHAIN,
-            memo = "gimlee:${orderId.toHexString()}",
+            memo = "gimlee:${purchaseId.toHexString()}",
             deadline = Instant.now().minus(1, ChronoUnit.HOURS),
             receivingAddress = "zs1seller",
             createdAt = Instant.now().minus(2, ChronoUnit.HOURS)
@@ -83,7 +83,7 @@ class PirateChainPaymentMonitorTest : StringSpec({
 
         every { paymentRepository.findAllByStatus(PaymentStatus.AWAITING_CONFIRMATION) } returns listOf(payment)
         
-        val memoString = "gimlee:${orderId.toHexString()}"
+        val memoString = "gimlee:${purchaseId.toHexString()}"
         val memoHex = memoString.toByteArray().joinToString("") { "%02x".format(it) }
         
         val tx = RawReceivedTransaction(
@@ -102,16 +102,16 @@ class PirateChainPaymentMonitorTest : StringSpec({
     
     "should mark as timeout if deadline passed and no payment" {
         val paymentId = ObjectId.get()
-        val orderId = ObjectId.get()
+        val purchaseId = ObjectId.get()
         val payment = Payment(
             id = paymentId,
-            orderId = orderId,
+            purchaseId = purchaseId,
             buyerId = ObjectId.get(),
             sellerId = ObjectId.get(),
             amount = BigDecimal("10.0"),
             status = PaymentStatus.AWAITING_CONFIRMATION,
             paymentMethod = PaymentMethod.PIRATE_CHAIN,
-            memo = "gimlee:${orderId.toHexString()}",
+            memo = "gimlee:${purchaseId.toHexString()}",
             deadline = Instant.now().minus(1, ChronoUnit.HOURS),
             receivingAddress = "zs1seller",
             createdAt = Instant.now().minus(2, ChronoUnit.HOURS)

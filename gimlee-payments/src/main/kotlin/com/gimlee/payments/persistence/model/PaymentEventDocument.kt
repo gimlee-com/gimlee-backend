@@ -8,7 +8,7 @@ import org.bson.types.ObjectId
  */
 data class PaymentEventDocument(
     val id: ObjectId = ObjectId.get(),
-    val orderId: ObjectId,
+    val purchaseId: ObjectId,
     val buyerId: ObjectId,
     val sellerId: ObjectId,
     val status: Int,
@@ -18,7 +18,7 @@ data class PaymentEventDocument(
 ) {
     companion object {
         const val FIELD_ID = "_id"
-        const val FIELD_ORDER_ID = "oid"
+        const val FIELD_PURCHASE_ID = "oid"
         const val FIELD_BUYER_ID = "bid"
         const val FIELD_SELLER_ID = "sid"
         const val FIELD_STATUS = "st"
