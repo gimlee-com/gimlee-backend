@@ -167,14 +167,8 @@ class AdService(
     }
 
     fun getAds(filters: AdFilters, sorting: AdSorting, pageRequest: Pageable): Page<Ad> {
-        val effectiveFilters = if (filters.createdBy != null) {
-            filters
-        } else {
-            // Ensure only ACTIVE ads are fetched if not fetching by createdBy (my ads)
-            filters // Status is already filtered in AdRepository.find for general queries
-        }
-        log.debug("Fetching ads with filters: {}, sorting: {}, page: {}", effectiveFilters, sorting, pageRequest)
-        val pageOfAdDocuments = adRepository.find(effectiveFilters, sorting, pageRequest)
+        log.debug("Fetching ads with filters: {}, sorting: {}, page: {}", filters, sorting, pageRequest)
+        val pageOfAdDocuments = adRepository.find(filters, sorting, pageRequest)
         return pageOfAdDocuments.map { it.toDomain() }
     }
 

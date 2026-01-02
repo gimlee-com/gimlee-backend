@@ -10,5 +10,10 @@ class HttpServletRequestAuthUtil {
             "principal",
             RequestAttributes.SCOPE_REQUEST
         ) as Principal
+
+        fun getPrincipalOrNull() = RequestContextHolder.getRequestAttributes()?.getAttribute(
+            "principal",
+            RequestAttributes.SCOPE_REQUEST
+        ) as? Principal
     }
 }

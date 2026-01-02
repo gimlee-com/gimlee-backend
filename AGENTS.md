@@ -54,6 +54,8 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **Events:** Use `ApplicationEventPublisher` and `gimlee-events` for loose coupling between modules.
 *   **Roles:** Grant roles (e.g., `PIRATE`) dynamically based on user actions.
 *   **DTO Intent:** Design creation DTOs with minimal fields to capture user intent early.
+*   **Atomic Operations:** Use atomic MongoDB operations and aggregation pipelines for conditional updates to maintain data integrity without transactions.
+*   **Domain Components:** Extract complex business logic into dedicated domain components (e.g., `AdStockService`) to maintain SRP and testability.
 
 ### 5. Configuration (`docs/development/configuration-guidelines.md`)
 *   **Externalize Everything:** Timeouts, prefixes, and monitoring delays must be configurable via `application.yaml`.
@@ -66,6 +68,7 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **Source of Truth:** The `.http` files serve as the source of truth for OpenAPI documentation. Descriptions and expected responses in annotations must match those in the `.http` files.
 *   **Security & Roles:** Do not manually document security or roles in OpenAPI annotations. The `OpenApiConfig` automatically appends this information to the documentation based on the `@Privileged` annotation and path configurations.
 *   **Stay in Sync:** Any addition or modification to Controllers requires corresponding updates to both their respective `.http` files and OpenAPI annotations to ensure consistency across all documentation formats.
+*   **Comprehensive Error Data:** When reporting conflicts or errors (e.g., price mismatches), return the current state of all relevant items so the client can recover gracefully.
 
 ### 7. Docker & Infrastructure
 *   **Module Synchronization:** This is a multi-module Gradle project where the `Dockerfile` explicitly copies each module's source directory to maintain a clean build context.

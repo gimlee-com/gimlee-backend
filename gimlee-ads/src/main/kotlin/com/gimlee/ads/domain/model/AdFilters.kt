@@ -8,4 +8,5 @@ data class AdFilters(
     val location: LocationFilter? = null,
     val createdBy: String? = null,
     val priceRange: Range<BigDecimal>? = null,
+    val statuses: List<AdStatus>? = null
 )

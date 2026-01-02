@@ -1,10 +1,7 @@
 package com.gimlee.ads.web
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.AdFilters
-import com.gimlee.ads.domain.model.AdSorting
-import com.gimlee.ads.domain.model.By
-import com.gimlee.ads.domain.model.Direction
+import com.gimlee.ads.domain.model.*
 import com.gimlee.ads.web.dto.request.AdFiltersDto.Companion.toAdFilters
 import com.gimlee.ads.web.dto.request.AdSortingDto.Companion.toAdSorting
 import com.gimlee.ads.web.dto.request.FetchAdsRequestDto
@@ -72,7 +69,10 @@ class FetchAdsController(
     @Privileged("USER")
     fun fetchMyAds(): Page<AdPreviewDto> {
         val pageOfMyAds = adService.getAds(
-            filters = AdFilters(createdBy = HttpServletRequestAuthUtil.getPrincipal().userId),
+            filters = AdFilters(
+                createdBy = HttpServletRequestAuthUtil.getPrincipal().userId,
+                statuses = listOf(AdStatus.ACTIVE, AdStatus.INACTIVE)
+            ),
             sorting = AdSorting(by = By.CREATED_DATE, direction = Direction.DESC),
             pageRequest = Pageable.unpaged() // This will result in a Page with all user's ads
         )
@@ -97,6 +97,15 @@ class FetchAdsController(
             response.status = HttpStatus.NOT_FOUND.value()
             return null
         }
+
+        if (ad.status != AdStatus.ACTIVE) {
+            val principal = HttpServletRequestAuthUtil.getPrincipalOrNull()
+            if (principal?.userId != ad.userId) {
+                response.status = HttpStatus.NOT_FOUND.value()
+                return null
+            }
+        }
+
         return AdDetailsDto.fromAd(ad)
     }
 }

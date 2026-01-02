@@ -100,7 +100,8 @@ class AdRepository(mongoDatabase: MongoDatabase) {
     fun find(filters: AdFilters, sorting: AdSorting, pageRequest: Pageable): Page<AdDocument> { // Return type changed
         val queryFilters = mutableListOf<Bson>()
 
-        queryFilters.add(Filters.eq(AdDocument.FIELD_STATUS, AdStatus.ACTIVE.name))
+        val statuses = filters.statuses ?: listOf(AdStatus.ACTIVE)
+        queryFilters.add(Filters.`in`(AdDocument.FIELD_STATUS, statuses.map { it.name }))
 
         filters.createdBy?.let {
             queryFilters.add(Filters.eq(AdDocument.FIELD_USER_ID, ObjectId(it)))
