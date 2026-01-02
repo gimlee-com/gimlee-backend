@@ -1,6 +1,6 @@
 package com.gimlee.ads.event
 
-import com.gimlee.ads.persistence.AdRepository
+import com.gimlee.ads.domain.AdStockService
 import com.gimlee.events.PurchaseEvent
 import com.gimlee.ads.domain.model.PurchaseStatus
 import com.gimlee.events.PurchaseEventItem
@@ -15,8 +15,8 @@ import java.time.Instant
 
 class PurchaseEventListenerTest : StringSpec({
 
-    val adRepository = mockk<AdRepository>(relaxed = true)
-    val listener = PurchaseEventListener(adRepository)
+    val adStockService = mockk<AdStockService>(relaxed = true)
+    val listener = PurchaseEventListener(adStockService)
 
     "should increment locked stock on CREATED event" {
         val adId = ObjectId.get()
@@ -32,7 +32,7 @@ class PurchaseEventListenerTest : StringSpec({
 
         listener.onPurchaseEvent(event)
 
-        verify { adRepository.incrementLockedStock(adId, 1) }
+        verify { adStockService.incrementLockedStock(adId, 1) }
     }
 
     "should complete sale on COMPLETE event" {
@@ -49,7 +49,7 @@ class PurchaseEventListenerTest : StringSpec({
 
         listener.onPurchaseEvent(event)
 
-        verify { adRepository.decrementStockAndLockedStock(adId, 2) }
+        verify { adStockService.commitStock(adId, 2) }
     }
 
     "should decrement locked stock on FAILED_PAYMENT_TIMEOUT event" {
@@ -66,7 +66,7 @@ class PurchaseEventListenerTest : StringSpec({
 
         listener.onPurchaseEvent(event)
 
-        verify { adRepository.decrementLockedStock(adId, 1) }
+        verify { adStockService.decrementLockedStock(adId, 1) }
     }
 
     "should propagate exception when incrementLockedStock fails" {
@@ -81,7 +81,7 @@ class PurchaseEventListenerTest : StringSpec({
             timestamp = Instant.now()
         )
 
-        every { adRepository.incrementLockedStock(adId, 1) } throws IllegalStateException("Cannot lock more stock")
+        every { adStockService.incrementLockedStock(adId, 1) } throws IllegalStateException("Cannot lock more stock")
 
         shouldThrow<IllegalStateException> {
             listener.onPurchaseEvent(event)

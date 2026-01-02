@@ -95,6 +95,10 @@ Content-Type: application/json
 # {
 #   "error": "Cannot update an ad that is not INACTIVE."
 # }
+# or
+# {
+#   "error": "Stock (2) cannot be lower than locked stock (3)."
+# }
 
 
 ### Activate an Ad
@@ -143,4 +147,35 @@ POST {{host}}/api/ads/{adId}/activate
 #
 # {
 #   "error": "Cannot activate an ad that is already ACTIVE." // Or similar message
+# }
+
+
+### Deactivate an Ad
+# Requires USER role authentication
+# Changes the status of an ACTIVE ad to INACTIVE.
+# Replace {adId} with the actual ID of the ad you want to deactivate.
+# @name /ads/{adId}/deactivate [POST]
+POST {{host}}/api/ads/{adId}/deactivate
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "id": "{adId}", // The deactivated Ad ID
+#   "status": "INACTIVE", // Status is now INACTIVE
+#   "updatedAt": "2023-01-01T10:15:00Z"
+# }
+
+### Expected Response (Not Found - 404 Not Found):
+# Content-Type: application/json
+#
+# {
+#   "error": "Ad not found with ID: {adId}"
+# }
+
+### Expected Response (Bad Request - 400 Bad Request):
+# Content-Type: application/json
+#
+# {
+#   "error": "Ad can only be deactivated when in ACTIVE state."
 # }

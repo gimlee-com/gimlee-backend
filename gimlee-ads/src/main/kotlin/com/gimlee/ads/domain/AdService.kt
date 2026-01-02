@@ -15,7 +15,10 @@ import java.time.Instant
 
 
 @Service
-class AdService(private val adRepository: AdRepository) {
+class AdService(
+    private val adRepository: AdRepository,
+    private val adStockService: AdStockService
+) {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -105,6 +108,12 @@ class AdService(private val adRepository: AdRepository) {
         val newPrice = updateData.price?.amount ?: existingAdDoc.price
         val newCurrency = updateData.price?.currency ?: existingAdDoc.currency
 
+        val newStock = updateData.stock ?: existingAdDoc.stock
+        try {
+            adStockService.validateStockLevel(adObjectId, newStock)
+        } catch (e: IllegalStateException) {
+            throw AdOperationException(e.message ?: "Invalid stock level.")
+        }
 
         val updatedAdDoc = existingAdDoc.copy(
             title = newTitle,
@@ -115,7 +124,7 @@ class AdService(private val adRepository: AdRepository) {
             location = newGeoPoint ?: existingAdDoc.location,
             mediaPaths = newMediaPaths,
             mainPhotoPath = newMainPhotoPath,
-            stock = updateData.stock ?: existingAdDoc.stock,
+            stock = newStock,
             updatedAtMicros = Instant.now().toMicros()
         )
 
@@ -217,6 +226,35 @@ class AdService(private val adRepository: AdRepository) {
         } catch (e: IllegalStateException) {
             throw AdOperationException(e.message ?: "Failed to activate ad.")
         }
+        return savedDocument.toDomain()
+    }
+
+    /**
+     * Deactivates an ad, changing its status to INACTIVE.
+     */
+    fun deactivateAd(adId: String, userId: String): Ad {
+        val adObjectId = ObjectId(adId)
+        val userObjectId = ObjectId(userId)
+        val existingAdDoc = adRepository.findById(adObjectId)
+            ?: throw AdNotFoundException(adId)
+
+        if (existingAdDoc.userId != userObjectId) {
+            log.warn("User {} attempted to deactivate ad {} owned by {}", userId, adId, existingAdDoc.userId)
+            throw AdOperationException("User does not have permission to deactivate this ad.")
+        }
+
+        if (existingAdDoc.status != AdStatus.ACTIVE) {
+            log.warn("Attempted to deactivate ad {} which is not in ACTIVE state (current: {})", adId, existingAdDoc.status)
+            throw AdOperationException("Ad can only be deactivated when in ACTIVE state.")
+        }
+
+        val deactivatedAdDoc = existingAdDoc.copy(
+            status = AdStatus.INACTIVE,
+            updatedAtMicros = Instant.now().toMicros()
+        )
+
+        log.info("Deactivating ad {} for user {}", adId, userId)
+        val savedDocument = adRepository.save(deactivatedAdDoc)
         return savedDocument.toDomain()
     }
 

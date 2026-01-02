@@ -195,14 +195,24 @@ class AdRepository(mongoDatabase: MongoDatabase) {
 
     /**
      * Decrements both stock and locked stock by the specified quantity (used when purchase is complete).
+     * Atomically deactivates the ad (sets status to INACTIVE) if the resulting stock is 0 or less.
      */
     fun decrementStockAndLockedStock(adId: ObjectId, quantity: Int = 1) {
         val filter = Filters.eq(AdDocument.FIELD_ID, adId)
-        val update = Updates.combine(
-            Updates.inc(AdDocument.FIELD_STOCK, -quantity),
-            Updates.inc(AdDocument.FIELD_LOCKED_STOCK, -quantity)
+
+        // Using aggregation pipeline update for atomic conditional status change
+        val pipeline = listOf(
+            Updates.set(AdDocument.FIELD_STOCK, Document("\$subtract", listOf("\$${AdDocument.FIELD_STOCK}", quantity))),
+            Updates.set(AdDocument.FIELD_LOCKED_STOCK, Document("\$subtract", listOf("\$${AdDocument.FIELD_LOCKED_STOCK}", quantity))),
+            Updates.set(AdDocument.FIELD_STATUS,
+                Document("\$cond", listOf(
+                    Document("\$lte", listOf("\$${AdDocument.FIELD_STOCK}", 0)),
+                    AdStatus.INACTIVE.name,
+                    "\$${AdDocument.FIELD_STATUS}"
+                ))
+            )
         )
-        collection.updateOne(filter, update)
+        collection.updateOne(filter, pipeline)
     }
 
 

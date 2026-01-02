@@ -15,7 +15,8 @@ import java.time.Instant
 class AdServiceTest : StringSpec({
 
     val adRepository = mockk<AdRepository>()
-    val adService = AdService(adRepository)
+    val adStockService = mockk<AdStockService>(relaxed = true)
+    val adService = AdService(adRepository, adStockService)
 
     "createAd should set stock" {
         val userId = ObjectId().toHexString()

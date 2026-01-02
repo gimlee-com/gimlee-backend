@@ -139,4 +139,42 @@ class ManageAdController(private val adService: AdService) {
                 .body(mapOf("error" to "An unexpected error occurred while activating the ad."))
         }
     }
+
+    @Operation(
+        summary = "Deactivate an Ad",
+        description = "Changes the status of an ACTIVE ad to INACTIVE. Requires USER role authentication."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Ad deactivated successfully",
+        content = [Content(schema = Schema(implementation = AdDto::class))]
+    )
+    @ApiResponse(responseCode = "404", description = "Ad not found for this user")
+    @ApiResponse(responseCode = "400", description = "Ad is already INACTIVE or invalid ID format")
+    @PostMapping("/{adId}/deactivate")
+    @Privileged(role = "USER")
+    fun deactivateAd(
+        @Parameter(description = "Unique ID of the ad to deactivate")
+        @PathVariable adId: String
+    ): ResponseEntity<Any> {
+        val principal = HttpServletRequestAuthUtil.Companion.getPrincipal()
+        log.info("User {} attempting to deactivate ad {}", principal.userId, adId)
+        return try {
+            val deactivatedAdDomain = adService.deactivateAd(adId, principal.userId)
+            ResponseEntity.ok(AdDto.fromDomain(deactivatedAdDomain))
+        } catch (e: AdService.AdNotFoundException) {
+            log.warn("Deactivation failed: Ad {} not found (requested by user {})", adId, principal.userId)
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("error" to e.message))
+        } catch (e: AdService.AdOperationException) {
+            log.warn("Deactivation failed for ad {}: {} (requested by user {})", adId, e.message, principal.userId)
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to e.message))
+        } catch (e: IllegalArgumentException) { // Catch invalid ObjectId format for adId
+            log.warn("Deactivation failed: Invalid ID format provided for ad {} by user {}", adId, principal.userId, e)
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to "Invalid ad ID format."))
+        } catch (e: Exception) {
+            log.error("Error deactivating ad {} for user {}: {}", adId, principal.userId, e.message, e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(mapOf("error" to "An unexpected error occurred while deactivating the ad."))
+        }
+    }
 }

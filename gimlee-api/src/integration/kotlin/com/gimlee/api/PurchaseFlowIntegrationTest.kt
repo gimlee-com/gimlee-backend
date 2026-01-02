@@ -98,6 +98,36 @@ class PurchaseFlowIntegrationTest(
                         finalAd?.stock shouldBe 9
                         finalAd?.lockedStock shouldBe 0
                         finalAd?.availableStock shouldBe 9
+                        finalAd?.status shouldBe com.gimlee.ads.domain.model.AdStatus.ACTIVE
+                    }
+                }
+            }
+
+            When("the buyer makes a purchase for all remaining items") {
+                val currentAd = adService.getAd(ad.id)!!
+                val remainingStock = currentAd.stock
+                val purchase = purchaseService.purchase(
+                    buyerId,
+                    listOf(PurchaseItemRequestDto(ad.id, remainingStock, BigDecimal("10.00"))),
+                    Currency.ARRR
+                )
+
+                And("the payment is complete") {
+                    val paymentEvent = PaymentEvent(
+                        purchaseId = purchase.id,
+                        buyerId = buyerId,
+                        sellerId = sellerId,
+                        status = PaymentStatus.COMPLETE.id,
+                        paymentMethod = PaymentMethod.PIRATE_CHAIN.id,
+                        amount = BigDecimal("10.00").multiply(BigDecimal(remainingStock)),
+                        timestamp = Instant.now()
+                    )
+                    eventPublisher.publishEvent(paymentEvent)
+
+                    Then("the Ad should become INACTIVE because stock is 0") {
+                        val finalAd = adService.getAd(ad.id)
+                        finalAd?.stock shouldBe 0
+                        finalAd?.status shouldBe com.gimlee.ads.domain.model.AdStatus.INACTIVE
                     }
                 }
             }
