@@ -32,7 +32,8 @@ Content-Type: application/json
 #   "payment": {
 #     "address": "zs1...",
 #     "amount": 1.5,
-#     "memo": gimle:60f8f9b3a9d9e8f8a8b8c8d8",
+#     "memo": "gimlee:60f8f9b3a9d9e8f8a8b8c8d8",
+#     "deadline": "2023-01-01T10:30:00Z",
 #     "qrCodeUri": "pirate:zs1...?amount=1.5"
 #   }
 # }
@@ -80,7 +81,8 @@ GET {{host}}/api/purchases/60f8f9b3a9d9e8f8a8b8c8d8/status
 # {
 #   "purchaseId": "60f8f9b3a9d9e8f8a8b8c8d8",
 #   "status": "AWAITING_PAYMENT",
-#   "paymentStatus": "AWAITING_CONFIRMATION"
+#   "paymentStatus": "AWAITING_CONFIRMATION",
+#   "paymentDeadline": "2023-01-01T10:30:00Z"
 # }
 
 ### Expected Response (Error - 404 Not Found):

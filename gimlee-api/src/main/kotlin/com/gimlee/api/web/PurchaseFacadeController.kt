@@ -71,6 +71,7 @@ class PurchaseFacadeController(
                         address = it.receivingAddress,
                         amount = it.amount,
                         memo = it.memo,
+                        deadline = it.deadline,
                         qrCodeUri = "pirate:${it.receivingAddress}?amount=${it.amount}"
                     )
                 }
@@ -183,7 +184,8 @@ class PurchaseFacadeController(
         val response = PurchaseStatusResponseDto(
             purchaseId = purchase.id.toHexString(),
             status = purchase.status.name,
-            paymentStatus = payment?.status?.name
+            paymentStatus = payment?.status?.name,
+            paymentDeadline = payment?.deadline
         )
         
         return ResponseEntity.ok(response)

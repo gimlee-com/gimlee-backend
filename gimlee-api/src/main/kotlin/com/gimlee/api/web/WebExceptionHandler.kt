@@ -21,8 +21,8 @@ class WebExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     @ExceptionHandler(AuthorizationException::class)
-    fun handleAuthorizationException(ex: RuntimeException, req: WebRequest): ResponseEntity<Any>? {
-        log.warn("Unauthorized access", ex)
+    fun handleAuthorizationException(ex: AuthorizationException, req: WebRequest): ResponseEntity<Any>? {
+        log.warn("Unauthorized access to resource: ${ex.resource}", ex)
         return handleExceptionInternal(
             ex,
             StatusResponseDto.fromStatusCode(StatusCode.UNAUTHORIZED),

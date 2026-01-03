@@ -25,6 +25,8 @@ spring:
           writetimeout: 5000
 
 gimlee:
+  scheduling:
+    pool-size: 5
   # gimlee-auth properties
   auth:
     rest:

@@ -31,6 +31,8 @@ spring:
     encoding: UTF-8
 
 gimlee:
+  scheduling:
+    pool-size: 5
   # gimlee-auth properties
   auth:
     jwt:

@@ -1,6 +1,7 @@
 package com.gimlee.api.web.dto
 
 import java.math.BigDecimal
+import java.time.Instant
 
 data class PurchaseResponseDto(
     val purchaseId: String,
@@ -12,11 +13,13 @@ data class PaymentDetailsDto(
     val address: String,
     val amount: BigDecimal,
     val memo: String,
+    val deadline: Instant,
     val qrCodeUri: String
 )
 
 data class PurchaseStatusResponseDto(
     val purchaseId: String,
     val status: String,
-    val paymentStatus: String?
+    val paymentStatus: String?,
+    val paymentDeadline: Instant?
 )

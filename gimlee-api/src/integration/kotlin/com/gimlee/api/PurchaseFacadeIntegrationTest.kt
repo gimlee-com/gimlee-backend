@@ -88,6 +88,7 @@ class PurchaseFacadeIntegrationTest(
                     response.payment?.address shouldBe "zs1testaddress"
                     response.payment?.amount shouldBe BigDecimal("10.00")
                     response.payment?.memo shouldNotBe null
+                    response.payment?.deadline shouldNotBe null
                     response.payment?.qrCodeUri shouldBe "pirate:zs1testaddress?amount=10.00"
                 }
 
@@ -104,6 +105,7 @@ class PurchaseFacadeIntegrationTest(
                         statusResponse.purchaseId shouldBe response.purchaseId
                         statusResponse.status shouldBe PurchaseStatus.AWAITING_PAYMENT.name
                         statusResponse.paymentStatus shouldBe "AWAITING_CONFIRMATION"
+                        statusResponse.paymentDeadline shouldNotBe null
                     }
                 }
             }

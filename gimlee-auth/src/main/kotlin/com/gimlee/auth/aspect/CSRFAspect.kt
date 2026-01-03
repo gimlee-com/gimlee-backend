@@ -9,7 +9,6 @@ import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.exception.AuthenticationException
-import com.gimlee.auth.exception.AuthorizationException
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import jakarta.annotation.Resource

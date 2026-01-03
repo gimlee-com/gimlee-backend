@@ -1,6 +1,7 @@
 package com.gimlee.auth.aspect
 
 import org.apache.commons.lang3.ArrayUtils
+import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
 import org.aspectj.lang.annotation.Pointcut
@@ -39,8 +40,8 @@ class AuthorizingAspect {
         // noop
     }
 
-    @Before(value = "annotatedWithPrivileged(priv)", argNames = "priv")
-    fun authorize(priv: Privileged) {
+    @Before(value = "annotatedWithPrivileged(priv)", argNames = "priv, joinPoint")
+    fun authorize(priv: Privileged, joinPoint: JoinPoint) {
 
         val userRoles = HttpServletRequestAuthUtil.getPrincipal().roles
         val requiredRole = Role.valueOf(priv.role)
@@ -49,7 +50,11 @@ class AuthorizingAspect {
             userRoles.stream().filter { userRole -> userRole == requiredRole }
                 .findAny()
                 .orElseThrow {
-                    AuthorizationException("Insufficient privileges. The user doesn't have the required role: ${priv.role}.")
+                    val resource = "${request?.method} ${request?.requestURI} (${joinPoint.signature.toShortString()})"
+                    AuthorizationException(
+                        "Insufficient privileges. The user doesn't have the required role: ${priv.role}.",
+                        resource
+                    )
                 }
         }
     }
