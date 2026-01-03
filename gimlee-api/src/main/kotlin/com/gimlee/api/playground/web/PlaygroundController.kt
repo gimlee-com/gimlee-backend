@@ -4,6 +4,7 @@ import com.gimlee.api.playground.ads.data.AdsPopulator
 import com.gimlee.api.playground.data.DatabaseCleaner
 import com.gimlee.api.playground.media.data.MediaPopulator
 import com.gimlee.api.playground.users.data.UsersPopulator
+import com.gimlee.api.playground.web.dto.CreateUsersRequest
 import com.gimlee.common.domain.model.StatusCode
 import com.gimlee.common.web.dto.StatusResponseDto
 import io.swagger.v3.oas.annotations.Operation
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Lazy
 import org.springframework.context.annotation.Profile
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @Profile("local", "dev", "test")
@@ -23,11 +25,11 @@ class PlaygroundController(
     @Lazy private val adsPopulator: AdsPopulator,
     @Lazy private val databaseCleaner: DatabaseCleaner
 ) {
-    @Operation(summary = "Create Playground Users", description = "Populates the database with a set of test users.")
+    @Operation(summary = "Create Playground Users", description = "Populates the database with a set of test users. If viewKey is provided, only 'seller' user is created with that viewKey.")
     @ApiResponse(responseCode = "200", description = "Users created successfully")
     @PostMapping("/playground/createUsers")
-    fun createUsers(): StatusResponseDto {
-        usersPopulator.populateUsers()
+    fun createUsers(@RequestBody request: CreateUsersRequest? = null): StatusResponseDto {
+        usersPopulator.populateUsers(request?.viewKey)
         return StatusResponseDto.fromStatusCode(StatusCode.SUCCESS)
     }
 

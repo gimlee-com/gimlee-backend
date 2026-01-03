@@ -3,6 +3,11 @@
 # Only available in local, dev, or test profiles.
 # @name createUsers
 POST {{host}}/api/playground/createUsers
+Content-Type: application/json
+
+{
+  "viewKey": "zxview1q2w3e4r5t6y7u8i9o0p..."
+}
 
 ### Expected Response (Success - 200 OK):
 # { "status": "SUCCESS", "code": 0, "message": "Success" }

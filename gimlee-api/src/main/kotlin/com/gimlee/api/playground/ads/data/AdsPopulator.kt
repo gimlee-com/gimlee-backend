@@ -91,6 +91,22 @@ class AdsPopulator(
             log.warn("No ad templates loaded. Skipping ad population.")
             return
         }
+
+        val sellerUser = userRepository.findOneByField("username", "seller")
+        if (sellerUser != null) {
+            log.info("User 'seller' found. Creating 1000 ads for 'seller' with 'Buyable' prefix.")
+            val totalAds = 1000
+            val chunkSize = 100
+            val tasks = (1..(totalAds / chunkSize)).map {
+                executorService.submit {
+                    createAdsForUser(sellerUser, chunkSize, "Buyable ")
+                }
+            }
+            tasks.forEach { it.get() }
+            log.info("Finished creating 1000 ads for 'seller'.")
+            return
+        }
+
         // Check for admin user remains the same
         val adminUser = userRepository.findOneByField("username", ADS_CHECK_USER)
         if (adminUser != null) {
@@ -133,88 +149,91 @@ class AdsPopulator(
         usersWithAds.addAll(usersFor1to9.map { it to (1..9) })
 
         val tasks = usersWithAds.map { (user, adCountRange) ->
-            executorService.submit { // Submit a task for each user needing ads
-                val userId = user.id?.toHexString()
-                if (userId == null) {
-                    log.warn("User ${user.username} has no ID. Skipping ad creation.")
-                    return@submit // Skip this task
-                }
-
-                val numberOfAdsToCreate = Random.nextInt(adCountRange.first, adCountRange.last + 1)
-                log.debug("Creating $numberOfAdsToCreate ads for user ${user.username} on thread ${Thread.currentThread().name}")
-
-                repeat(numberOfAdsToCreate) {
-                    try {
-                        val city = cityDataUnsorted.randomOrNull()
-                        if (city == null) {
-                            log.error("Could not get a random city (city list might be empty). Skipping this ad creation.")
-                            return@repeat
-                        }
-
-                        val template = adTemplates.random()
-                        val price = BigDecimal.valueOf(Random.nextDouble(MIN_PRICE, MAX_PRICE))
-                            .setScale(2, RoundingMode.HALF_UP)
-                        val currency = if (Random.nextBoolean()) Currency.USD else Currency.ARRR
-                        val location = Location(city.id, doubleArrayOf(city.lon, city.lat))
-
-                        // 1. Create inactive ad
-                        val createdAd = adService.createAd(userId, template.title)
-
-                        // --- Media Population Logic ---
-                        var adMediaPaths: List<String>? = null
-                        var adMainPhotoPath: String? = null
-
-                        if (Random.nextDouble() < MEDIA_ADD_CHANCE) {
-                            val numberOfMediaItemsToAdd = Random.nextInt(1, MAX_MEDIA_ITEMS_PER_AD + 1)
-                            val tempMediaPaths = mutableListOf<String>()
-                            try {
-                                repeat(numberOfMediaItemsToAdd) {
-                                    val mediaItem = playgroundMediaRepository.getRandomMediaItem()
-                                    // IMPORTANT: Assumes MediaItem has a 'path' field. Replace 'path' with the actual field name
-                                    // that holds the string representation of the media path/URL (e.g., mediaItem.url, mediaItem.storageKey).
-                                    tempMediaPaths.add(mediaItem.path)
-                                }
-                                if (tempMediaPaths.isNotEmpty()) {
-                                    adMediaPaths = tempMediaPaths.toList()
-                                    adMainPhotoPath = tempMediaPaths.random()
-                                }
-                            } catch (e: IllegalArgumentException) {
-                                log.warn("Could not fetch random media items for ad for user ${user.username} (PlaygroundMediaRepository might be empty or an error occurred): ${e.message}")
-                            } catch (e: Exception) {
-                                log.error("Unexpected error fetching media items for ad for user ${user.username}: ${e.message}", e)
-                            }
-                        }
-                        // --- End Media Population Logic ---
-
-                        // 2. Update ad with details (including media)
-                        val updateRequest = UpdateAdRequest(
-                            title = template.title,
-                            description = template.description,
-                            price = CurrencyAmount(price, currency),
-                            location = location,
-                            mediaPaths = adMediaPaths,
-                            mainPhotoPath = adMainPhotoPath,
-                            stock = Random.nextInt(1, 100)
-                        )
-                        val updatedAd = adService.updateAd(createdAd.id, userId, updateRequest)
-
-                        // 3. Activate ad
-                        adService.activateAd(updatedAd.id, userId)
-
-                    } catch (e: AdService.AdOperationException) {
-                        log.warn("Skipping ad creation for user ${user.username} due to operation exception: ${e.message}")
-                    } catch (e: AdService.AdNotFoundException) {
-                        log.error("Error during ad creation sequence for user ${user.username}: Ad not found unexpectedly.", e)
-                    } catch (e: Exception) {
-                        log.error("Failed to create an ad for user ${user.username}", e)
-                    }
-                }
-                log.debug("Finished creating ads for user ${user.username}")
+            val numberOfAdsToCreate = Random.nextInt(adCountRange.first, adCountRange.last + 1)
+            executorService.submit {
+                createAdsForUser(user, numberOfAdsToCreate)
             }
         }
 
         tasks.forEach { it.get() }
         log.info("All ad population tasks completed.")
+    }
+
+    private fun createAdsForUser(user: User, count: Int, titlePrefix: String = "") {
+        val userId = user.id?.toHexString()
+        if (userId == null) {
+            log.warn("User ${user.username} has no ID. Skipping ad creation.")
+            return
+        }
+
+        log.debug("Creating $count ads for user ${user.username} on thread ${Thread.currentThread().name}")
+
+        repeat(count) {
+            try {
+                val city = cityDataUnsorted.randomOrNull()
+                if (city == null) {
+                    log.error("Could not get a random city (city list might be empty). Skipping this ad creation.")
+                    return@repeat
+                }
+
+                val template = adTemplates.random()
+                val price = BigDecimal.valueOf(Random.nextDouble(MIN_PRICE, MAX_PRICE))
+                    .setScale(2, RoundingMode.HALF_UP)
+                val currency = if (Random.nextBoolean()) Currency.USD else Currency.ARRR
+                val location = Location(city.id, doubleArrayOf(city.lon, city.lat))
+
+                // 1. Create inactive ad
+                val title = "$titlePrefix${template.title}"
+                val createdAd = adService.createAd(userId, title)
+
+                // --- Media Population Logic ---
+                var adMediaPaths: List<String>? = null
+                var adMainPhotoPath: String? = null
+
+                if (Random.nextDouble() < MEDIA_ADD_CHANCE) {
+                    val numberOfMediaItemsToAdd = Random.nextInt(1, MAX_MEDIA_ITEMS_PER_AD + 1)
+                    val tempMediaPaths = mutableListOf<String>()
+                    try {
+                        repeat(numberOfMediaItemsToAdd) {
+                            val mediaItem = playgroundMediaRepository.getRandomMediaItem()
+                            tempMediaPaths.add(mediaItem.path)
+                        }
+                        if (tempMediaPaths.isNotEmpty()) {
+                            adMediaPaths = tempMediaPaths.toList()
+                            adMainPhotoPath = tempMediaPaths.random()
+                        }
+                    } catch (e: IllegalArgumentException) {
+                        log.warn("Could not fetch random media items for ad for user ${user.username} (PlaygroundMediaRepository might be empty or an error occurred): ${e.message}")
+                    } catch (e: Exception) {
+                        log.error("Unexpected error fetching media items for ad for user ${user.username}: ${e.message}", e)
+                    }
+                }
+                // --- End Media Population Logic ---
+
+                // 2. Update ad with details (including media)
+                val updateRequest = UpdateAdRequest(
+                    title = title,
+                    description = template.description,
+                    price = CurrencyAmount(price, currency),
+                    location = location,
+                    mediaPaths = adMediaPaths,
+                    mainPhotoPath = adMainPhotoPath,
+                    stock = Random.nextInt(1, 100)
+                )
+                val updatedAd = adService.updateAd(createdAd.id, userId, updateRequest)
+
+                // 3. Activate ad
+                adService.activateAd(updatedAd.id, userId)
+
+            } catch (e: AdService.AdOperationException) {
+                log.warn("Skipping ad creation for user ${user.username} due to operation exception: ${e.message}")
+            } catch (e: AdService.AdNotFoundException) {
+                log.error("Error during ad creation sequence for user ${user.username}: Ad not found unexpectedly.", e)
+            } catch (e: Exception) {
+                log.error("Failed to create an ad for user ${user.username}", e)
+            }
+        }
+        log.debug("Finished creating ads for user ${user.username}")
     }
 
     private fun shutdownAndAwaitTermination() {
