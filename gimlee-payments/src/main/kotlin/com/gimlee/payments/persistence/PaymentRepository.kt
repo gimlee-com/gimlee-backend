@@ -22,6 +22,7 @@ import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Filters
 import org.bson.Document
+import java.math.BigDecimal
 import org.bson.types.Decimal128
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Repository
@@ -101,7 +102,7 @@ class PaymentRepository(
         buyerId = getObjectId(FIELD_BUYER_ID),
         sellerId = getObjectId(FIELD_SELLER_ID),
         amount = get(FIELD_AMOUNT, Decimal128::class.java).bigDecimalValue(),
-        paidAmount = get(FIELD_PAID_AMOUNT, Decimal128::class.java).bigDecimalValue(),
+        paidAmount = get(FIELD_PAID_AMOUNT, Decimal128::class.java)?.bigDecimalValue() ?: BigDecimal.ZERO,
         status = PaymentStatus.entries.first { it.id == getInteger(FIELD_STATUS) },
         paymentMethod = PaymentMethod.lookupById(getInteger(FIELD_PAYMENT_METHOD)),
         memo = getString(FIELD_MEMO),
