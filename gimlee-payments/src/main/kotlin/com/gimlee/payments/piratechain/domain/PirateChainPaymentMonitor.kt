@@ -28,7 +28,7 @@ class PirateChainPaymentMonitor(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(fixedDelayString = "\${gimlee.payments.pirate-chain.monitor-delay-ms:60000}")
+    @Scheduled(fixedDelayString = "\${gimlee.payments.pirate-chain.monitor-delay-ms:10000}")
     fun monitorPayments() {
         log.info("Starting payment monitoring cycle...")
         val activePayments = paymentRepository.findAllByStatus(PaymentStatus.AWAITING_CONFIRMATION)
