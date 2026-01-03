@@ -61,7 +61,7 @@ class PirateChainPaymentMonitorTest : StringSpec({
 
         monitor.monitorPayments()
 
-        verify { paymentService.updatePaymentStatus(paymentId, PaymentStatus.COMPLETE) }
+        verify { paymentService.updatePaymentStatus(paymentId, PaymentStatus.COMPLETE, BigDecimal("10.0")) }
     }
 
     "should mark as underpaid if deadline passed and partial payment" {
@@ -97,7 +97,7 @@ class PirateChainPaymentMonitorTest : StringSpec({
 
         monitor.monitorPayments()
 
-        verify { paymentService.updatePaymentStatus(paymentId, PaymentStatus.COMPLETE_UNDERPAID) }
+        verify { paymentService.updatePaymentStatus(paymentId, PaymentStatus.COMPLETE_UNDERPAID, BigDecimal("5.0")) }
     }
     
     "should mark as timeout if deadline passed and no payment" {
@@ -123,6 +123,6 @@ class PirateChainPaymentMonitorTest : StringSpec({
 
         monitor.monitorPayments()
 
-        verify { paymentService.updatePaymentStatus(paymentId, PaymentStatus.FAILED_SOFT_TIMEOUT) }
+        verify { paymentService.updatePaymentStatus(paymentId, PaymentStatus.FAILED_SOFT_TIMEOUT, BigDecimal.ZERO) }
     }
 })

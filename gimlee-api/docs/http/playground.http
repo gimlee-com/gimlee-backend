@@ -6,7 +6,7 @@ POST {{host}}/api/playground/createUsers
 Content-Type: application/json
 
 {
-  "viewKey": "zxview1q2w3e4r5t6y7u8i9o0p..."
+  "viewKey": "zxviews1qdsq8dlkqqqqpqrq769e7masfmxy257qk30l2kgzfh7vzx6usx467j9tu2fvg7mlq4u9wqek0kdcy62wsm7uujsap5hfz5qe9k33hh9d7ts30az4c70rkjz6r7fpms0js8ez6mcny0flzme7zvhx2ha3am7cpfc6mfya9qec6975fypjrzk4dajhdwc5achgq8wmmj9y3vyzxu8y6j2p6txe7vafam9tmy2r5x68qzcmvu8psjs9a8qmvpty3m2mlh5efwp44dhfv4gkk5htj"
 }
 
 ### Expected Response (Success - 200 OK):

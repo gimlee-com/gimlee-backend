@@ -12,6 +12,7 @@ data class PurchaseResponseDto(
 data class PaymentDetailsDto(
     val address: String,
     val amount: BigDecimal,
+    val paidAmount: BigDecimal = BigDecimal.ZERO,
     val memo: String,
     val deadline: Instant,
     val qrCodeUri: String
@@ -21,5 +22,7 @@ data class PurchaseStatusResponseDto(
     val purchaseId: String,
     val status: String,
     val paymentStatus: String?,
-    val paymentDeadline: Instant?
+    val paymentDeadline: Instant?,
+    val totalAmount: BigDecimal?,
+    val paidAmount: BigDecimal?
 )

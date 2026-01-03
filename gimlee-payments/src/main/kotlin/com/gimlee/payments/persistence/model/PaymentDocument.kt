@@ -12,6 +12,7 @@ data class PaymentDocument(
     val buyerId: ObjectId,
     val sellerId: ObjectId,
     val amount: Decimal128,
+    val paidAmount: Decimal128,
     val status: Int,
     val paymentMethod: Int,
     val memo: String,
@@ -25,6 +26,7 @@ data class PaymentDocument(
         const val FIELD_BUYER_ID = "bid"
         const val FIELD_SELLER_ID = "sid"
         const val FIELD_AMOUNT = "amt"
+        const val FIELD_PAID_AMOUNT = "pa"
         const val FIELD_STATUS = "st"
         const val FIELD_PAYMENT_METHOD = "pm"
         const val FIELD_MEMO = "mm"

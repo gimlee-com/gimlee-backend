@@ -32,6 +32,7 @@ Content-Type: application/json
 #   "payment": {
 #     "address": "zs1...",
 #     "amount": 1.5,
+#     "paidAmount": 0.0,
 #     "memo": "gimlee:60f8f9b3a9d9e8f8a8b8c8d8",
 #     "deadline": "2023-01-01T10:30:00Z",
 #     "qrCodeUri": "pirate:zs1...?amount=1.5"
@@ -40,6 +41,7 @@ Content-Type: application/json
 
 ### Expected Response (Error - 400 Bad Request):
 # Occurs if the Ad is not found, stock is insufficient, seller lacks a wallet, or multiple sellers are involved.
+# Also occurs if the buyer attempts to purchase from themselves.
 # Content-Type: application/json
 #
 # {
@@ -47,7 +49,7 @@ Content-Type: application/json
 # }
 # or
 # {
-#   "error": "All items in a purchase must belong to the same seller."
+#   "error": "Cannot purchase from self."
 # }
 #
 
@@ -82,7 +84,9 @@ GET {{host}}/api/purchases/60f8f9b3a9d9e8f8a8b8c8d8/status
 #   "purchaseId": "60f8f9b3a9d9e8f8a8b8c8d8",
 #   "status": "AWAITING_PAYMENT",
 #   "paymentStatus": "AWAITING_CONFIRMATION",
-#   "paymentDeadline": "2023-01-01T10:30:00Z"
+#   "paymentDeadline": "2023-01-01T10:30:00Z",
+#   "totalAmount": 1.5,
+#   "paidAmount": 0.0
 # }
 
 ### Expected Response (Error - 404 Not Found):
@@ -94,6 +98,15 @@ GET {{host}}/api/purchases/60f8f9b3a9d9e8f8a8b8c8d8/status
 # Occurs if the authenticated user is neither the buyer nor the seller of the purchase.
 #
 # HTTP/1.1 403 Forbidden
+
+
+### Cancel Purchase
+# Allows the buyer to cancel a purchase that is awaiting payment.
+# @name cancelPurchase
+POST {{host}}/api/purchases/60f8f9b3a9d9e8f8a8b8c8d8/cancel
+
+### Expected Response (Success - 204 No Content):
+# HTTP/1.1 204 No Content
 
 
 ### Get My Purchases

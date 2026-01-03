@@ -77,20 +77,21 @@ class PirateChainPaymentMonitor(
 
         if (totalPaid >= payment.amount) {
             log.info("Payment ${payment.id} paid fully. Total paid: $totalPaid, Required: ${payment.amount}")
-            paymentService.updatePaymentStatus(payment.id, PaymentStatus.COMPLETE)
+            paymentService.updatePaymentStatus(payment.id, PaymentStatus.COMPLETE, totalPaid)
         } else {
             val now = Instant.now()
             if (now.isAfter(payment.deadline)) {
                 if (totalPaid > BigDecimal.ZERO) {
                      log.info("Payment ${payment.id} timed out with partial payment: $totalPaid")
-                     paymentService.updatePaymentStatus(payment.id, PaymentStatus.COMPLETE_UNDERPAID)
+                     paymentService.updatePaymentStatus(payment.id, PaymentStatus.COMPLETE_UNDERPAID, totalPaid)
                 } else {
                      log.info("Payment ${payment.id} timed out with no payment.")
-                     paymentService.updatePaymentStatus(payment.id, PaymentStatus.FAILED_SOFT_TIMEOUT)
+                     paymentService.updatePaymentStatus(payment.id, PaymentStatus.FAILED_SOFT_TIMEOUT, totalPaid)
                 }
             } else {
                  if (totalPaid > BigDecimal.ZERO) {
                      log.debug("Payment ${payment.id} partially paid: $totalPaid / ${payment.amount}")
+                     paymentService.updatePaymentStatus(payment.id, PaymentStatus.AWAITING_CONFIRMATION, totalPaid)
                  }
             }
         }

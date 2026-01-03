@@ -69,12 +69,33 @@ class PaymentService(
         return payment
     }
 
-    fun updatePaymentStatus(paymentId: ObjectId, newStatus: PaymentStatus) {
+    fun updatePaymentStatus(paymentId: ObjectId, newStatus: PaymentStatus, paidAmount: BigDecimal? = null) {
         val payment = paymentRepository.findById(paymentId) ?: return
+        var updatedPayment = payment
+        var changed = false
+
         if (payment.status != newStatus) {
-            val updatedPayment = payment.copy(status = newStatus)
+            updatedPayment = updatedPayment.copy(status = newStatus)
+            changed = true
+        }
+
+        if (paidAmount != null && payment.paidAmount.compareTo(paidAmount) != 0) {
+            updatedPayment = updatedPayment.copy(paidAmount = paidAmount)
+            changed = true
+        }
+
+        if (changed) {
             paymentRepository.save(updatedPayment)
-            publishEvent(updatedPayment)
+            if (payment.status != newStatus) {
+                publishEvent(updatedPayment)
+            }
+        }
+    }
+
+    fun cancelPaymentForPurchase(purchaseId: ObjectId) {
+        val payment = paymentRepository.findByPurchaseId(purchaseId) ?: return
+        if (payment.status == PaymentStatus.AWAITING_CONFIRMATION) {
+            updatePaymentStatus(payment.id, PaymentStatus.CANCELLED)
         }
     }
 

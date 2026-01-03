@@ -106,7 +106,58 @@ class PurchaseFacadeIntegrationTest(
                         statusResponse.status shouldBe PurchaseStatus.AWAITING_PAYMENT.name
                         statusResponse.paymentStatus shouldBe "AWAITING_CONFIRMATION"
                         statusResponse.paymentDeadline shouldNotBe null
+                        statusResponse.totalAmount shouldBe BigDecimal("10.00")
+                        statusResponse.paidAmount shouldBe BigDecimal.ZERO
                     }
+                }
+            }
+
+            When("the seller attempts to purchase from self") {
+                val sellerPrincipal = Principal(userId = sellerId.toHexString(), username = "seller", roles = listOf(Role.USER))
+                val request = PurchaseRequestDto(
+                    items = listOf(PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("10.00"))),
+                    currency = Currency.ARRR
+                )
+
+                mockMvc.post("/purchases") {
+                    requestAttr("principal", sellerPrincipal)
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.error") { value("Cannot purchase from self.") }
+                }
+            }
+
+            When("the buyer cancels the purchase") {
+                val request = PurchaseRequestDto(
+                    items = listOf(PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("10.00"))),
+                    currency = Currency.ARRR
+                )
+
+                val result = mockMvc.post("/purchases") {
+                    requestAttr("principal", principal)
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andReturn()
+                val purchaseResponse = objectMapper.readValue(result.response.contentAsString, PurchaseResponseDto::class.java)
+
+                mockMvc.post("/purchases/${purchaseResponse.purchaseId}/cancel") {
+                    requestAttr("principal", principal)
+                }.andExpect {
+                    status { isNoContent() }
+                }
+
+                Then("the purchase status should be CANCELLED") {
+                    val statusResult = mockMvc.get("/purchases/${purchaseResponse.purchaseId}/status") {
+                        requestAttr("principal", principal)
+                    }.andExpect {
+                        status { isOk() }
+                    }.andReturn()
+
+                    val statusResponse = objectMapper.readValue(statusResult.response.contentAsString, PurchaseStatusResponseDto::class.java)
+                    statusResponse.status shouldBe PurchaseStatus.CANCELLED.name
+                    statusResponse.paymentStatus shouldBe "CANCELLED"
                 }
             }
 

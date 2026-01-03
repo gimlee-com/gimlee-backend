@@ -46,6 +46,11 @@ class PurchaseService(
 
         val purchasedItemDetails = collectPurchasedItemDetails(items, ads)
         val sellerId = getAndValidateSingleSeller(purchasedItemDetails)
+
+        if (buyerId == sellerId) {
+            throw IllegalArgumentException("Cannot purchase from self.")
+        }
+
         val totalAmount = calculateTotalAmount(purchasedItemDetails)
 
         return initPurchase(
@@ -199,6 +204,27 @@ class PurchaseService(
             purchaseRepository.save(updatedPurchase)
             publishPurchaseEvent(updatedPurchase)
         }
+    }
+
+    fun cancelPurchase(buyerId: ObjectId, purchaseId: ObjectId) {
+        val purchase = purchaseRepository.findById(purchaseId)
+            ?: throw IllegalArgumentException("Purchase not found: $purchaseId")
+
+        if (purchase.buyerId != buyerId) {
+            throw IllegalArgumentException("Purchase $purchaseId does not belong to buyer $buyerId")
+        }
+
+        if (purchase.status != PurchaseStatus.AWAITING_PAYMENT) {
+            throw IllegalStateException("Purchase $purchaseId cannot be cancelled in status ${purchase.status}")
+        }
+
+        val updatedPurchase = purchase.copy(status = PurchaseStatus.CANCELLED)
+        purchaseRepository.save(updatedPurchase)
+
+        paymentService.cancelPaymentForPurchase(purchaseId)
+        publishPurchaseEvent(updatedPurchase)
+
+        log.info("Purchase $purchaseId cancelled by buyer $buyerId")
     }
 
     private fun publishPurchaseEvent(purchase: Purchase) {

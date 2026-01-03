@@ -70,6 +70,7 @@ class PurchaseFacadeController(
                     PaymentDetailsDto(
                         address = it.receivingAddress,
                         amount = it.amount,
+                        paidAmount = it.paidAmount,
                         memo = it.memo,
                         deadline = it.deadline,
                         qrCodeUri = "pirate:${it.receivingAddress}?amount=${it.amount}"
@@ -185,9 +186,42 @@ class PurchaseFacadeController(
             purchaseId = purchase.id.toHexString(),
             status = purchase.status.name,
             paymentStatus = payment?.status?.name,
-            paymentDeadline = payment?.deadline
+            paymentDeadline = payment?.deadline,
+            totalAmount = purchase.totalAmount,
+            paidAmount = payment?.paidAmount
         )
         
         return ResponseEntity.ok(response)
+    }
+
+    @Operation(
+        summary = "Cancel Purchase",
+        description = "Allows the buyer to cancel a purchase that is awaiting payment."
+    )
+    @ApiResponse(responseCode = "204", description = "Purchase cancelled successfully")
+    @ApiResponse(responseCode = "400", description = "Purchase cannot be cancelled in current state")
+    @ApiResponse(responseCode = "403", description = "User is not the buyer of this purchase")
+    @ApiResponse(responseCode = "404", description = "Purchase not found")
+    @PostMapping("/{purchaseId}/cancel")
+    @Privileged(role = "USER")
+    fun cancelPurchase(@PathVariable purchaseId: String): ResponseEntity<Any> {
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
+        return try {
+            purchaseService.cancelPurchase(ObjectId(principal.userId), ObjectId(purchaseId))
+            ResponseEntity.noContent().build()
+        } catch (e: IllegalArgumentException) {
+            log.warn("Cancel purchase failed: {}", e.message)
+            if (e.message?.contains("not found") == true) {
+                ResponseEntity.notFound().build()
+            } else {
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to e.message))
+            }
+        } catch (e: IllegalStateException) {
+            log.warn("Cancel purchase failed: {}", e.message)
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to e.message))
+        } catch (e: Exception) {
+            log.error("Error cancelling purchase {}: {}", purchaseId, e.message, e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
+        }
     }
 }

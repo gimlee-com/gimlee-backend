@@ -10,6 +10,7 @@ data class Payment(
     val buyerId: ObjectId,
     val sellerId: ObjectId,
     val amount: BigDecimal,
+    val paidAmount: BigDecimal = BigDecimal.ZERO,
     val status: PaymentStatus,
     val paymentMethod: PaymentMethod,
     val memo: String,

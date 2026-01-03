@@ -7,6 +7,7 @@ import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.payments.persistence.model.PaymentDocument
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_AMOUNT
+import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_PAID_AMOUNT
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_BUYER_ID
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_CREATED_AT
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_DEADLINE
@@ -69,6 +70,7 @@ class PaymentRepository(
             buyerId = buyerId,
             sellerId = sellerId,
             amount = Decimal128(amount),
+            paidAmount = Decimal128(paidAmount),
             status = status.id,
             paymentMethod = paymentMethod.id,
             memo = memo,
@@ -84,6 +86,7 @@ class PaymentRepository(
             .append(FIELD_BUYER_ID, doc.buyerId)
             .append(FIELD_SELLER_ID, doc.sellerId)
             .append(FIELD_AMOUNT, doc.amount)
+            .append(FIELD_PAID_AMOUNT, doc.paidAmount)
             .append(FIELD_STATUS, doc.status)
             .append(FIELD_PAYMENT_METHOD, doc.paymentMethod)
             .append(FIELD_MEMO, doc.memo)
@@ -98,6 +101,7 @@ class PaymentRepository(
         buyerId = getObjectId(FIELD_BUYER_ID),
         sellerId = getObjectId(FIELD_SELLER_ID),
         amount = get(FIELD_AMOUNT, Decimal128::class.java).bigDecimalValue(),
+        paidAmount = get(FIELD_PAID_AMOUNT, Decimal128::class.java).bigDecimalValue(),
         status = PaymentStatus.entries.first { it.id == getInteger(FIELD_STATUS) },
         paymentMethod = PaymentMethod.lookupById(getInteger(FIELD_PAYMENT_METHOD)),
         memo = getString(FIELD_MEMO),

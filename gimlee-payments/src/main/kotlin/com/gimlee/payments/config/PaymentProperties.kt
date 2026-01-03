@@ -13,8 +13,8 @@ data class PaymentProperties(
 data class PirateChainProperties(
     @DefaultValue("gimlee:")
     val memoPrefix: String = "gimlee:",
-    @DefaultValue("60000")
-    val monitorDelayMs: Long = 60000,
+    @DefaultValue("10000")
+    val monitorDelayMs: Long = 10000,
     @DefaultValue("1")
     val minConfirmations: Int = 1,
     @DefaultValue("5")
