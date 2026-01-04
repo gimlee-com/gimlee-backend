@@ -4,6 +4,7 @@ import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
+import com.gimlee.location.cities.data.cityDataById
 import jakarta.validation.Valid
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Size
@@ -43,7 +44,9 @@ data class UpdateAdRequestDto(
                 CurrencyAmount(price, currency)
             },
             location = location?.let { dto ->
-                Location(cityId = dto.cityId, point = dto.point)
+                val point = dto.point ?: cityDataById[dto.cityId]?.let { doubleArrayOf(it.lon, it.lat) }
+                requireNotNull(point) { "Location point is mandatory and city ID '${dto.cityId}' is invalid." }
+                Location(cityId = dto.cityId, point = point)
             },
             mediaPaths = mediaPaths,
             mainPhotoPath = mainPhotoPath,

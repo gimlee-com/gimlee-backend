@@ -3,6 +3,7 @@ package com.gimlee.ads.domain
 import com.gimlee.ads.domain.model.*
 import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.ads.persistence.model.AdDocument
+import com.gimlee.location.cities.data.cityDataById
 import com.gimlee.common.toMicros
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
@@ -88,8 +89,15 @@ class AdService(
         }
 
         val newCityId = updateData.location?.cityId
-        val newGeoPoint = updateData.location?.point?.takeIf { it.size == 2 }?.let {
-            GeoJsonPoint(it[0], it[1])
+        val newGeoPoint = updateData.location?.let {
+            GeoJsonPoint(it.point[0], it.point[1])
+        }
+
+        val finalCityId = newCityId ?: existingAdDoc.cityId
+        var finalGeoPoint = newGeoPoint ?: existingAdDoc.location
+
+        if (finalCityId != null && finalGeoPoint == null) {
+            finalGeoPoint = cityDataById[finalCityId]?.let { GeoJsonPoint(it.lon, it.lat) }
         }
 
         // Media fields validation
@@ -120,8 +128,8 @@ class AdService(
             description = updateData.description ?: existingAdDoc.description,
             price = newPrice,
             currency = newCurrency,
-            cityId = newCityId ?: existingAdDoc.cityId,
-            location = newGeoPoint ?: existingAdDoc.location,
+            cityId = finalCityId,
+            location = finalGeoPoint,
             mediaPaths = newMediaPaths,
             mainPhotoPath = newMainPhotoPath,
             stock = newStock,
@@ -257,18 +265,20 @@ class AdService(
                 !existingAd.description.isNullOrBlank() &&
                 existingAd.price != null &&
                 existingAd.currency != null
-                && (existingAd.cityId != null || existingAd.location != null)
+                && existingAd.cityId != null
+                && existingAd.location != null
                 && existingAd.stock > 0
 
         if (!isComplete) {
             log.warn(
-                "Attempted to activate incomplete ad {}: title={}, desc={}, price={}, curr={}, location={}, stock={}",
+                "Attempted to activate incomplete ad {}: title={}, desc={}, price={}, curr={}, cityId={}, location={}, stock={}",
                 adId,
                 existingAd.title.isNotBlank(),
                 !existingAd.description.isNullOrBlank(),
                 existingAd.price != null,
                 existingAd.currency != null,
-                existingAd.cityId != null || existingAd.location != null,
+                existingAd.cityId != null,
+                existingAd.location != null,
                 existingAd.stock
             )
             throw AdOperationException("Ad cannot be activated until title, description, price, location and stock are all set. Stock must be greater than 0.")

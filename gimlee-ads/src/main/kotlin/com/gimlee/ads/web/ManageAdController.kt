@@ -142,9 +142,9 @@ class ManageAdController(private val adService: AdService) {
         } catch (e: AdService.AdOperationException) {
             log.warn("Update failed for ad {}: {} (requested by user {})", adId, e.message, principal.userId)
             ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to e.message))
-        } catch (e: IllegalArgumentException) { // Catch invalid ObjectId format for adId or userId
-            log.warn("Update failed: Invalid ID format provided for ad {} by user {}", adId, principal.userId, e)
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to "Invalid ad ID format."))
+        } catch (e: IllegalArgumentException) { // Catch invalid ObjectId format or other validation issues from toDomain()
+            log.warn("Update failed: {} for ad {} by user {}", e.message, adId, principal.userId)
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to (e.message ?: "Invalid request format.")))
         } catch (e: Exception) {
             log.error("Error updating ad {} for user {}: {}", adId, principal.userId, e.message, e)
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

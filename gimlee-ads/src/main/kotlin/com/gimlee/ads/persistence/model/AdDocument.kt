@@ -1,6 +1,7 @@
 package com.gimlee.ads.persistence.model
 
 import com.gimlee.ads.domain.model.*
+import com.gimlee.location.cities.data.cityDataById
 import com.gimlee.common.InstantUtils.fromMicros
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
@@ -55,8 +56,10 @@ data class AdDocument(
             status = status,
             createdAt = fromMicros(createdAtMicros),
             updatedAt = fromMicros(updatedAtMicros),
-            location = if (cityId != null && location != null) {
-                Location(cityId, doubleArrayOf(location.x, location.y))
+            location = if (cityId != null) {
+                val point = location?.let { doubleArrayOf(it.x, it.y) }
+                    ?: cityDataById[cityId]?.let { doubleArrayOf(it.lon, it.lat) }
+                point?.let { Location(cityId, it) }
             } else {
                 null
             },
