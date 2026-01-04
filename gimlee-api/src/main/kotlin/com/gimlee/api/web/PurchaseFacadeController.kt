@@ -73,7 +73,7 @@ class PurchaseFacadeController(
                         paidAmount = it.paidAmount,
                         memo = it.memo,
                         deadline = it.deadline,
-                        qrCodeUri = "pirate:${it.receivingAddress}?amount=${it.amount}"
+                        qrCodeUri = it.receivingAddress
                     )
                 }
             )

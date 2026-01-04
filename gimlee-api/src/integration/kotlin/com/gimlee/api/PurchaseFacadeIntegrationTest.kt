@@ -89,7 +89,7 @@ class PurchaseFacadeIntegrationTest(
                     response.payment?.amount shouldBe BigDecimal("10.00")
                     response.payment?.memo shouldNotBe null
                     response.payment?.deadline shouldNotBe null
-                    response.payment?.qrCodeUri shouldBe "pirate:zs1testaddress?amount=10.00"
+                    response.payment?.qrCodeUri shouldBe "zs1testaddress"
                 }
 
                 And("the buyer checks the purchase status") {
