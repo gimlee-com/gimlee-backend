@@ -53,6 +53,7 @@ dependencies {
     integrationImplementation(libs.spring.boot.starter.test)
     integrationImplementation(platform(libs.testcontainers.bom))
     integrationImplementation(libs.testcontainers.mongodb)
+    integrationImplementation(project(":gimlee-notifications"))
     integrationImplementation(testFixtures(project(":gimlee-common")))
 }
 

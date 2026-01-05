@@ -3,6 +3,10 @@ package com.gimlee.api.config
 import com.gimlee.auth.annotation.Privileged
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
+import io.swagger.v3.oas.models.media.Content
+import io.swagger.v3.oas.models.media.MediaType
+import io.swagger.v3.oas.models.media.Schema
+import io.swagger.v3.oas.models.responses.ApiResponse
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 import org.springdoc.core.customizers.OperationCustomizer
@@ -68,6 +72,41 @@ class OpenApiConfig(
             }
             
             operation.description = description.toString().trim()
+
+            val statusResponseSchema = Schema<Any>().`$ref`("#/components/schemas/StatusResponseDto")
+            val commonErrorContent = Content().addMediaType("application/json", MediaType().schema(statusResponseSchema))
+
+            if (!isUnsecured) {
+                if (!operation.responses.containsKey("401")) {
+                    operation.responses.addApiResponse("401", ApiResponse()
+                        .description("Unauthorized - Missing or invalid credentials")
+                        .content(commonErrorContent))
+                }
+                if (!operation.responses.containsKey("403")) {
+                    operation.responses.addApiResponse("403", ApiResponse()
+                        .description("Forbidden - Insufficient privileges")
+                        .content(commonErrorContent))
+                }
+            }
+
+            operation.responses.forEach { (code, response) ->
+                val isError = code.toIntOrNull()?.let { it >= 400 } ?: false
+                
+                if (response.content == null || response.content.isEmpty()) {
+                    if (isError) {
+                        response.content = commonErrorContent
+                    }
+                } else {
+                    if (!response.content.containsKey("application/json")) {
+                        val firstMediaType = response.content.values.firstOrNull()
+                        if (firstMediaType != null) {
+                             response.content.addMediaType("application/json", firstMediaType)
+                        } else if (isError) {
+                             response.content.addMediaType("application/json", MediaType().schema(statusResponseSchema))
+                        }
+                    }
+                }
+            }
 
             operation
         }

@@ -22,7 +22,7 @@ Content-Type: application/json
 
 
 ### Login User
-# Authenticates a user and returns a session token (usually via a JWT cookie).
+# Authenticates a user and returns an authorization token.
 # If the user is unverified, the response will indicate that verification is required.
 # @name login
 POST {{host}}/api/auth/login

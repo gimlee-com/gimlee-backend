@@ -96,7 +96,7 @@ class AdManagementIntegrationTest(
                 content = objectMapper.writeValueAsString(updateRequest)
             }.andExpect {
                 status { isBadRequest() }
-                jsonPath("$.error") { value("Stock (2) cannot be lower than locked stock (3).") }
+                jsonPath("$.status") { value("AD_INVALID_AD_STATUS") }
             }
         }
 

@@ -17,9 +17,12 @@ class LoginController(
 ) {
     @Operation(
         summary = "Login User",
-        description = "Authenticates a user and returns a session token (usually via a JWT cookie). If the user is unverified, the response will indicate that verification is required."
+        description = "Authenticates a user and returns an authorization token. If the user is unverified, the response will indicate that verification is required."
     )
-    @ApiResponse(responseCode = "200", description = "Login successful or verification required")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Login successful or failed. Possible status codes: SUCCESS, AUTH_INCORRECT_CREDENTIALS"
+    )
     @PostMapping(path = ["/auth/login"])
     fun login(
         @RequestBody loginData: LoginRequestDto

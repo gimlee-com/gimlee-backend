@@ -27,7 +27,7 @@ spring:
       max-file-size: 15MB
       max-request-size: 51MB
   messages:
-    basename: i18n/messages
+    basename: i18n/messages,i18n/common/messages,i18n/auth/messages,i18n/purchases/messages,i18n/ads/messages,i18n/user/messages,i18n/payments/messages,i18n/location/messages,i18n/media/messages
     encoding: UTF-8
 
 gimlee:

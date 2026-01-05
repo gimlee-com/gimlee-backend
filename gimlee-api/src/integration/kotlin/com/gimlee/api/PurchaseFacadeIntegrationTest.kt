@@ -125,7 +125,7 @@ class PurchaseFacadeIntegrationTest(
                     content = objectMapper.writeValueAsString(request)
                 }.andExpect {
                     status { isBadRequest() }
-                    jsonPath("$.error") { value("Cannot purchase from self.") }
+                    jsonPath("$.status") { value("PURCHASE_CANNOT_PURCHASE_FROM_SELF") }
                 }
             }
 
@@ -145,7 +145,8 @@ class PurchaseFacadeIntegrationTest(
                 mockMvc.post("/purchases/${purchaseResponse.purchaseId}/cancel") {
                     requestAttr("principal", principal)
                 }.andExpect {
-                    status { isNoContent() }
+                    status { isOk() }
+                    jsonPath("$.status") { value("SUCCESS") }
                 }
 
                 Then("the purchase status should be CANCELLED") {
@@ -173,8 +174,8 @@ class PurchaseFacadeIntegrationTest(
                     content = objectMapper.writeValueAsString(maliciousRequest)
                 }.andExpect {
                     status { isConflict() }
-                    jsonPath("$.error") { value("PRICE_MISMATCH") }
-                    jsonPath("$.currentPrices['${ad.id}'].amount") { value(10.0) }
+                    jsonPath("$.status") { value("PURCHASE_PRICE_MISMATCH") }
+                    jsonPath("$.data.currentPrices['${ad.id}'].amount") { value(10.0) }
                 }
             }
 
@@ -206,7 +207,7 @@ class PurchaseFacadeIntegrationTest(
                     content = objectMapper.writeValueAsString(request)
                 }.andExpect {
                     status { isBadRequest() }
-                    jsonPath("$.error") { value("All items in a purchase must belong to the same seller.") }
+                    jsonPath("$.status") { value("PURCHASE_INVALID_PURCHASE_REQUEST") }
                 }
             }
 
@@ -236,9 +237,9 @@ class PurchaseFacadeIntegrationTest(
                     content = objectMapper.writeValueAsString(request)
                 }.andExpect {
                     status { isConflict() }
-                    jsonPath("$.error") { value("PRICE_MISMATCH") }
-                    jsonPath("$.currentPrices['${ad.id}'].amount") { value(10.0) }
-                    jsonPath("$.currentPrices['${ad2.id}'].amount") { value(20.0) }
+                    jsonPath("$.status") { value("PURCHASE_PRICE_MISMATCH") }
+                    jsonPath("$.data.currentPrices['${ad.id}'].amount") { value(10.0) }
+                    jsonPath("$.data.currentPrices['${ad2.id}'].amount") { value(20.0) }
                 }
             }
 
@@ -257,7 +258,7 @@ class PurchaseFacadeIntegrationTest(
                     content = objectMapper.writeValueAsString(request)
                 }.andExpect {
                     status { isBadRequest() }
-                    jsonPath("$.error") { value("One or more ads are not active: ${inactiveAd.id}") }
+                    jsonPath("$.status") { value("PURCHASE_ADS_NOT_ACTIVE") }
                 }
             }
         }

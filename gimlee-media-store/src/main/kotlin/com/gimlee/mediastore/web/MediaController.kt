@@ -10,11 +10,17 @@ import org.apache.logging.log4j.LogManager
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import com.gimlee.mediastore.service.MediaService
 import com.gimlee.mediastore.service.PictureUploadService
 import com.gimlee.mediastore.media.web.dto.MediaUploadResponseDto
+import com.gimlee.mediastore.domain.MediaStoreOutcome
+import com.gimlee.common.domain.model.Outcome
+import com.gimlee.common.web.dto.StatusResponseDto
+import org.springframework.context.MessageSource
+import org.springframework.context.i18n.LocaleContextHolder
 import java.io.FileNotFoundException
 import jakarta.activation.MimetypesFileTypeMap
 import jakarta.servlet.http.HttpServletResponse
@@ -23,17 +29,23 @@ import jakarta.servlet.http.HttpServletResponse
 @RestController
 class MediaController(
     private val pictureUploadService: PictureUploadService,
-    private val mediaService: MediaService
+    private val mediaService: MediaService,
+    private val messageSource: MessageSource
 ) {
     companion object {
         private val mimetypeFileTypeMap = MimetypesFileTypeMap()
         private val log = LogManager.getLogger()
     }
 
+    private fun handleOutcome(outcome: Outcome, data: Any? = null): ResponseEntity<Any> {
+        val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
+        return ResponseEntity.status(outcome.httpCode).body(StatusResponseDto.fromOutcome(outcome, message, data))
+    }
+
     @ExceptionHandler(FileNotFoundException::class)
-    fun handleFileNotFound(e: FileNotFoundException, response: HttpServletResponse) {
+    fun handleFileNotFound(e: FileNotFoundException): ResponseEntity<Any> {
         log.info("File not found. ${e.message}")
-        response.status = HttpStatus.NOT_FOUND.value()
+        return handleOutcome(MediaStoreOutcome.FILE_NOT_FOUND)
     }
 
     @Operation(
@@ -56,7 +68,11 @@ class MediaController(
         description = "Retrieves a media file (original or thumbnail) from the store."
     )
     @ApiResponse(responseCode = "200", description = "The media file")
-    @ApiResponse(responseCode = "404", description = "File not found")
+    @ApiResponse(
+        responseCode = "404",
+        description = "File not found. Possible status codes: MEDIA_FILE_NOT_FOUND",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
     @GetMapping("/media")
     fun getMediaFile(
         @Parameter(description = "Path to the media file")

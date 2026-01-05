@@ -10,11 +10,15 @@ import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import com.gimlee.auth.exception.AuthenticationException
 import com.gimlee.auth.exception.AuthorizationException
-import com.gimlee.common.domain.model.StatusCode
+import com.gimlee.common.domain.model.Outcome
+import com.gimlee.common.domain.model.CommonOutcome
+import com.gimlee.auth.domain.AuthOutcome
 import com.gimlee.common.web.dto.StatusResponseDto
+import org.springframework.context.MessageSource
+import org.springframework.context.i18n.LocaleContextHolder
 
 @ControllerAdvice(basePackages = ["com.gimlee"])
-class WebExceptionHandler : ResponseEntityExceptionHandler() {
+class WebExceptionHandler(private val messageSource: MessageSource) : ResponseEntityExceptionHandler() {
 
     companion object {
         private val log = LogManager.getLogger()
@@ -23,23 +27,22 @@ class WebExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(AuthorizationException::class)
     fun handleAuthorizationException(ex: AuthorizationException, req: WebRequest): ResponseEntity<Any>? {
         log.warn("Unauthorized access to resource: ${ex.resource}", ex)
-        return handleExceptionInternal(
-            ex,
-            StatusResponseDto.fromStatusCode(StatusCode.UNAUTHORIZED),
-            HttpHeaders(),
-            HttpStatus.FORBIDDEN,
-            req
-        )
+        return handleOutcome(CommonOutcome.UNAUTHORIZED, req)
     }
 
     @ExceptionHandler(AuthenticationException::class)
     fun handleAuthenticationException(ex: RuntimeException, req: WebRequest): ResponseEntity<Any>? {
         log.warn("Unauthenticated access", ex)
+        return handleOutcome(AuthOutcome.MISSING_CREDENTIALS, req)
+    }
+
+    private fun handleOutcome(outcome: Outcome, req: WebRequest): ResponseEntity<Any>? {
+        val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
         return handleExceptionInternal(
-            ex,
-            StatusResponseDto.fromStatusCode(StatusCode.MISSING_CREDENTIALS),
+            Exception(message),
+            StatusResponseDto.fromOutcome(outcome, message),
             HttpHeaders(),
-            HttpStatus.UNAUTHORIZED,
+            HttpStatus.valueOf(outcome.httpCode),
             req
         )
     }

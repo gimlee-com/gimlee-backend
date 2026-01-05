@@ -7,11 +7,19 @@ import com.gimlee.auth.service.UserService
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.payments.domain.PaymentService
 import com.gimlee.purchases.domain.PurchaseService
+import com.gimlee.purchases.domain.PurchaseOutcome
+import com.gimlee.common.domain.model.Outcome
+import com.gimlee.common.domain.model.CommonOutcome
+import com.gimlee.common.web.dto.StatusResponseDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.bson.types.ObjectId
+import org.springframework.context.MessageSource
+import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
@@ -24,10 +32,16 @@ class SalesFacadeController(
     private val purchaseService: PurchaseService,
     private val adService: AdService,
     private val userService: UserService,
-    private val paymentService: PaymentService
+    private val paymentService: PaymentService,
+    private val messageSource: MessageSource
 ) {
     companion object {
         private const val PAGE_SIZE = 60
+    }
+
+    private fun handleOutcome(outcome: Outcome, data: Any? = null): ResponseEntity<Any> {
+        val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
+        return ResponseEntity.status(outcome.httpCode).body(StatusResponseDto.fromOutcome(outcome, message, data))
     }
 
     @Operation(summary = "Fetch My Orders", description = "Fetches orders for the authenticated seller.")
@@ -79,8 +93,16 @@ class SalesFacadeController(
     }
 
     @Operation(summary = "Fetch Single Order", description = "Fetches full details for a specific order owned by the seller.")
-    @ApiResponse(responseCode = "200", description = "Detailed order information")
-    @ApiResponse(responseCode = "404", description = "Order not found or not owned by the seller")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Detailed order information",
+        content = [Content(schema = Schema(implementation = SalesOrderDto::class))]
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Order not found or not owned by the seller. Possible status codes: PURCHASE_ORDER_NOT_FOUND",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
     @GetMapping("/{purchaseId}")
     @Privileged("USER")
     fun getOrder(
@@ -91,7 +113,7 @@ class SalesFacadeController(
         val purchase = purchaseService.getPurchase(ObjectId(purchaseId))
 
         if (purchase == null || purchase.sellerId.toHexString() != principal.userId) {
-            return ResponseEntity.status(404).body(mapOf("error" to "Order not found."))
+            return handleOutcome(PurchaseOutcome.ORDER_NOT_FOUND)
         }
 
         val adIds = purchase.items.map { it.adId.toHexString() }.distinct()

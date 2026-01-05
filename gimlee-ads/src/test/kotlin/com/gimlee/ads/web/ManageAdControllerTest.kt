@@ -16,18 +16,23 @@ import io.mockk.unmockkAll
 import org.springframework.http.HttpStatus
 import org.springframework.web.context.request.RequestAttributes
 import org.springframework.web.context.request.RequestContextHolder
+import com.gimlee.common.web.dto.StatusResponseDto
+import org.springframework.context.MessageSource
 import java.math.BigDecimal
+import java.util.*
 
 class ManageAdControllerTest : StringSpec({
 
     val adService = mockk<AdService>()
-    val controller = ManageAdController(adService)
+    val messageSource = mockk<MessageSource>()
+    val controller = ManageAdController(adService, messageSource)
 
     beforeTest {
         mockkStatic(RequestContextHolder::class)
         mockkObject(AdDto.Companion)
         val requestAttributes = mockk<RequestAttributes>()
         every { RequestContextHolder.getRequestAttributes() } returns requestAttributes
+        every { messageSource.getMessage(any(), any(), any()) } returns "Mocked Message"
     }
 
     afterTest {
@@ -52,7 +57,9 @@ class ManageAdControllerTest : StringSpec({
         val response = controller.updateAd("ad1", request)
 
         response.statusCode shouldBe HttpStatus.FORBIDDEN
-        (response.body as Map<*, *>)["error"] shouldBe "Only users with the PIRATE role can make sales in ARRR. To get that role, you need to link your Pirate Chain wallet."
+        val body = response.body as StatusResponseDto
+        body.status shouldBe "AD_PIRATE_ROLE_REQUIRED"
+        body.success shouldBe false
     }
 
     "updateAd should proceed when using ARRR with PIRATE role" {

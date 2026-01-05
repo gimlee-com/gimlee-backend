@@ -37,6 +37,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **Framework:** Use **Kotest** for all tests.
 *   **Priority:** Integration tests are the primary focus.
 *   **Database:** Use **Testcontainers** with MongoDB for integration tests via `BaseIntegrationTest`.
+*   **Shared Test Fixtures:** Use the Gradle `java-test-fixtures` plugin (primarily in `gimlee-common`) to share common test utilities, base classes, and mocks across the project modules.
 *   **Unit Tests:** Use sparingly, only for quirky internal logic. Keep them simple with minimal context/mocking.
 
 ### 3. Performance (`docs/development/performance-guidelines.md`)
@@ -67,6 +68,7 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **OpenAPI Annotations:** All controller methods must be documented with OpenAPI annotations (`@Operation`, `@ApiResponse`, `@Parameter`, etc.).
 *   **Source of Truth:** The `.http` files serve as the source of truth for OpenAPI documentation. Descriptions and expected responses in annotations must match those in the `.http` files.
 *   **Security & Roles:** Do not manually document security or roles in OpenAPI annotations. The `OpenApiConfig` automatically appends this information to the documentation based on the `@Privileged` annotation and path configurations.
+*   **Error Documentation:** Common error responses (401 Unauthorized, 403 Forbidden) and the error response schema (`StatusResponseDto`) are automatically handled by the global `OperationCustomizer`.
 *   **Stay in Sync:** Any addition or modification to Controllers requires corresponding updates to both their respective `.http` files and OpenAPI annotations to ensure consistency across all documentation formats.
 *   **Comprehensive Error Data:** When reporting conflicts or errors (e.g., price mismatches), return the current state of all relevant items so the client can recover gracefully.
 
@@ -79,6 +81,16 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **Country Codes:** Always use **ISO 3166-1 alpha-2** codes (e.g., `US`, `PL`).
 *   **Language Tags:** Strictly apply the **IETF standard** (ISO 639-1 language code combined with ISO 3166-1 alpha-2 country code, e.g., `en-US`, `pl-PL`).
 *   **Validation:** Use `@IsoCountryCode` and `@IetfLanguageTag` annotations from `gimlee-common` for DTO validation.
+*   **Module-Specific Bundles:** Each module maintains its own message bundles at `src/main/resources/i18n/{module}/messages.properties` to avoid classpath collisions.
+*   **Basenames:** All module-specific bundles must be registered in the `spring.messages.basename` property in `application.yaml`.
+
+### 9. Unified API Status responses and Outcome System
+*   **Outcome Interface:** Operations must return or report results using the `Outcome` interface from `gimlee-common`. Each module defines its own implementation (e.g., `AuthOutcome`, `AdOutcome`).
+*   **Descriptive Slugs:** Use descriptive, machine-readable string slugs as codes (e.g., `AUTH_INCORRECT_CREDENTIALS`) instead of numeric status codes.
+*   **Response Format:** Use `StatusResponseDto` for a unified response structure. It includes `success` (Boolean), `status` (String slug), `message` (Localized human-readable string), and optional `data` (Any).
+*   **HTTP Status Mapping:** The `Outcome` determines the HTTP status code (via `httpCode`). Controllers must ensure the `ResponseEntity` status matches the outcome.
+*   **I18n Integration:** Each `Outcome` provides a `messageKey` used to resolve localized messages via Spring's `MessageSource`.
+*   **Exception Handling:** The `WebExceptionHandler` in `gimlee-api` automatically converts common security exceptions (`AuthenticationException`, `AuthorizationException`) into appropriate `Outcome`-based `StatusResponseDto` responses.
 
 ## Setup & Configuration
 *   **Local Config:** Copy `gimlee-api/src/main/resources/application-local-EXAMPLE.yaml` to `application-local.yaml` and fill in details (PirateChain RPC, SMTP, etc.).

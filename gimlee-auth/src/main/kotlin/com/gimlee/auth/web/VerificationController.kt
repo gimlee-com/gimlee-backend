@@ -27,7 +27,10 @@ class VerificationController(
         summary = "Verify User",
         description = "Verifies the user's account using a code sent to their email. Requires a valid (but possibly unverified) session."
     )
-    @ApiResponse(responseCode = "200", description = "User verified successfully")
+    @ApiResponse(
+        responseCode = "200",
+        description = "User verification result. Possible status codes: SUCCESS, AUTH_INVALID_VERIFICATION_CODE"
+    )
     @PostMapping(path = ["/auth/verifyUser"])
     @ResponseStatus(HttpStatus.OK)
     fun verifyUser(

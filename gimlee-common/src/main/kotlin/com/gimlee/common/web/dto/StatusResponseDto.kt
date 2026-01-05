@@ -1,15 +1,21 @@
 package com.gimlee.common.web.dto
 
-import com.gimlee.common.domain.model.StatusCode
-
-private val statusResponses = StatusCode.entries
-    .associateBy({ it }, { StatusResponseDto(it.isSuccess, it.code) })
+import com.gimlee.common.domain.model.Outcome
 
 data class StatusResponseDto(
-    val success: Boolean = false,
-    val code: Int
+    val success: Boolean,
+    val status: String,
+    val message: String? = null,
+    val data: Any? = null
 ) {
     companion object {
-        fun fromStatusCode(statusCode: StatusCode) = statusResponses[statusCode] ?: error("Unknown status code")
+        fun fromOutcome(outcome: Outcome, message: String? = null, data: Any? = null): StatusResponseDto {
+            return StatusResponseDto(
+                success = outcome.httpCode in 200..299,
+                status = outcome.code,
+                message = message,
+                data = data
+            )
+        }
     }
 }

@@ -59,8 +59,11 @@ class UserVerificationService(
     fun verifyCode(userId: ObjectId, code: String): IdentityVerificationResponse {
         return if (verificationCodeRepository.existsAndIsNotExpired(userId, code)) {
             val user = activateUser(userId)
+            val outcome = com.gimlee.common.domain.model.CommonOutcome.SUCCESS
             IdentityVerificationResponse(
                 success = true,
+                status = outcome.code,
+                message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale()),
                 accessToken = jwtTokenService.generateToken(
                     userId.toHexString(),
                     user.username!!,
@@ -69,7 +72,12 @@ class UserVerificationService(
                 )
             )
         } else {
-            IdentityVerificationResponse.unsuccessful
+            val outcome = com.gimlee.auth.domain.AuthOutcome.INVALID_VERIFICATION_CODE
+            IdentityVerificationResponse(
+                success = false,
+                status = outcome.code,
+                message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
+            )
         }
     }
 

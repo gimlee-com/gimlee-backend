@@ -5,9 +5,11 @@ import com.gimlee.api.playground.data.DatabaseCleaner
 import com.gimlee.api.playground.media.data.MediaPopulator
 import com.gimlee.api.playground.users.data.UsersPopulator
 import com.gimlee.api.playground.web.dto.CreateUsersRequest
-import com.gimlee.common.domain.model.StatusCode
+import com.gimlee.common.domain.model.CommonOutcome
 import com.gimlee.common.web.dto.StatusResponseDto
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Lazy
@@ -26,34 +28,50 @@ class PlaygroundController(
     @Lazy private val databaseCleaner: DatabaseCleaner
 ) {
     @Operation(summary = "Create Playground Users", description = "Populates the database with a set of test users. If viewKey is provided, only 'seller' user is created with that viewKey.")
-    @ApiResponse(responseCode = "200", description = "Users created successfully")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Users created successfully. Possible status codes: SUCCESS",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
     @PostMapping("/playground/createUsers")
     fun createUsers(@RequestBody request: CreateUsersRequest? = null): StatusResponseDto {
         usersPopulator.populateUsers(request?.viewKey)
-        return StatusResponseDto.fromStatusCode(StatusCode.SUCCESS)
+        return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS)
     }
 
     @Operation(summary = "Create Playground Media", description = "Populates the media store with test images.")
-    @ApiResponse(responseCode = "200", description = "Media created successfully")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Media created successfully. Possible status codes: SUCCESS",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
     @PostMapping("/playground/createMedia")
     fun createMedia(): StatusResponseDto {
         mediaPopulator.populateMedia()
-        return StatusResponseDto.fromStatusCode(StatusCode.SUCCESS)
+        return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS)
     }
 
     @Operation(summary = "Create Playground Ads", description = "Populates the database with test advertisements.")
-    @ApiResponse(responseCode = "200", description = "Ads created successfully")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Ads created successfully. Possible status codes: SUCCESS",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
     @PostMapping("/playground/createAds")
     fun createAds(): StatusResponseDto {
         adsPopulator.populateAds()
-        return StatusResponseDto.fromStatusCode(StatusCode.SUCCESS)
+        return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS)
     }
 
     @Operation(summary = "Clear Database", description = "Empties all collections in the database (preserving indexes).")
-    @ApiResponse(responseCode = "200", description = "Database cleared successfully")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Database cleared successfully. Possible status codes: SUCCESS",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
     @PostMapping("/playground/clearDatabase")
     fun clearDatabase(): StatusResponseDto {
         databaseCleaner.clearAll()
-        return StatusResponseDto.fromStatusCode(StatusCode.SUCCESS)
+        return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS)
     }
 }
