@@ -1,7 +1,7 @@
 package com.gimlee.api
+import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
@@ -12,8 +12,8 @@ import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.auth.persistence.UserRepository
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.toMicros
-import com.gimlee.payments.piratechain.persistence.UserPirateChainAddressRepository
-import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo
+import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
+import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
 import com.gimlee.purchases.domain.PurchaseService
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import io.kotest.matchers.shouldBe
@@ -32,7 +32,7 @@ class OrderHistoryIntegrationTest(
     private val purchaseService: PurchaseService,
     private val userRoleRepository: UserRoleRepository,
     private val userRepository: UserRepository,
-    private val userPirateChainAddressRepository: UserPirateChainAddressRepository
+    private val userWalletAddressRepository: UserWalletAddressRepository
 ) : BaseIntegrationTest({
 
     Given("a seller and a buyer") {
@@ -41,13 +41,14 @@ class OrderHistoryIntegrationTest(
         userRoleRepository.add(sellerId, Role.PIRATE)
         userRepository.save(User(id = sellerId, username = "seller_user"))
 
-        val addressInfo = PirateChainAddressInfo(
+        val addressInfo = WalletAddressInfo(
+            type = Currency.ARRR,
             zAddress = "zs1testaddress",
             viewKeyHash = "hash",
             viewKeySalt = "salt",
             lastUpdateTimestamp = Instant.now().toMicros()
         )
-        userPirateChainAddressRepository.addAddressToUser(sellerId, addressInfo)
+        userWalletAddressRepository.addAddressToUser(sellerId, addressInfo)
 
         val buyerId = ObjectId.get()
         userRepository.save(User(id = buyerId, username = "buyer_user"))

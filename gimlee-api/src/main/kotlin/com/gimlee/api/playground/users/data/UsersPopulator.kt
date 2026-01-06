@@ -9,7 +9,7 @@ import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.auth.util.createHexSaltAndPasswordHash
 import com.gimlee.auth.util.generateSalt
 import com.gimlee.auth.domain.UserStatus
-import com.gimlee.payments.piratechain.domain.PirateChainAddressService
+import com.gimlee.payments.crypto.piratechain.domain.PirateChainAddressService
 import org.apache.logging.log4j.LogManager
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime

@@ -1,7 +1,7 @@
 package com.gimlee.purchases.domain
+import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Ad
 import com.gimlee.ads.domain.model.AdStatus

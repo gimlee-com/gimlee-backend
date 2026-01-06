@@ -1,8 +1,8 @@
 package com.gimlee.api
+import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
@@ -15,8 +15,8 @@ import com.gimlee.common.toMicros
 import com.gimlee.purchases.domain.model.PurchaseStatus
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import com.gimlee.purchases.web.dto.request.PurchaseRequestDto
-import com.gimlee.payments.piratechain.persistence.UserPirateChainAddressRepository
-import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo
+import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
+import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -36,7 +36,7 @@ class PurchaseFacadeIntegrationTest(
     private val objectMapper: ObjectMapper,
     private val adService: AdService,
     private val userRoleRepository: UserRoleRepository,
-    private val userPirateChainAddressRepository: UserPirateChainAddressRepository
+    private val userWalletAddressRepository: UserWalletAddressRepository
 ) : BaseIntegrationTest({
 
     Given("a seller and an active Ad") {
@@ -44,13 +44,14 @@ class PurchaseFacadeIntegrationTest(
         userRoleRepository.add(sellerId, Role.USER)
         userRoleRepository.add(sellerId, Role.PIRATE)
 
-        val addressInfo = PirateChainAddressInfo(
+        val addressInfo = WalletAddressInfo(
+            type = Currency.ARRR,
             zAddress = "zs1testaddress",
             viewKeyHash = "hash",
             viewKeySalt = "salt",
             lastUpdateTimestamp = Instant.now().toMicros()
         )
-        userPirateChainAddressRepository.addAddressToUser(sellerId, addressInfo)
+        userWalletAddressRepository.addAddressToUser(sellerId, addressInfo)
 
         val ad = adService.createAd(sellerId.toHexString(), "Test Item", 10)
         adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(

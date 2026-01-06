@@ -1,11 +1,11 @@
 package com.gimlee.api.playground.ads.data
+import com.gimlee.common.domain.model.Currency
 
 import com.fasterxml.jackson.dataformat.csv.CsvMapper
 import com.fasterxml.jackson.dataformat.csv.CsvSchema
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
-import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.location.cities.data.cityDataUnsorted // Import the city data list
 import com.gimlee.api.playground.ads.domain.AdTemplate
@@ -179,7 +179,7 @@ class AdsPopulator(
                 val template = adTemplates.random()
                 val price = BigDecimal.valueOf(Random.nextDouble(MIN_PRICE, MAX_PRICE))
                     .setScale(2, RoundingMode.HALF_UP)
-                val currency = if (Random.nextBoolean()) Currency.USD else Currency.ARRR
+                val currency = if (Random.nextBoolean()) Currency.YEC else Currency.ARRR
                 val location = Location(city.id, doubleArrayOf(city.lon, city.lat))
 
                 // 1. Create inactive ad

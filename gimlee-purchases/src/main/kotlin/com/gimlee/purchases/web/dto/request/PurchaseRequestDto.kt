@@ -1,6 +1,6 @@
 package com.gimlee.purchases.web.dto.request
+import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.ads.domain.model.Currency
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull

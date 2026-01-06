@@ -1,4 +1,5 @@
 package com.gimlee.ads.domain.model
+import com.gimlee.common.domain.model.Currency
 
 import java.math.BigDecimal
 

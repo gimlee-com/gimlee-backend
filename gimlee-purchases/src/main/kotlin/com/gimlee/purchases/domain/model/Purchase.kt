@@ -1,6 +1,6 @@
 package com.gimlee.purchases.domain.model
+import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.ads.domain.model.Currency
 import org.bson.types.ObjectId
 import java.math.BigDecimal
 import java.time.Instant

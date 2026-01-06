@@ -1,7 +1,7 @@
 package com.gimlee.api.playground.payments.service
 
-import com.gimlee.payments.ycash.client.YcashRpcClient
-import com.gimlee.payments.ycash.client.model.ZSendManyAmount
+import com.gimlee.payments.crypto.ycash.client.YcashRpcClient
+import com.gimlee.payments.crypto.ycash.client.model.ZSendManyAmount
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.math.BigDecimal

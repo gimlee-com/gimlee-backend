@@ -43,7 +43,7 @@ Content-Type: application/json
   "title": "Updated Ad Title",
   "description": "This is a detailed description of the item.",
   "price": 19.99,
-  "currency": "USD",
+  "currency": "YEC",
   "location": {
     "cityId": "city-id-123",
     "point": {
@@ -67,7 +67,7 @@ Content-Type: application/json
 #   "title": "Updated Ad Title",
 #   "description": "This is a detailed description of the item.",
 #   "price": 19.99,
-#   "currency": "USD",
+#   "currency": "YEC",
 #   "status": "INACTIVE", // Status remains INACTIVE after update
 #   "userId": "5f8f8f8f8f8f8f8f8f8f8f8f", // Example User ID
 #   "location": {
@@ -123,7 +123,7 @@ POST {{host}}/api/sales/ads/{adId}/activate
 #   "title": "Updated Ad Title", // Or original title if not updated
 #   "description": "This is a detailed description of the item.", // Or null/previous value
 #   "price": 19.99, // Or null/previous value
-#   "currency": "USD", // Or null/previous value
+#   "currency": "YEC", // Or null/previous value
 #   "status": "ACTIVE", // Status is now ACTIVE
 #   "userId": "5f8f8f8f8f8f8f8f8f8f8f8f", // Example User ID
 #   "location": { // Or null/previous value

@@ -1,4 +1,5 @@
 package com.gimlee.ads.web
+import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.*

@@ -1,11 +1,11 @@
 package com.gimlee.ads.persistence
+import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.ads.domain.model.AdFilters
 import com.gimlee.ads.domain.model.AdSorting
 import com.gimlee.ads.domain.model.By
 import com.gimlee.ads.domain.model.Direction
 import com.gimlee.ads.domain.model.AdStatus
-import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.persistence.model.AdDocument
 import com.gimlee.common.persistence.mongo.MongoExceptionUtils
 import com.mongodb.MongoException
@@ -274,7 +274,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             title = doc.getString(AdDocument.FIELD_TITLE),
             description = doc.getString(AdDocument.FIELD_DESCRIPTION),
             price = priceString?.let { BigDecimal(it) },
-            currency = currencyString?.let { Currency.valueOf(it) },
+            currency = currencyString?.let { Currency.valueOf(it)},
             status = AdStatus.valueOf(statusString ?: AdStatus.INACTIVE.name),
             createdAtMicros = doc.getLong(AdDocument.FIELD_CREATED_AT),
             updatedAtMicros = doc.getLong(AdDocument.FIELD_UPDATED_AT),

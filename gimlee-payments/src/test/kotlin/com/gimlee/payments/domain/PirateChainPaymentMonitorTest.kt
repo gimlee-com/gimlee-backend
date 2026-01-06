@@ -5,10 +5,10 @@ import com.gimlee.payments.domain.model.Payment
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.payments.persistence.PaymentRepository
-import com.gimlee.payments.piratechain.client.PirateChainRpcClient
-import com.gimlee.payments.piratechain.client.model.RawReceivedTransaction
+import com.gimlee.payments.crypto.piratechain.client.PirateChainRpcClient
+import com.gimlee.payments.crypto.client.model.RawReceivedTransaction
 import com.gimlee.payments.client.model.RpcResponse
-import com.gimlee.payments.piratechain.domain.PirateChainPaymentMonitor
+import com.gimlee.payments.crypto.piratechain.domain.PirateChainPaymentMonitor
 import io.kotest.core.spec.style.StringSpec
 import io.mockk.every
 import io.mockk.mockk

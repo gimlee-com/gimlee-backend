@@ -1,4 +1,5 @@
 package com.gimlee.ads.persistence.model
+import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.ads.domain.model.*
 import com.gimlee.location.cities.data.cityDataById

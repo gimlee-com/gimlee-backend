@@ -1,6 +1,6 @@
 package com.gimlee.purchases.persistence
+import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.ads.domain.model.Currency
 import com.gimlee.common.InstantUtils.fromMicros
 import com.gimlee.common.toMicros
 import com.gimlee.purchases.domain.model.Purchase
@@ -139,6 +139,6 @@ class PurchaseRepository(
         adId = getObjectId(PurchaseItemDocument.FIELD_AD_ID),
         quantity = getInteger(PurchaseItemDocument.FIELD_QUANTITY),
         unitPrice = get(PurchaseItemDocument.FIELD_UNIT_PRICE, Decimal128::class.java).bigDecimalValue(),
-        currency = Currency.valueOf(getString(PurchaseItemDocument.FIELD_CURRENCY))
+        currency = Currency.valueOf(getString(PurchaseItemDocument.FIELD_CURRENCY))!!
     )
 }

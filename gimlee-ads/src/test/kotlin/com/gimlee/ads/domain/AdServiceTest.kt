@@ -1,4 +1,5 @@
 package com.gimlee.ads.domain
+import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.ads.domain.model.*
 import com.gimlee.ads.persistence.AdRepository
@@ -88,7 +89,7 @@ class AdServiceTest : StringSpec({
             title = "Test Ad",
             description = "Description",
             price = BigDecimal("100"),
-            currency = Currency.USD,
+            currency = Currency.ARRR,
             status = AdStatus.INACTIVE,
             createdAtMicros = 1000L,
             updatedAtMicros = 1000L,

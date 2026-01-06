@@ -1,8 +1,8 @@
 package com.gimlee.api
+import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.web.dto.request.UpdateAdRequestDto
@@ -12,8 +12,8 @@ import com.gimlee.purchases.domain.PurchaseService
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.toMicros
-import com.gimlee.payments.piratechain.persistence.UserPirateChainAddressRepository
-import com.gimlee.payments.piratechain.persistence.model.PirateChainAddressInfo
+import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
+import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
@@ -33,7 +33,7 @@ class AdManagementIntegrationTest(
     private val adService: AdService,
     private val purchaseService: PurchaseService,
     private val userRoleRepository: UserRoleRepository,
-    private val userPirateChainAddressRepository: UserPirateChainAddressRepository
+    private val userWalletAddressRepository: UserWalletAddressRepository
 ) : BaseIntegrationTest({
 
     Given("an active ad with some locked stock") {
@@ -41,13 +41,14 @@ class AdManagementIntegrationTest(
         userRoleRepository.add(sellerId, Role.USER)
         userRoleRepository.add(sellerId, Role.PIRATE)
 
-        val addressInfo = PirateChainAddressInfo(
+        val addressInfo = WalletAddressInfo(
+            type = Currency.ARRR,
             zAddress = "zs1testaddress",
             viewKeyHash = "hash",
             viewKeySalt = "salt",
             lastUpdateTimestamp = Instant.now().toMicros()
         )
-        userPirateChainAddressRepository.addAddressToUser(sellerId, addressInfo)
+        userWalletAddressRepository.addAddressToUser(sellerId, addressInfo)
 
         val principal = Principal(userId = sellerId.toHexString(), username = "seller", roles = listOf(Role.USER, Role.PIRATE))
         

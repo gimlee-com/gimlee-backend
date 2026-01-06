@@ -1,8 +1,8 @@
 package com.gimlee.ads.web.dto.request
+import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
-import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.location.cities.data.cityDataById
 import jakarta.validation.Valid

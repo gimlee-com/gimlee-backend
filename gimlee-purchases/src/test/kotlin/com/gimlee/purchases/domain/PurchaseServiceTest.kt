@@ -1,4 +1,5 @@
 package com.gimlee.purchases.domain
+import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.events.PurchaseEvent
 import com.gimlee.purchases.domain.model.PurchaseStatus
@@ -16,7 +17,6 @@ import org.springframework.context.ApplicationEventPublisher
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.Ad
 import com.gimlee.ads.domain.model.AdStatus
-import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
 import java.math.BigDecimal
 import java.time.Instant

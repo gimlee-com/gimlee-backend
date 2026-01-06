@@ -7,7 +7,7 @@ import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.payments.persistence.PaymentEventRepository
 import com.gimlee.payments.persistence.PaymentRepository
-import com.gimlee.payments.piratechain.persistence.UserPirateChainAddressRepository
+import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import org.bson.types.ObjectId
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -19,7 +19,7 @@ import java.time.temporal.ChronoUnit
 class PaymentService(
     private val paymentRepository: PaymentRepository,
     private val paymentEventRepository: PaymentEventRepository,
-    private val userPirateChainAddressRepository: UserPirateChainAddressRepository,
+    private val userWalletAddressRepository: UserWalletAddressRepository,
     private val applicationEventPublisher: ApplicationEventPublisher,
     private val paymentProperties: PaymentProperties
 ) {
@@ -36,17 +36,26 @@ class PaymentService(
         paymentMethod: PaymentMethod
     ): Payment {
         
-        val receivingAddress = if (paymentMethod == PaymentMethod.PIRATE_CHAIN) {
-             val sellerAddresses = userPirateChainAddressRepository.findByUserId(sellerId)
-             sellerAddresses?.addresses?.firstOrNull()?.zAddress
-                ?: throw IllegalStateException("Seller $sellerId does not have a Pirate Chain address set up.")
-        } else {
-             throw UnsupportedOperationException("Payment method $paymentMethod not supported")
+        val receivingAddress = when (paymentMethod) {
+            PaymentMethod.PIRATE_CHAIN -> {
+                val sellerAddresses = userWalletAddressRepository.findByUserId(sellerId)
+                sellerAddresses?.addresses?.firstOrNull { it.type == com.gimlee.common.domain.model.Currency.ARRR }?.zAddress
+                    ?: throw IllegalStateException("Seller $sellerId does not have a Pirate Chain address set up.")
+            }
+            PaymentMethod.YCASH -> {
+                val sellerAddresses = userWalletAddressRepository.findByUserId(sellerId)
+                sellerAddresses?.addresses?.firstOrNull { it.type == com.gimlee.common.domain.model.Currency.YEC }?.zAddress
+                    ?: throw IllegalStateException("Seller $sellerId does not have a YCash address set up.")
+            }
         }
 
         val now = Instant.now()
         val deadline = now.plus(paymentProperties.timeoutHours, ChronoUnit.HOURS)
-        val memo = "${paymentProperties.pirateChain.memoPrefix}${purchaseId.toHexString()}"
+        val memoPrefix = when (paymentMethod) {
+            PaymentMethod.PIRATE_CHAIN -> paymentProperties.pirateChain.memoPrefix
+            PaymentMethod.YCASH -> paymentProperties.ycash.memoPrefix
+        }
+        val memo = "$memoPrefix${purchaseId.toHexString()}"
 
         val payment = Payment(
             id = ObjectId.get(),

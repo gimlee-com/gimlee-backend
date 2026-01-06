@@ -1,6 +1,6 @@
 package com.gimlee.ads.web.dto.response
+import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.ads.domain.model.Currency
 import com.gimlee.ads.domain.model.CurrencyAmount
 import java.math.BigDecimal
 

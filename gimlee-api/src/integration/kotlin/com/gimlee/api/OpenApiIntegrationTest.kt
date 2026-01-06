@@ -29,8 +29,8 @@ class OpenApiIntegrationTest(
                 // Check for some endpoints and their security/role info
                 content shouldContain "\"bearerAuth\":[]"
                 
-                // Check for a secured endpoint (e.g., /payments/piratechain/addresses/view-key)
-                content shouldContain "/payments/piratechain/addresses/view-key"
+                // Check for a secured endpoint (e.g., /payments/{crypto}/addresses/view-key)
+                content shouldContain "/payments/{crypto}/addresses/view-key"
                 content shouldContain "**Security:** `JWT (Bearer)`"
                 content shouldContain "**Required Role:** `USER`"
                 
