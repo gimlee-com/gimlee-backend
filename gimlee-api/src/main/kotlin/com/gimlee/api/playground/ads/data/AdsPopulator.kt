@@ -92,18 +92,33 @@ class AdsPopulator(
             return
         }
 
-        val sellerUser = userRepository.findOneByField("username", "seller")
-        if (sellerUser != null) {
-            log.info("User 'seller' found. Creating 1000 ads for 'seller' with 'Buyable' prefix.")
-            val totalAds = 1000
-            val chunkSize = 100
-            val tasks = (1..(totalAds / chunkSize)).map {
-                executorService.submit {
-                    createAdsForUser(sellerUser, chunkSize, "Buyable ")
+        val pirateSeller = userRepository.findOneByField("username", "pirate_seller")
+        val ycashSeller = userRepository.findOneByField("username", "ycash_seller")
+
+        if (pirateSeller != null || ycashSeller != null) {
+            val tasks = mutableListOf<java.util.concurrent.Future<*>>()
+            if (pirateSeller != null) {
+                log.info("User 'pirate_seller' found. Creating 500 ARRR ads.")
+                val totalAds = 500
+                val chunkSize = 50
+                repeat(totalAds / chunkSize) {
+                    tasks.add(executorService.submit {
+                        createAdsForUser(pirateSeller, chunkSize, "ARRR Ad ", Currency.ARRR)
+                    })
+                }
+            }
+            if (ycashSeller != null) {
+                log.info("User 'ycash_seller' found. Creating 500 YEC ads.")
+                val totalAds = 500
+                val chunkSize = 50
+                repeat(totalAds / chunkSize) {
+                    tasks.add(executorService.submit {
+                        createAdsForUser(ycashSeller, chunkSize, "YEC Ad ", Currency.YEC)
+                    })
                 }
             }
             tasks.forEach { it.get() }
-            log.info("Finished creating 1000 ads for 'seller'.")
+            log.info("Finished creating ads for sellers.")
             return
         }
 
@@ -159,7 +174,7 @@ class AdsPopulator(
         log.info("All ad population tasks completed.")
     }
 
-    private fun createAdsForUser(user: User, count: Int, titlePrefix: String = "") {
+    private fun createAdsForUser(user: User, count: Int, titlePrefix: String = "", forceCurrency: Currency? = null) {
         val userId = user.id?.toHexString()
         if (userId == null) {
             log.warn("User ${user.username} has no ID. Skipping ad creation.")
@@ -179,7 +194,7 @@ class AdsPopulator(
                 val template = adTemplates.random()
                 val price = BigDecimal.valueOf(Random.nextDouble(MIN_PRICE, MAX_PRICE))
                     .setScale(2, RoundingMode.HALF_UP)
-                val currency = if (Random.nextBoolean()) Currency.YEC else Currency.ARRR
+                val currency = forceCurrency ?: if (Random.nextBoolean()) Currency.YEC else Currency.ARRR
                 val location = Location(city.id, doubleArrayOf(city.lon, city.lat))
 
                 // 1. Create inactive ad

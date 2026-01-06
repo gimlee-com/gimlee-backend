@@ -39,7 +39,7 @@ class PurchaseServiceTest : StringSpec({
         val purchaseSlot = slot<Purchase>()
         every { purchaseRepository.save(capture(purchaseSlot)) } answers { purchaseSlot.captured }
 
-        service.initPurchase(buyerId, sellerId, items, amount)
+        service.initPurchase(buyerId, sellerId, items, amount, PaymentMethod.PIRATE_CHAIN)
 
         verify { paymentService.initPayment(any(), buyerId, sellerId, amount, PaymentMethod.PIRATE_CHAIN) }
         verify(exactly = 2) { purchaseRepository.save(any()) } 

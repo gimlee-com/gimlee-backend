@@ -34,14 +34,14 @@ These capabilities are beneficial in many ways, including:
 
 Payment verification occurs directly on the blockchain, ensuring transparency and security **without the platform ever
 taking custody of user funds**. This approach is compatible with privacy-focused cryptocurrencies like Monero (XMR),
-PirateChain (ARRR), and Firo (FIRO).
+PirateChain (ARRR), YCash (YEC), and Firo (FIRO).
 
 ## Project Status & Roadmap
 
 **Gimlee is currently in the early stages of active development.**
 
-*   **Stage 1 (In Progress):** Integration with the **PirateChain (ARRR)** blockchain. PirateChain was selected 
-    for the initial implementation primarily due to its relatively fast transaction confirmation times, contributing to a better user experience.
+*   **Stage 1 (In Progress):** Integration with **PirateChain (ARRR)** and **YCash (YEC)** blockchains. These privacy-focused cryptocurrencies 
+    were selected for the initial implementation due to their fast transaction confirmation times and advanced privacy features.
 *   **Stage 2 (Planned):** Implementation of decentralized storage for core data (e.g., users, listings). 
     Potential solutions under consideration include **Dash Platform Drive**. This aims to enable the creation 
     of independent Gimlee instances (clones) that can synchronize the full dataset or specific subsets
@@ -72,6 +72,8 @@ This section guides developers looking to contribute or run a local instance for
 *   **Flyway CLI:** For database migrations, ensure the Flyway CLI is installed and available in your PATH.
 *   **PirateChain Full Node:** A running [PirateChain](https://piratechain.com) full node wallet is required for 
     transaction verification during development. (*Note: By default, this node will connect to the PirateChain mainnet.*)
+*   **YCash Full Node:** A running [YCash](https://ycash.xyz) full node wallet is required for 
+    transaction verification during development. (*Note: By default, this node will connect to the YCash mainnet.*)
 *   **SMTP Server:** A configured SMTP server is necessary for the application to send emails (e.g., notifications,
     confirmations).
 
@@ -86,6 +88,9 @@ Before running the application for the first time:
     *   **PirateChain RPC:** The `rpc-url`, `user`, and `password` values for the `gimlee.payments.piratechain` section
         can typically be found in the PirateChain full node's configuration file (usually located
         at `~/.komodo/PIRATE/PIRATE.conf`).
+    *   **YCash RPC:** The `rpc-url`, `user`, and `password` values for the `gimlee.payments.ycash` section
+        can typically be found in the YCash full node's configuration file (usually located
+        at `~/.ycash/ycash.conf`).
     *   **Media Storage:** The application supports two media storage backends: local filesystem and S3-compatible object storage. This is controlled by the `gimlee.media.store.storage-type` property.
         *   **For local storage (default):** Set `gimlee.media.store.storage-type` to `LOCAL` (or omit it). Then, configure `gimlee.media.store.local.directory` with the absolute path where files should be saved.
         *   **For S3-compatible storage:** Set `gimlee.media.store.storage-type` to `S3`. Then, configure the properties under `gimlee.media.store.s3`, including `endpoint`, `region`, `bucket`, `access-key`, and `secret-key`.

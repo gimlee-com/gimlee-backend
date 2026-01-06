@@ -27,6 +27,7 @@ import kotlin.reflect.typeOf
 class YcashRpcClient(
     private val httpClient: HttpClient,
     private val properties: YcashClientProperties,
+    private val isProd: Boolean = true
 ) : CryptoClient {
     private val log = LoggerFactory.getLogger(javaClass)
     private val objectMapper: ObjectMapper = ObjectMapper()
@@ -44,6 +45,10 @@ class YcashRpcClient(
         private const val RPC_LIST_UNSPENT = "listunspent"
         private const val RPC_IMPORT_VIEWING_KEY = "z_importviewingkey"
         private const val RPC_LIST_RECEIVED_BY_ADDRESS = "z_listreceivedbyaddress"
+
+        private const val ALREADY_CONTAINS_PRIVATE_KEY_ERROR_CODE = -4
+        private const val ALREADY_CONTAINS_PRIVATE_KEY_ERROR_MSG_PART = "The wallet already contains the private key for this viewing key"
+        private val ADDRESS_REGEX = Regex("address: ([a-zA-Z0-9]+)")
     }
 
     @Throws(IOException::class, YcashRpcException::class)
@@ -69,23 +74,25 @@ class YcashRpcClient(
                     val rpcResponse: RpcResponse<T> = objectMapper.readValue(jsonResponse, responseType)
 
                     rpcResponse.error?.let {
-                        // Extract the specific message from the inner map
                         val errorMsg = it["message"] as? String ?: "Unknown RPC error"
-                        val errorCode = it["code"]
-                        throw YcashRpcException("Node Error: $errorMsg (Code: $errorCode)")
+                        val errorCode = it["code"] as? Int
+                        throw YcashRpcException("Node Error: $errorMsg (Code: $errorCode)", errorCode, errorMsg)
                     }
                     rpcResponse
                 } else {
                     // Attempt to parse JSON error even on 500 status codes (common for RPC)
-                    try {
+                    val rpcError = try {
                         val errorType = determineResponseType<Any>(method) // Use Any/generic to just look for error field
                         val rpcResponse: RpcResponse<Any> = objectMapper.readValue(jsonResponse, errorType)
-                        rpcResponse.error?.let {
-                            val errorMsg = it["message"] as? String ?: "Unknown RPC error"
-                            throw YcashRpcException("Node Error: $errorMsg (Code: ${it["code"]})")
-                        }
+                        rpcResponse.error
                     } catch (ignore: Exception) {
-                        // If parsing fails, fall back to standard HTTP error
+                        null
+                    }
+
+                    rpcError?.let {
+                        val errorMsg = it["message"] as? String ?: "Unknown RPC error"
+                        val errorCode = it["code"] as? Int
+                        throw YcashRpcException("Node Error: $errorMsg (Code: $errorCode)", errorCode, errorMsg)
                     }
 
                     val errorReason = response.reasonPhrase ?: "Unknown Error"
@@ -95,6 +102,8 @@ class YcashRpcClient(
             }
         } catch (e: IOException) {
             throw IOException("Failed to execute RPC request '$method': ${e.message}", e)
+        } catch (e: YcashRpcException) {
+            throw e
         } catch (e: Exception) {
             log.error("Unexpected error during RPC call processing for method '{}': {}", method, e.message, e)
             throw YcashRpcException("Failed to process RPC response for method '$method': ${e.message}")
@@ -138,11 +147,29 @@ class YcashRpcClient(
 
     @Throws(IOException::class, YcashRpcException::class)
     override fun importViewingKey(viewKey: String): RpcResponse<Address> =
-        callRpc(RPC_IMPORT_VIEWING_KEY, listOf(viewKey, NO_RESCAN))
+        try {
+            callRpc(RPC_IMPORT_VIEWING_KEY, listOf(viewKey, NO_RESCAN))
+        } catch (e: YcashRpcException) {
+            if (!isProd && e.errorCode == ALREADY_CONTAINS_PRIVATE_KEY_ERROR_CODE &&
+                e.errorMsg?.contains(ALREADY_CONTAINS_PRIVATE_KEY_ERROR_MSG_PART) == true
+            ) {
+                val address = e.errorMsg.let { msg ->
+                    ADDRESS_REGEX.find(msg)?.groupValues?.get(1) ?: "unknown"
+                }
+                log.info("Viewing key already has a private key in the wallet for address: {}. Ignoring error as we are not in prod.", address)
+                RpcResponse(result = Address(address), error = null, id = null)
+            } else {
+                throw e
+            }
+        }
 
     @Throws(IOException::class, YcashRpcException::class)
     override fun getReceivedByAddress(address: String, minConfirmations: Int): RpcResponse<List<RawReceivedTransaction>> =
         callRpc(RPC_LIST_RECEIVED_BY_ADDRESS, listOf(address, minConfirmations))
 
-    class YcashRpcException(message: String) : Exception(message)
+    class YcashRpcException(
+        message: String,
+        val errorCode: Int? = null,
+        val errorMsg: String? = null
+    ) : Exception(message)
 }

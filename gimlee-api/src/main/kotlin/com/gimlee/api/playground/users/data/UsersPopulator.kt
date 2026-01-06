@@ -10,6 +10,7 @@ import com.gimlee.auth.util.createHexSaltAndPasswordHash
 import com.gimlee.auth.util.generateSalt
 import com.gimlee.auth.domain.UserStatus
 import com.gimlee.payments.crypto.piratechain.domain.PirateChainAddressService
+import com.gimlee.payments.crypto.ycash.domain.YcashAddressService
 import org.apache.logging.log4j.LogManager
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
@@ -18,7 +19,8 @@ import java.time.LocalDateTime
 class UsersPopulator(
     private val userRepository: UserRepository,
     private val userRoleRepository: UserRoleRepository,
-    private val pirateChainAddressService: PirateChainAddressService
+    private val pirateChainAddressService: PirateChainAddressService,
+    private val ycashAddressService: YcashAddressService
 ) {
     companion object {
         private val log = LogManager.getLogger()
@@ -27,9 +29,21 @@ class UsersPopulator(
         private const val EMAIL = "playground-user@gimlee.com"
     }
 
-    fun populateUsers(viewKey: String? = null): List<Pair<User, List<Role>>> {
-        if (viewKey != null) {
-            return listOf(createSeller(viewKey))
+    fun populateUsers(pirateViewKey: String? = null, ycashViewKey: String? = null): List<Pair<User, List<Role>>> {
+        val sellers = mutableListOf<Pair<User, List<Role>>>()
+        if (pirateViewKey != null) {
+            sellers.add(createSeller("pirate_seller", pirateViewKey, Role.PIRATE) { userId, vk ->
+                pirateChainAddressService.importAndAssociateViewKey(userId, vk)
+            })
+        }
+        if (ycashViewKey != null) {
+            sellers.add(createSeller("ycash_seller", ycashViewKey, Role.YCASH) { userId, vk ->
+                ycashAddressService.importAndAssociateViewKey(userId, vk)
+            })
+        }
+
+        if (sellers.isNotEmpty()) {
+            return sellers
         }
 
         val users = createUsers()
@@ -47,11 +61,10 @@ class UsersPopulator(
         }
     }
 
-    private fun createSeller(viewKey: String): Pair<User, List<Role>> {
-        val username = "seller"
+    private fun createSeller(username: String, viewKey: String, role: Role, importFunc: (String, String) -> Unit): Pair<User, List<Role>> {
         val existingUser = userRepository.findOneByField(FIELD_USERNAME, username)
         val user = if (existingUser != null) {
-            log.info("User 'seller' already exists. Reusing.")
+            log.info("User '$username' already exists. Reusing.")
             existingUser
         } else {
             val (salt, passwordHash) = createHexSaltAndPasswordHash(PASSWORD, generateSalt())
@@ -66,22 +79,22 @@ class UsersPopulator(
                 lastLogin = LocalDateTime.now()
             )
             val savedUser = userRepository.save(newUser)
-            log.info("User 'seller' created.")
+            log.info("User '$username' created.")
             savedUser
         }
 
         val existingRoles = userRoleRepository.getAll(user.id!!)
-        val rolesToAdd = listOf(Role.USER, Role.PIRATE).filter { it !in existingRoles }
-        rolesToAdd.forEach { role ->
-            userRoleRepository.add(user.id!!, role)
+        val rolesToAdd = listOf(Role.USER, role).filter { it !in existingRoles }
+        rolesToAdd.forEach { r ->
+            userRoleRepository.add(user.id!!, r)
         }
         if (rolesToAdd.isNotEmpty()) {
-            log.info("Roles $rolesToAdd added to user 'seller'.")
+            log.info("Roles $rolesToAdd added to user '$username'.")
         }
 
-        pirateChainAddressService.importAndAssociateViewKey(user.id!!.toHexString(), viewKey)
-        log.info("ViewKey registered for user 'seller'.")
+        importFunc(user.id!!.toHexString(), viewKey)
+        log.info("ViewKey registered for user '$username'.")
 
-        return Pair(user, listOf(Role.USER, Role.PIRATE))
+        return Pair(user, listOf(Role.USER, role))
     }
 }

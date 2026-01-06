@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.env.Environment
 import com.gimlee.payments.crypto.ycash.client.YcashRpcClient
 import com.gimlee.payments.config.PaymentProperties
 import java.net.URI
@@ -25,7 +26,8 @@ import java.util.concurrent.atomic.AtomicInteger
 @EnableConfigurationProperties(YcashClientProperties::class, PaymentProperties::class)
 class YcashClientConfig(
     private val properties: YcashClientProperties,
-    private val paymentProperties: PaymentProperties
+    private val paymentProperties: PaymentProperties,
+    private val environment: Environment
 ) {
 
     companion object {
@@ -66,7 +68,7 @@ class YcashClientConfig(
     @Bean
     fun ycashRpcClient(
         @Qualifier(YCASH_HTTP_CLIENT) httpClient: HttpClient
-    ) = YcashRpcClient(httpClient, properties)
+    ) = YcashRpcClient(httpClient, properties, environment.activeProfiles.contains("prod"))
 
     @Bean(name = [YCASH_MONITOR_EXECUTOR])
     fun ycashMonitorExecutor(): ExecutorService {

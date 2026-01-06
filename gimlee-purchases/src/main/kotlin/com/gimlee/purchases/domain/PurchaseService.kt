@@ -64,8 +64,14 @@ class PurchaseService(
                     currency = it.currency
                 )
             },
-            totalAmount = totalAmount
+            totalAmount = totalAmount,
+            paymentMethod = getPaymentMethod(currency)
         )
+    }
+
+    private fun getPaymentMethod(currency: Currency): PaymentMethod = when (currency) {
+        Currency.ARRR -> PaymentMethod.PIRATE_CHAIN
+        Currency.YEC -> PaymentMethod.YCASH
     }
 
     private fun validateAdsExist(items: List<PurchaseItemRequestDto>, ads: Map<String, Ad>) {
@@ -150,7 +156,8 @@ class PurchaseService(
         buyerId: ObjectId,
         sellerId: ObjectId,
         items: List<PurchaseItem>,
-        totalAmount: BigDecimal
+        totalAmount: BigDecimal,
+        paymentMethod: PaymentMethod
     ): Purchase {
         val purchaseId = ObjectId.get()
         val now = Instant.now()
@@ -174,7 +181,7 @@ class PurchaseService(
             buyerId = buyerId,
             sellerId = sellerId,
             amount = totalAmount,
-            paymentMethod = PaymentMethod.PIRATE_CHAIN
+            paymentMethod = paymentMethod
         )
 
         // Update status to AWAITING_PAYMENT
