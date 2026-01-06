@@ -62,10 +62,25 @@ class YcashRpcClient(
                     val rpcResponse: RpcResponse<T> = objectMapper.readValue(jsonResponse, responseType)
 
                     rpcResponse.error?.let {
-                        throw YcashRpcException("RPC Error: ${it["message"]} (Code: ${it["code"]})")
+                        // Extract the specific message from the inner map
+                        val errorMsg = it["message"] as? String ?: "Unknown RPC error"
+                        val errorCode = it["code"]
+                        throw YcashRpcException("Node Error: $errorMsg (Code: $errorCode)")
                     }
                     rpcResponse
                 } else {
+                    // Attempt to parse JSON error even on 500 status codes (common for RPC)
+                    try {
+                        val errorType = determineResponseType<Any>(method) // Use Any/generic to just look for error field
+                        val rpcResponse: RpcResponse<Any> = objectMapper.readValue(jsonResponse, errorType)
+                        rpcResponse.error?.let {
+                            val errorMsg = it["message"] as? String ?: "Unknown RPC error"
+                            throw YcashRpcException("Node Error: $errorMsg (Code: ${it["code"]})")
+                        }
+                    } catch (ignore: Exception) {
+                        // If parsing fails, fall back to standard HTTP error
+                    }
+
                     val errorReason = response.reasonPhrase ?: "Unknown Error"
                     EntityUtils.consumeQuietly(entity)
                     throw IOException("HTTP Error: $statusCode $errorReason. Response: $jsonResponse")
