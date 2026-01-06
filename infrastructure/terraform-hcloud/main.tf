@@ -226,6 +226,12 @@ resource "hcloud_firewall" "wallet" {
     port      = "19067"
     source_ips = ["0.0.0.0/0", "::/0"] # Ycash Lightwalletd (gimlee-internal-testnet)
   }
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "18232"
+    source_ips = ["0.0.0.0/0", "::/0"] # ycashd (gimlee-internal-testnet)
+  }
   apply_to {
     label_selector = "role=wallet"
   }

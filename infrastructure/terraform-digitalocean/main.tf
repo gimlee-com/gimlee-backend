@@ -192,6 +192,12 @@ resource "digitalocean_firewall" "wallet" {
     source_addresses = ["0.0.0.0/0", "::/0"]
   }
 
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "18232" # ycashd (gimlee-internal-testnet)
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
   outbound_rule {
     protocol              = "tcp"
     port_range            = "all"
