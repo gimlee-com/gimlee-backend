@@ -202,6 +202,30 @@ resource "hcloud_firewall" "wallet" {
     port      = "45453"
     source_ips = [for s in hcloud_server.app : "${s.ipv4_address}/32"] # Only allow App nodes
   }
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "19232"
+    source_ips = [for s in hcloud_server.app : "${s.ipv4_address}/32"] # Ycash RPC (Mainnet)
+  }
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "18232"
+    source_ips = [for s in hcloud_server.app : "${s.ipv4_address}/32"] # Ycash RPC (gimlee-internal-testnet)
+  }
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "9067"
+    source_ips = ["0.0.0.0/0", "::/0"] # Ycash Lightwalletd (Mainnet)
+  }
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "19067"
+    source_ips = ["0.0.0.0/0", "::/0"] # Ycash Lightwalletd (gimlee-internal-testnet)
+  }
   apply_to {
     label_selector = "role=wallet"
   }

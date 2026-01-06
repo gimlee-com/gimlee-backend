@@ -7,7 +7,8 @@ import org.springframework.boot.context.properties.bind.DefaultValue
 data class PaymentProperties(
     @DefaultValue("1")
     val timeoutHours: Long,
-    val pirateChain: PirateChainProperties = PirateChainProperties()
+    val pirateChain: PirateChainProperties = PirateChainProperties(),
+    val ycash: YcashProperties = YcashProperties()
 )
 
 data class PirateChainProperties(
@@ -19,4 +20,15 @@ data class PirateChainProperties(
     val minConfirmations: Int = 1,
     @DefaultValue("5")
     val monitorThreads: Int = 5
+)
+
+data class YcashProperties(
+    @DefaultValue("gimlee:")
+    val memoPrefix: String = "gimlee:",
+    @DefaultValue("10000")
+    val monitorDelayMs: Long = 10000,
+    @DefaultValue("1")
+    val minConfirmations: Int = 1,
+    @DefaultValue("1")
+    val monitorThreads: Int = 1
 )

@@ -1,7 +1,6 @@
-package com.gimlee.payments.piratechain.client.model
+package com.gimlee.payments.client.model
 
 private const val JSONRPC_VERSION = "1.0"
-
 
 data class RpcRequest(
     val method: String,

@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import com.gimlee.payments.piratechain.client.PirateChainRpcClient
 import com.gimlee.payments.piratechain.client.model.RawReceivedTransaction
-import com.gimlee.payments.piratechain.client.model.RpcResponse
+import com.gimlee.payments.client.model.RpcResponse
 import com.gimlee.payments.piratechain.persistence.UserPirateChainAddressRepository
 import com.gimlee.payments.piratechain.web.dto.PirateChainTransactionDto // Import the new DTO
 

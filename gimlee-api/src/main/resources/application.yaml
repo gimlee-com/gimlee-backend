@@ -61,3 +61,9 @@ gimlee:
         max-connections: 2
         response-timeout-millis: 1000
         connection-request-timeout-millis: 300
+    ycash:
+      monitor-threads: 1
+      client:
+        max-connections: 2
+        response-timeout-millis: 1000
+        connection-request-timeout-millis: 300

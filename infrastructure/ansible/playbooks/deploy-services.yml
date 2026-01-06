@@ -1,4 +1,3 @@
----
 - name: Deploy Database
   hosts: db
   become: true
@@ -107,3 +106,163 @@
         volumes:
           - /opt/piratechain/data:/root/.komodo/PIRATE
           - /opt/piratechain/PIRATE.conf:/root/.komodo/PIRATE/PIRATE.conf:ro
+
+- name: Deploy Ycash Wallet
+  hosts: wallet
+  become: true
+  vars:
+    # ycash_network can be 'mainnet', 'gimlee-internal-testnet', or 'both'
+    ycash_network: "mainnet"
+    ycash_instances: "{{ ['mainnet', 'gimlee-internal-testnet'] if ycash_network == 'both' else [ycash_network] }}"
+    ycash_lightwalletd_enabled: true
+  tasks:
+    - name: Create Ycash base directory
+      file:
+        path: /opt/ycash
+        state: directory
+        mode: '0755'
+
+    - name: Download Ycash/Zcash fetch-params script
+      get_url:
+        url: https://raw.githubusercontent.com/ycashfoundation/ycash/master/zcutil/fetch-params.sh
+        dest: /opt/ycash/fetch-params.sh
+        mode: '0755'
+
+    - name: Run fetch-params script
+      command: /opt/ycash/fetch-params.sh
+      environment:
+        HOME: /opt/ycash
+      args:
+        creates: /opt/ycash/.zcash-params/sapling-output.params
+
+    - name: Create Ycash instance directories
+      file:
+        path: "/opt/ycash/{{ item }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ ycash_instances }}"
+
+    - name: Create Ycash config files
+      copy:
+        dest: "/opt/ycash/{{ item }}/ycash.conf"
+        content: |
+          server=1
+          listen=1
+          discover={{ '0' if item == 'gimlee-internal-testnet' else '1' }}
+          txindex=1
+          insightexplorer=1
+          experimentalfeatures=1
+          lightwalletd=1
+          addressindex=1
+          timestampindex=1
+          spentindex=1
+          {% if item == 'gimlee-internal-testnet' %}
+          # Private solo gimlee-internal-testnet (Regtest Mode)
+          regtest=1
+          gen=0
+          # Force Sapling activation at block 1 (ID:Height)
+          # Overwinter: 5ba81b19, Sapling: 76b809bb
+          nuparams=5ba81b19:1
+          nuparams=76b809bb:1
+          {% else %}
+          addnode=seed.ycash.xyz:19233
+          addnode=explorer.ycash.xyz:19233
+          addnode=ycash.rocks:19233
+          addnode=dnsseed.ycash.xyz:19233
+          {% endif %}
+          rpcuser={{ ycash_user }}
+          rpcpassword={{ ycash_password }}
+          rpcport={{ 18232 if item == 'gimlee-internal-testnet' else 19232 }}
+          rpcbind=0.0.0.0
+          rpcallowip=0.0.0.0/0
+        mode: '0600'
+      loop: "{{ ycash_instances }}"
+
+    - name: Copy Dockerfile for Ycash
+      copy:
+        src: ../../../wallets/ycash/Dockerfile
+        dest: /opt/ycash/Dockerfile
+
+    - name: Copy Dockerfile for Ycash lightwalletd
+      copy:
+        src: ../../../wallets/ycash/lightwalletd.Dockerfile
+        dest: /opt/ycash/lightwalletd.Dockerfile
+      when: ycash_lightwalletd_enabled
+
+    - name: Build Ycash image from Dockerfile
+      community.docker.docker_image:
+        name: ycash:latest
+        build:
+          path: /opt/ycash
+        source: build
+
+    - name: Build Ycash lightwalletd image
+      community.docker.docker_image:
+        name: ycash-lightwalletd:latest
+        build:
+          path: /opt/ycash
+          dockerfile: lightwalletd.Dockerfile
+        source: build
+      when: ycash_lightwalletd_enabled
+
+    - name: Ensure old Ycash container is removed (if it exists from previous version)
+      community.docker.docker_container:
+        name: ycash
+        state: absent
+
+    - name: Run Ycash containers
+      community.docker.docker_container:
+        name: "ycash-{{ item }}"
+        image: ycash:latest
+        command: ./ycashd -printtoconsole
+        restart_policy: always
+        ports:
+          - "{{ 18232 if item == 'gimlee-internal-testnet' else 19232 }}:{{ 18232 if item == 'gimlee-internal-testnet' else 19232 }}"
+        volumes:
+          - "/opt/ycash/{{ item }}:/root/.ycash"
+          - "/opt/ycash/{{ item }}/ycash.conf:/root/.ycash/ycash.conf:ro"
+          - "/opt/ycash/.zcash-params:/root/.zcash-params:ro"
+      loop: "{{ ycash_instances }}"
+
+    - name: Run Ycash lightwalletd containers
+      community.docker.docker_container:
+        name: "ycash-lightwalletd-{{ item }}"
+        image: ycash-lightwalletd:latest
+        command: >
+          -conf-file /root/.ycash/ycash.conf
+          -bind-addr 0.0.0.0:{{ 19067 if item == 'gimlee-internal-testnet' else 9067 }}
+          -log-file /dev/stdout
+          -no-tls
+        network_mode: host
+        restart_policy: always
+        volumes:
+          - "/opt/ycash/{{ item }}:/root/.ycash:ro"
+      loop: "{{ ycash_instances }}"
+      when: ycash_lightwalletd_enabled
+
+    - name: Run Heartbeat Miner (Regtest Only)
+      community.docker.docker_container:
+        name: "ycash-miner-{{ item }}"
+        image: alpine:latest
+        # We install curl, then run an infinite loop hitting the RPC endpoint
+        command: >
+          sh -c "
+            apk add --no-cache curl &&
+            echo 'Starting Heartbeat Miner...' &&
+            while true; do
+              curl -s --user $RPC_USER:$RPC_PASSWORD \
+                --data-binary '{\"jsonrpc\": \"1.0\", \"id\": \"miner\", \"method\": \"generate\", \"params\": [1]}' \
+                -H 'content-type: text/plain;' \
+                http://127.0.0.1:18232/ > /dev/null;
+              echo \"[$(date)] Mined 1 block\";
+              sleep 60;
+            done
+          "
+        network_mode: host
+        restart_policy: always
+        env:
+          RPC_USER: "{{ ycash_user }}"
+          RPC_PASSWORD: "{{ ycash_password }}"
+      loop: "{{ ycash_instances }}"
+      # Only run this for the internal testnet
+      when: item == 'gimlee-internal-testnet'

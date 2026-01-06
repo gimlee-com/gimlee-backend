@@ -52,6 +52,15 @@ gimlee:
         rpc-url: <fillme>
         user: <fillme>
         password: <fillme>
+    ycash:
+      memo-prefix: "gimlee:"
+      monitor-delay-ms: 60000
+      min-confirmations: 1
+      monitor-threads: 1
+      client:
+        rpc-url: <fillme>
+        user: <fillme>
+        password: <fillme>
 
 # Metrics related configurations
 management:

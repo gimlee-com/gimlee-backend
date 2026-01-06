@@ -41,3 +41,19 @@ POST {{host}}/api/playground/clearDatabase
 
 ### Expected Response (Success - 200 OK):
 # { "status": "SUCCESS", "code": 0, "message": "Success" }
+
+
+### Ycash Faucet
+# Sends some YEC coins to the specified address.
+# Only available in local, dev, or test profiles.
+# @name ycashFaucet
+POST {{host}}/api/playground/ycash/faucet
+Content-Type: application/json
+
+{
+  "address": "ys1x6efdxgq8eazad0fgjh00ack9pdev3ca9z9hcjugczvd4rhaprdhqz6pnzcrp7u9e0nx257hdtm",
+  "amount": 1000
+}
+
+### Expected Response (Success - 200 OK):
+# { "success": true, "status": "SUCCESS", "message": "Success", "data": { "operationId": "opid-..." } }

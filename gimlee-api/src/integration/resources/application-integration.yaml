@@ -6,6 +6,8 @@ server:
       charset: UTF-8
 
 spring:
+  main:
+    allow-bean-definition-overriding: true
   messages:
     basename: i18n/messages,i18n/common/messages,i18n/auth/messages,i18n/purchases/messages,i18n/ads/messages,i18n/user/messages,i18n/payments/messages,i18n/location/messages,i18n/media/messages
     encoding: UTF-8
@@ -64,6 +66,11 @@ gimlee:
   # gimlee-payments properties
   payments:
     pirate-chain:
+      client:
+        rpc-url: http://127.0.0.1
+        user: dummy
+        password: dummy
+    ycash:
       client:
         rpc-url: http://127.0.0.1
         user: dummy

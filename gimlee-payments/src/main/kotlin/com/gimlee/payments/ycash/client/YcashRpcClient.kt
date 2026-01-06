@@ -1,4 +1,4 @@
-package com.gimlee.payments.piratechain.client
+package com.gimlee.payments.ycash.client
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JavaType
@@ -11,20 +11,18 @@ import org.apache.hc.core5.http.io.entity.EntityUtils
 import org.apache.hc.core5.http.io.entity.StringEntity
 import org.slf4j.LoggerFactory
 import com.gimlee.common.UUIDv7
-import com.gimlee.payments.piratechain.client.model.Address
-import com.gimlee.payments.piratechain.client.model.PirateChainInfo
-import com.gimlee.payments.piratechain.client.model.RawReceivedTransaction
 import com.gimlee.payments.client.model.RpcRequest
 import com.gimlee.payments.client.model.RpcResponse
-import com.gimlee.payments.piratechain.config.PirateChainClientProperties
+import com.gimlee.payments.ycash.config.YcashClientProperties
+import com.gimlee.payments.ycash.client.model.ZSendManyAmount
 import java.io.IOException
 import java.lang.reflect.Type
 import kotlin.reflect.javaType
 import kotlin.reflect.typeOf
 
-class PirateChainRpcClient(
+class YcashRpcClient(
     private val httpClient: HttpClient,
-    private val properties: PirateChainClientProperties,
+    private val properties: YcashClientProperties,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val objectMapper: ObjectMapper = ObjectMapper()
@@ -32,14 +30,14 @@ class PirateChainRpcClient(
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
     companion object {
-        private const val NO_RESCAN = "no"
-
         private const val RPC_GET_INFO = "getinfo"
-        private const val RPC_IMPORT_VIEWING_KEY = "z_importviewingkey"
-        private const val RPC_LIST_RECEIVED_BY_ADDRESS = "z_listreceivedbyaddress"
+        private const val RPC_Z_SEND_MANY = "z_sendmany"
+        private const val RPC_Z_GET_NEW_ADDRESS = "z_getnewaddress"
+        private const val RPC_GET_NEW_ADDRESS = "getnewaddress"
+        private const val RPC_LIST_ADDRESSES = "listaddressgroupings"
     }
 
-    @Throws(IOException::class, PirateChainRpcException::class)
+    @Throws(IOException::class, YcashRpcException::class)
     private inline fun <reified T> callRpc(method: String, params: List<Any>): RpcResponse<T> {
         val request = RpcRequest(method, params, UUIDv7.generate().toString())
         val jsonRequest = objectMapper.writeValueAsString(request)
@@ -61,15 +59,8 @@ class PirateChainRpcClient(
                     val responseType: JavaType = determineResponseType<T>(method)
                     val rpcResponse: RpcResponse<T> = objectMapper.readValue(jsonResponse, responseType)
 
-                    rpcResponse.result?.let {
-                        log.debug("Deserialized result type for method '{}': {}", method, it::class.java.name)
-                        if (it is List<*> && it.isNotEmpty()) {
-                           log.debug("Deserialized list element type: {}", it.first()!!::class.java.name)
-                        }
-                    }
-
                     rpcResponse.error?.let {
-                        throw PirateChainRpcException("RPC Error: ${it["message"]} (Code: ${it["code"]})")
+                        throw YcashRpcException("RPC Error: ${it["message"]} (Code: ${it["code"]})")
                     }
                     rpcResponse
                 } else {
@@ -81,8 +72,8 @@ class PirateChainRpcClient(
         } catch (e: IOException) {
             throw IOException("Failed to execute RPC request '$method': ${e.message}", e)
         } catch (e: Exception) {
-             log.error("Unexpected error during RPC call processing for method '{}': {}", method, e.message, e)
-            throw PirateChainRpcException("Failed to process RPC response for method '$method': ${e.message}")
+            log.error("Unexpected error during RPC call processing for method '{}': {}", method, e.message, e)
+            throw YcashRpcException("Failed to process RPC response for method '$method': ${e.message}")
         }
     }
 
@@ -91,26 +82,31 @@ class PirateChainRpcClient(
         val typeFactory = objectMapper.typeFactory
         val typeT: Type = typeOf<T>().javaType
         val javaTypeT: JavaType = typeFactory.constructType(typeT)
-        val responseType: JavaType = typeFactory.constructParametricType(
+        return typeFactory.constructParametricType(
             RpcResponse::class.java,
             javaTypeT
         )
-
-        log.debug("Determined JavaType for method '{}': {}", method, responseType.toCanonical())
-        return responseType
     }
 
-    @Throws(IOException::class, PirateChainRpcException::class)
-    fun getInfo(): RpcResponse<PirateChainInfo> =
+    @Throws(IOException::class, YcashRpcException::class)
+    fun getInfo(): RpcResponse<Map<String, Any>> =
         callRpc(RPC_GET_INFO, emptyList())
 
-    @Throws(IOException::class, PirateChainRpcException::class)
-    fun importViewingKey(viewKey: String): RpcResponse<Address> =
-        callRpc(RPC_IMPORT_VIEWING_KEY, listOf(viewKey, NO_RESCAN))
+    @Throws(IOException::class, YcashRpcException::class)
+    fun zSendMany(fromAddress: String, amounts: List<ZSendManyAmount>): RpcResponse<String> =
+        callRpc(RPC_Z_SEND_MANY, listOf(fromAddress, amounts))
 
-    @Throws(IOException::class, PirateChainRpcException::class)
-    fun getReceivedByAddress(address: String, minConfirmations: Int): RpcResponse<List<RawReceivedTransaction>> =
-        callRpc(RPC_LIST_RECEIVED_BY_ADDRESS, listOf(address, minConfirmations))
+    @Throws(IOException::class, YcashRpcException::class)
+    fun zGetNewAddress(): RpcResponse<String> =
+        callRpc(RPC_Z_GET_NEW_ADDRESS, emptyList())
 
-    class PirateChainRpcException(message: String) : Exception(message)
+    @Throws(IOException::class, YcashRpcException::class)
+    fun getNewAddress(): RpcResponse<String> =
+        callRpc(RPC_GET_NEW_ADDRESS, emptyList())
+
+    @Throws(IOException::class, YcashRpcException::class)
+    fun listAddressGroupings(): RpcResponse<List<List<List<Any>>>> =
+        callRpc(RPC_LIST_ADDRESSES, emptyList())
+
+    class YcashRpcException(message: String) : Exception(message)
 }

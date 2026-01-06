@@ -9,6 +9,7 @@
           - apt-transport-https
           - ca-certificates
           - curl
+          - wget
           - gnupg
           - lsb-release
         state: present

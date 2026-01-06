@@ -167,6 +167,31 @@ resource "digitalocean_firewall" "wallet" {
     source_tags      = ["app"]
   }
 
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "19232" # Ycash RPC (Mainnet)
+    source_tags      = ["app"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "18232" # Ycash RPC (gimlee-internal-testnet)
+    source_tags      = ["app"]
+  }
+
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "9067" # Ycash Lightwalletd (Mainnet)
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "19067" # Ycash Lightwalletd (gimlee-internal-testnet)
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
   outbound_rule {
     protocol              = "tcp"
     port_range            = "all"

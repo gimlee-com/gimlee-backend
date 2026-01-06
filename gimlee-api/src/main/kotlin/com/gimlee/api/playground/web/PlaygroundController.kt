@@ -4,7 +4,9 @@ import com.gimlee.api.playground.ads.data.AdsPopulator
 import com.gimlee.api.playground.data.DatabaseCleaner
 import com.gimlee.api.playground.media.data.MediaPopulator
 import com.gimlee.api.playground.users.data.UsersPopulator
+import com.gimlee.api.playground.payments.service.YcashFaucetService
 import com.gimlee.api.playground.web.dto.CreateUsersRequest
+import com.gimlee.api.playground.web.dto.FaucetRequest
 import com.gimlee.common.domain.model.CommonOutcome
 import com.gimlee.common.web.dto.StatusResponseDto
 import io.swagger.v3.oas.annotations.Operation
@@ -25,7 +27,8 @@ class PlaygroundController(
     @Lazy private val usersPopulator: UsersPopulator,
     @Lazy private val mediaPopulator: MediaPopulator,
     @Lazy private val adsPopulator: AdsPopulator,
-    @Lazy private val databaseCleaner: DatabaseCleaner
+    @Lazy private val databaseCleaner: DatabaseCleaner,
+    @Lazy private val ycashFaucetService: YcashFaucetService
 ) {
     @Operation(summary = "Create Playground Users", description = "Populates the database with a set of test users. If viewKey is provided, only 'seller' user is created with that viewKey.")
     @ApiResponse(
@@ -37,6 +40,18 @@ class PlaygroundController(
     fun createUsers(@RequestBody request: CreateUsersRequest? = null): StatusResponseDto {
         usersPopulator.populateUsers(request?.viewKey)
         return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS)
+    }
+
+    @Operation(summary = "Ycash Faucet", description = "Sends some YEC coins to the specified address.")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Coins sent successfully. Possible status codes: SUCCESS",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @PostMapping("/playground/ycash/faucet")
+    fun ycashFaucet(@RequestBody request: FaucetRequest): StatusResponseDto {
+        val operationId = ycashFaucetService.sendCoins(request.address, request.amount)
+        return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS, data = mapOf("operationId" to operationId))
     }
 
     @Operation(summary = "Create Playground Media", description = "Populates the media store with test images.")

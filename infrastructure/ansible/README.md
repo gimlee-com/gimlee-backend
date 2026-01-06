@@ -48,8 +48,13 @@ This deploys MongoDB on db nodes and the PirateChain Full Node on wallet nodes.
 ```bash
 ansible-playbook -i ../inventory.ini deploy-services.yml \
   --extra-vars "piratechain_user=YOUR_RPC_USER" \
-  --extra-vars "piratechain_password=YOUR_RPC_PASSWORD"
+  --extra-vars "piratechain_password=YOUR_RPC_PASSWORD" \
+  --extra-vars "ycash_user=YOUR_YCASH_RPC_USER" \
+  --extra-vars "ycash_password=YOUR_YCASH_RPC_PASSWORD" \
+  --extra-vars "ycash_network=gimlee-internal-testnet"
 ```
+
+*Note: `ycash_network` can be `mainnet`, `gimlee-internal-testnet`, or `both`. Default is `mainnet`. The `gimlee-internal-testnet` is configured as a private solo network with mining enabled (to ensure availability).*
 
 **3. Deploy Monitoring Stack**
 This deploys the exporters (ears) and the Prometheus/Grafana stack (brains).
@@ -91,7 +96,10 @@ ansible-playbook -i ../inventory.ini deploy-app.yml \
   --extra-vars "s3_access_key=YOUR_S3_ACCESS_KEY" \
   --extra-vars "s3_secret_key=YOUR_S3_SECRET_KEY" \
   --extra-vars "piratechain_user=YOUR_RPC_USER" \
-  --extra-vars "piratechain_password=YOUR_RPC_PASSWORD"
+  --extra-vars "piratechain_password=YOUR_RPC_PASSWORD" \
+  --extra-vars "ycash_user=YOUR_YCASH_RPC_USER" \
+  --extra-vars "ycash_password=YOUR_YCASH_RPC_PASSWORD" \
+  --extra-vars "ycash_rpc_port=19232" # Use 18232 for gimlee-internal-testnet
 ```
 
 **Where to get these values:**

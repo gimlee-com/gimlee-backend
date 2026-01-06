@@ -8,6 +8,7 @@
     spring_profile: "test"
     mongodb_uri: "mongodb://{{ hostvars['db1']['ansible_host'] }}:27017/gimlee"
     piratechain_rpc: "http://{{ hostvars['wallet1']['ansible_host'] }}:45453"
+    ycash_rpc: "http://{{ hostvars['wallet1']['ansible_host'] }}:{{ ycash_rpc_port | default(19232) }}"
   tasks:
     - name: Run Gimlee API container from pre-built image
       community.docker.docker_container:
@@ -24,6 +25,9 @@
           GIMLEE_PAYMENTS_PIRATE_CHAIN_CLIENT_RPC_URL: "{{ piratechain_rpc }}"
           GIMLEE_PAYMENTS_PIRATE_CHAIN_CLIENT_USER: "{{ piratechain_user }}"
           GIMLEE_PAYMENTS_PIRATE_CHAIN_CLIENT_PASSWORD: "{{ piratechain_password }}"
+          GIMLEE_PAYMENTS_YCASH_CLIENT_RPC_URL: "{{ ycash_rpc }}"
+          GIMLEE_PAYMENTS_YCASH_CLIENT_USER: "{{ ycash_user }}"
+          GIMLEE_PAYMENTS_YCASH_CLIENT_PASSWORD: "{{ ycash_password }}"
           SPRING_MAIL_HOST: "{{ mail_host }}"
           SPRING_MAIL_PORT: "{{ mail_port }}"
           SPRING_MAIL_USERNAME: "{{ mail_username }}"
