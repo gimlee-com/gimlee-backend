@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory
 import com.gimlee.common.UUIDv7
 import com.gimlee.payments.client.model.RpcRequest
 import com.gimlee.payments.client.model.RpcResponse
+import com.gimlee.payments.ycash.client.model.UnspentOutput
 import com.gimlee.payments.ycash.config.YcashClientProperties
 import com.gimlee.payments.ycash.client.model.ZSendManyAmount
 import java.io.IOException
@@ -35,6 +36,7 @@ class YcashRpcClient(
         private const val RPC_Z_GET_NEW_ADDRESS = "z_getnewaddress"
         private const val RPC_GET_NEW_ADDRESS = "getnewaddress"
         private const val RPC_LIST_ADDRESSES = "listaddressgroupings"
+        private const val RPC_LIST_UNSPENT = "listunspent"
     }
 
     @Throws(IOException::class, YcashRpcException::class)
@@ -107,6 +109,10 @@ class YcashRpcClient(
     @Throws(IOException::class, YcashRpcException::class)
     fun listAddressGroupings(): RpcResponse<List<List<List<Any>>>> =
         callRpc(RPC_LIST_ADDRESSES, emptyList())
+
+    @Throws(IOException::class, YcashRpcException::class)
+    fun listUnspent(minConfs: Int = 1, maxConfs: Int = 9999999): RpcResponse<List<UnspentOutput>> =
+        callRpc(RPC_LIST_UNSPENT, listOf(minConfs, maxConfs))
 
     class YcashRpcException(message: String) : Exception(message)
 }

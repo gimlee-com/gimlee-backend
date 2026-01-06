@@ -28,11 +28,15 @@ class YcashFaucetService(
     }
 
     private fun findFromAddress(): String? {
-        val response = ycashRpcClient.listAddressGroupings()
-        // result is List<List<List<Any>>> -> [group][address_info][address, balance, account]
-        return response.result?.flatten()
-            ?.filter { it.size >= 2 && (it[1] as? Number)?.toDouble() ?: 0.0 > 0.0 }
-            ?.mapNotNull { it[0] as? String }
-            ?.firstOrNull()
+        // We look for any UTXO that is spendable (min 1 confirmation).
+        // listUnspent automatically handles coinbase maturity (funds won't appear here until they have 100 confirmations).
+        val response = ycashRpcClient.listUnspent()
+
+        return response.result
+            ?.filter { it.spendable && it.amount > BigDecimal.ZERO }
+            // We pick the address with the largest single UTXO to avoid fragmentation,
+            // but you could also just pick the first one.
+            ?.maxByOrNull { it.amount }
+            ?.address
     }
 }
