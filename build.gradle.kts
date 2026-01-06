@@ -12,8 +12,8 @@ plugins {
 
 allprojects {
     repositories {
-        gradlePluginPortal()
         mavenCentral()
+        gradlePluginPortal()
         maven { url = uri("https://jitpack.io") }
     }
 }
