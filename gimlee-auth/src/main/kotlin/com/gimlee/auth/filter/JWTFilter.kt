@@ -47,7 +47,7 @@ class JWTFilter(
                             username = jwtData.getClaim("username").asString(),
                             roles = jwtData.getClaim("roles").asList(Role::class.java))
                     } else {
-                        Principal("", "", emptyList())
+                        Principal.EMPTY
                     },
                     SCOPE_REQUEST
                 )

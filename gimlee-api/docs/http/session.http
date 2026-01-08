@@ -1,0 +1,15 @@
+### Initialize Session with all decorators
+GET {{host}}/api/session/init?decorators=accessToken,userProfile
+Accept: application/json
+
+### Initialize Session with only accessToken
+GET {{host}}/api/session/init?decorators=accessToken
+Accept: application/json
+
+### Initialize Session with only userProfile
+GET {{host}}/api/session/init?decorators=userProfile
+Accept: application/json
+
+### Initialize Session without decorators
+GET {{host}}/api/session/init
+Accept: application/json

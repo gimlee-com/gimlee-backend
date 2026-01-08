@@ -52,6 +52,7 @@ gimlee:
         - /auth/register
         - /auth/register/**
         - /auth/login
+        - /session/init
         - /media
         - /playground/**
       jwt:
