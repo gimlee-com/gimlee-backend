@@ -1,0 +1,14 @@
+### Update User Avatar
+PUT {{host}}/user/profile/avatar
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "avatarUrl": "https://example.com/avatar.png"
+}
+
+> {%
+ client.test("Request executed successfully", function() {
+   client.assert(response.status === 200, "Response status is not 200");
+ });
+ %}
