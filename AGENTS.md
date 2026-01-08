@@ -38,6 +38,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **Priority:** Integration tests are the primary focus.
 *   **Database:** Use **Testcontainers** with MongoDB for integration tests via `BaseIntegrationTest`.
 *   **Shared Test Fixtures:** Use the Gradle `java-test-fixtures` plugin (primarily in `gimlee-common`) to share common test utilities, base classes, and mocks across the project modules.
+*   **Authentication Mocking:** When testing controllers that depend on `HttpServletRequestAuthUtil.getPrincipal()`, use `mockMvc` with `requestAttr("principal", principal)` to simulate an authenticated user.
 *   **Unit Tests:** Use sparingly, only for quirky internal logic. Keep them simple with minimal context/mocking.
 
 ### 3. Performance (`docs/development/performance-guidelines.md`)
@@ -57,6 +58,8 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **DTO Intent:** Design creation DTOs with minimal fields to capture user intent early.
 *   **Atomic Operations:** Use atomic MongoDB operations and aggregation pipelines for conditional updates to maintain data integrity without transactions.
 *   **Domain Components:** Extract complex business logic into dedicated domain components (e.g., `AdStockService`) to maintain SRP and testability.
+*   **Facade Controllers:** Use `gimlee-api` for facade controllers that coordinate multiple module services. This minimizes front-end requests.
+*   **Decorator Pattern:** For complex initialization responses (e.g., `SessionInitController`), use a decorator pattern. Clients should be able to request specific data subsets via query parameters to optimize response payload and backend processing.
 
 ### 5. Configuration (`docs/development/configuration-guidelines.md`)
 *   **Externalize Everything:** Timeouts, prefixes, and monitoring delays must be configurable via `application.yaml`.
@@ -71,6 +74,7 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **Error Documentation:** Common error responses (401 Unauthorized, 403 Forbidden) and the error response schema (`StatusResponseDto`) are automatically handled by the global `OperationCustomizer`.
 *   **Stay in Sync:** Any addition or modification to Controllers requires corresponding updates to both their respective `.http` files and OpenAPI annotations to ensure consistency across all documentation formats.
 *   **Comprehensive Error Data:** When reporting conflicts or errors (e.g., price mismatches), return the current state of all relevant items so the client can recover gracefully.
+*   **Dynamic Response Documentation:** For controllers using dynamic response structures (e.g., Jackson's `@JsonAnyGetter`), create a dedicated "Documentation DTO". Use this DTO in the `@ApiResponse`'s `implementation` attribute to ensure the OpenAPI schema accurately reflects all possible decorator fields.
 
 ### 7. Docker & Infrastructure
 *   **Module Synchronization:** This is a multi-module Gradle project where the `Dockerfile` explicitly copies each module's source directory to maintain a clean build context.
