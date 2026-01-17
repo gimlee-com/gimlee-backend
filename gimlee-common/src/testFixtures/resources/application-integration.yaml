@@ -4,6 +4,10 @@ spring:
       uri: mongodb://localhost:27017/gimlee
 
 gimlee:
+  ads:
+    category:
+      sync:
+        enabled: false
   auth:
     rest:
       unsecured-paths: /auth/login,/auth/register

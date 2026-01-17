@@ -20,10 +20,10 @@ class CategoryRepositoryTest(
             val sourceId = "123"
             val nameMap = mapOf("en-US" to Category.CategoryName("Test Category", "test-category"))
 
-            categoryRepository.upsertGptCategory(uuid, sourceId, null, nameMap, now)
+            categoryRepository.upsertCategoryBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY, uuid, sourceId, null, nameMap, now)
 
             Then("it should be retrievable via mapping") {
-                val map = categoryRepository.getGptSourceIdToUuidMap()
+                val map = categoryRepository.getSourceIdToUuidMapBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
                 map shouldHaveSize 1
                 map[sourceId] shouldBe uuid
             }
@@ -35,12 +35,12 @@ class CategoryRepositoryTest(
             val sourceId = "456"
             val nameMap = mapOf("en-US" to Category.CategoryName("Old Name", "old-name"))
 
-            categoryRepository.upsertGptCategory(uuid, sourceId, null, nameMap, now)
+            categoryRepository.upsertCategoryBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY, uuid, sourceId, null, nameMap, now)
 
             val later = now + 1000
             val newNameMap = mapOf("en-US" to Category.CategoryName("New Name", "new-name"))
 
-            categoryRepository.upsertGptCategory(uuid, sourceId, null, newNameMap, later)
+            categoryRepository.upsertCategoryBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY, uuid, sourceId, null, newNameMap, later)
 
             Then("it should have the new name and updated timestamp") {
                  // To verify specific fields we might need a findByUuid or map verification if we exposed a full fetch
@@ -49,7 +49,7 @@ class CategoryRepositoryTest(
                  // per guidelines "No Abstractions" (MongoRepository forbidden).
                  // Repository only has what we added.
 
-                 val map = categoryRepository.getGptSourceIdToUuidMap()
+                 val map = categoryRepository.getSourceIdToUuidMapBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
                  map[sourceId] shouldBe uuid
             }
         }

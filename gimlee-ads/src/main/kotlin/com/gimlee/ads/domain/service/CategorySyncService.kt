@@ -6,8 +6,12 @@ import com.gimlee.common.UUIDv7
 import com.gimlee.common.toMicros
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.MessageSource
+import org.springframework.context.annotation.Lazy
+import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.text.Normalizer
@@ -23,8 +27,14 @@ class CategorySyncService(
     @Value("\${gimlee.ads.gpt.url-template:https://www.google.com/basepages/producttype/taxonomy-with-ids.%s.txt}")
     private val gptUrlTemplate: String,
     @Value("\${gimlee.ads.gpt.languages:en-US,pl-PL}")
-    private val languages: List<String>
+    private val languages: List<String>,
+    @Value("\${gimlee.ads.category.sync.enabled:false}")
+    private val enabled: Boolean
 ) {
+
+    @Autowired
+    @Lazy
+    private lateinit var self: CategorySyncService
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(CategorySyncService::class.java)
@@ -32,14 +42,30 @@ class CategorySyncService(
         private val WHITESPACE = Pattern.compile("[\\s]")
     }
 
+    @EventListener(ApplicationReadyEvent::class)
+    fun syncOnStartup() {
+        if (enabled && !categoryRepository.hasAnyCategoryOfSourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)) {
+            LOGGER.info("No GPT categories found in database. Triggering initial sync.")
+            if (::self.isInitialized) {
+                self.syncCategories()
+            } else {
+                syncCategories()
+            }
+        }
+    }
+
     @Scheduled(cron = "\${gimlee.ads.category.sync.cron:0 0 0 1 * ?}")
     @SchedulerLock(name = "gptCategorySync", lockAtMostFor = "\${gimlee.ads.category.sync.lock.at-most:PT1H}", lockAtLeastFor = "\${gimlee.ads.category.sync.lock.at-least:PT5M}")
     fun syncCategories() {
+        if (!enabled) {
+            LOGGER.debug("Google Product Taxonomy sync is disabled")
+            return
+        }
         LOGGER.info("Starting Google Product Taxonomy sync")
         val now = Instant.now().toMicros()
 
         // 1. Load existing map
-        val existingMap = categoryRepository.getGptSourceIdToUuidMap()
+        val existingMap = categoryRepository.getSourceIdToUuidMapBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
         val sourceIdToUuid = existingMap.toMutableMap()
 
         // 2. Download and Parse taxonomies for all configured languages
@@ -112,12 +138,12 @@ class CategorySyncService(
             }
 
             if (nameMap.isNotEmpty()) {
-                categoryRepository.upsertGptCategory(uuid, sourceId, parentUuid, nameMap, now)
+                categoryRepository.upsertCategoryBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY, uuid, sourceId, parentUuid, nameMap, now)
             }
         }
 
         // 5. Deprecate missing
-        categoryRepository.deprecateMissingGptCategories(now)
+        categoryRepository.deprecateMissingCategoriesBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY, now)
 
         LOGGER.info("Google Product Taxonomy sync completed successfully")
     }

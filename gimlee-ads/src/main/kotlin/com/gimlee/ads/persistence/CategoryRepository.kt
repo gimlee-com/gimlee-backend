@@ -34,8 +34,8 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
         mongoDatabase.getCollection(COLLECTION_NAME)
     }
 
-    fun getGptSourceIdToUuidMap(): Map<String, UUID> {
-        val query = Filters.eq(FIELD_SOURCE_TYPE, Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY.shortName)
+    fun getSourceIdToUuidMapBySourceType(sourceType: Category.Source.Type): Map<String, UUID> {
+        val query = Filters.eq(FIELD_SOURCE_TYPE, sourceType.shortName)
         val projection = Projections.include(FIELD_ID, FIELD_SOURCE_ID)
 
         return collection.find(query)
@@ -50,7 +50,8 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
             .toMap()
     }
 
-    fun upsertGptCategory(
+    fun upsertCategoryBySourceType(
+        sourceType: Category.Source.Type,
         uuid: UUID,
         sourceId: String,
         parent: UUID?,
@@ -58,14 +59,14 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
         now: Long
     ) {
         val query = Filters.and(
-            Filters.eq(FIELD_SOURCE_TYPE, Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY.shortName),
+            Filters.eq(FIELD_SOURCE_TYPE, sourceType.shortName),
             Filters.eq(FIELD_SOURCE_ID, sourceId)
         )
 
         val updates = Updates.combine(
             Updates.setOnInsert(FIELD_ID, uuid),
             Updates.setOnInsert(FIELD_CREATED_AT, now),
-            Updates.setOnInsert(FIELD_SOURCE, Document("type", Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY.shortName).append("id", sourceId)),
+            Updates.setOnInsert(FIELD_SOURCE, Document("type", sourceType.shortName).append("id", sourceId)),
             Updates.set(FIELD_PARENT, parent),
             Updates.set(FIELD_NAME, toNameDocument(nameMap)),
             Updates.set(FIELD_UPDATED_AT, now),
@@ -75,9 +76,9 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
         collection.updateOne(query, updates, UpdateOptions().upsert(true))
     }
 
-    fun deprecateMissingGptCategories(beforeTimestamp: Long) {
+    fun deprecateMissingCategoriesBySourceType(sourceType: Category.Source.Type, beforeTimestamp: Long) {
         val query = Filters.and(
-            Filters.eq(FIELD_SOURCE_TYPE, Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY.shortName),
+            Filters.eq(FIELD_SOURCE_TYPE, sourceType.shortName),
             Filters.lt(FIELD_UPDATED_AT, beforeTimestamp),
             Filters.ne("$FIELD_FLAGS.$FIELD_DEPRECATED_FLAG", true)
         )
@@ -87,10 +88,17 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
         collection.updateMany(query, update)
     }
 
-    fun findAllGptCategories(): List<Category> {
-        return collection.find(Filters.eq(FIELD_SOURCE_TYPE, Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY.shortName))
+    fun findAllCategoriesBySourceType(sourceType: Category.Source.Type): List<Category> {
+        return collection.find(Filters.eq(FIELD_SOURCE_TYPE, sourceType.shortName))
             .map { doc -> fromDocument(doc) }
             .toList()
+    }
+
+    fun hasAnyCategoryOfSourceType(sourceType: Category.Source.Type): Boolean {
+        return collection.find(Filters.eq(FIELD_SOURCE_TYPE, sourceType.shortName))
+            .projection(Projections.include(FIELD_ID))
+            .limit(1)
+            .first() != null
     }
 
     private fun fromDocument(doc: Document): Category {

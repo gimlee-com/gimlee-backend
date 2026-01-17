@@ -37,6 +37,7 @@ gimlee:
   ads:
     category:
       sync:
+        enabled: true
         cron: "0 0 0 1 * ?"
         lock:
           at-most: PT1H

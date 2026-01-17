@@ -17,19 +17,22 @@ class CategoryServiceIntegrationTest(
         val childId = UUIDv7.generate()
         val grandchildId = UUIDv7.generate()
 
-        categoryRepository.upsertGptCategory(
+        categoryRepository.upsertCategoryBySourceType(
+            Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY,
             rootId, "1", null, mapOf(
                 "en-US" to Category.CategoryName("Animals", "animals"),
                 "pl-PL" to Category.CategoryName("Zwierzęta", "zwierzeta")
             ), now
         )
-        categoryRepository.upsertGptCategory(
+        categoryRepository.upsertCategoryBySourceType(
+            Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY,
             childId, "2", rootId, mapOf(
                 "en-US" to Category.CategoryName("Dogs", "dogs"),
                 "pl-PL" to Category.CategoryName("Psy", "psy")
             ), now
         )
-        categoryRepository.upsertGptCategory(
+        categoryRepository.upsertCategoryBySourceType(
+            Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY,
             grandchildId, "3", childId, mapOf(
                 "en-US" to Category.CategoryName("Food", "food"),
                 "pl-PL" to Category.CategoryName("Karma", "karma")

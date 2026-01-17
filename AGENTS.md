@@ -52,6 +52,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **Thread Pools:** All thread pools must have the same core and maximum pool size to ensure consistent performance and avoid unexpected overhead. This should be configurable via a single application property.
 
 ### 4. Architecture (`docs/development/architecture-guidelines.md`)
+*   **SOLID Principles:** Adhere strictly to SOLID principles. Specifically, ensure the **Dependency Inversion Principle** is followed by designing repositories to be generic and not tied to specific implementations and business logic.
 *   **SRP:** Maintain strict separation between the modules and avoid circular dependencies.
 *   **Self-Documenting Code:** Prefer extracting complex logic into well-named private methods over using inline comments. This makes the high-level flow of a method clear and self-explanatory.
 *   **Events:** Use `ApplicationEventPublisher` and `gimlee-events` for loose coupling between modules.

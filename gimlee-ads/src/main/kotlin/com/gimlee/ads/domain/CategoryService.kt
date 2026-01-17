@@ -16,7 +16,7 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
         .build<String, List<Category>>()
 
     private fun getAllCategories(): List<Category> {
-        return categoriesCache.get("all") { categoryRepository.findAllGptCategories() } ?: emptyList()
+        return categoriesCache.get("all") { categoryRepository.findAllCategoriesBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY) } ?: emptyList()
     }
 
     /**

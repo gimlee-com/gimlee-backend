@@ -1,5 +1,6 @@
 package com.gimlee.ads.domain.service
 
+import com.gimlee.ads.domain.model.Category
 import com.gimlee.ads.persistence.CategoryRepository
 import com.gimlee.common.BaseIntegrationTest
 import com.github.tomakehurst.wiremock.client.WireMock
@@ -15,6 +16,7 @@ import java.nio.file.Paths
 import kotlin.time.Duration.Companion.seconds
 
 @TestPropertySource(properties = [
+    "gimlee.ads.category.sync.enabled=true",
     "gimlee.ads.category.sync.cron=*/1 * * * * ?",
     "gimlee.ads.category.sync.lock.at-most=PT2S",
     "gimlee.ads.category.sync.lock.at-least=PT1S",
@@ -43,13 +45,13 @@ class CategorySyncIntegrationTest(
         When("The sync job runs") {
             Then("categories should be inserted into the database") {
                 eventually(15.seconds) {
-                    val map = categoryRepository.getGptSourceIdToUuidMap()
+                    val map = categoryRepository.getSourceIdToUuidMapBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
                     map shouldHaveSize 15
                 }
             }
 
             Then("slugs and hierarchy should be correct for both languages") {
-                val categories = categoryRepository.findAllGptCategories()
+                val categories = categoryRepository.findAllCategoriesBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
                 val bySourceId = categories.associateBy { it.source.id }
                 
                 // Root category: 1 - Animals & Pet Supplies / Zwierzęta i artykuły dla zwierząt
