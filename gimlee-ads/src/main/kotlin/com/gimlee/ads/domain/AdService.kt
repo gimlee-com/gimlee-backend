@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Service
 import java.time.Instant
-import java.util.*
 
 
 @Service
@@ -289,16 +288,13 @@ class AdService(
         }
     }
 
-    private fun resolveCategoryPath(categoryId: String?): List<UUID>? {
+    private fun resolveCategoryPath(categoryId: String?): List<Int>? {
         if (categoryId == null) return null
-        val uuid = try {
-            UUID.fromString(categoryId)
-        } catch (e: Exception) {
-            throw AdOperationException("Invalid category ID format.")
-        }
-        if (!categoryService.isLeaf(uuid)) {
+        val id = categoryId.toIntOrNull() ?: throw AdOperationException("Invalid category ID format.")
+        
+        if (!categoryService.isLeaf(id)) {
             throw AdOperationException("Category must be a leaf node.")
         }
-        return categoryService.resolveCategoryPathIds(uuid)
+        return categoryService.resolveCategoryPathIds(id)
     }
 }

@@ -149,7 +149,7 @@ class AdServiceTest : StringSpec({
     "createAd should fail if category is not a leaf" {
         val userId = ObjectId().toHexString()
         val title = "Test Ad"
-        val categoryId = java.util.UUID.randomUUID().toString()
+        val categoryId = "123"
 
         every { categoryService.isLeaf(any()) } returns false
 
@@ -163,7 +163,7 @@ class AdServiceTest : StringSpec({
     "updateAd should fail if category is not a leaf" {
         val adId = ObjectId()
         val userId = ObjectId()
-        val categoryId = java.util.UUID.randomUUID().toString()
+        val categoryId = "123"
         val existingDoc = AdDocument(
             id = adId,
             userId = userId,

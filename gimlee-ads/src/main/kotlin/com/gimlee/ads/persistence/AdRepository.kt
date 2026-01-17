@@ -20,7 +20,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
-import java.util.*
 
 @Repository
 class AdRepository(mongoDatabase: MongoDatabase) {
@@ -104,7 +103,9 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             queryFilters.add(Filters.eq(AdDocument.FIELD_USER_ID, ObjectId(it)))
         }
         filters.categoryId?.let {
-            queryFilters.add(Filters.eq<UUID>(AdDocument.FIELD_CATEGORY_IDS, UUID.fromString(it)))
+            it.toIntOrNull()?.let { intId ->
+                queryFilters.add(Filters.eq(AdDocument.FIELD_CATEGORY_IDS, intId))
+            }
         }
         filters.text?.let {
             val regexFilter = Filters.or(
@@ -280,7 +281,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             createdAtMicros = doc.getLong(AdDocument.FIELD_CREATED_AT),
             updatedAtMicros = doc.getLong(AdDocument.FIELD_UPDATED_AT),
             cityId = doc.getString(AdDocument.FIELD_CITY_ID),
-            categoryIds = doc.getList(AdDocument.FIELD_CATEGORY_IDS, java.util.UUID::class.java),
+            categoryIds = doc.getList(AdDocument.FIELD_CATEGORY_IDS, Integer::class.java)?.map { it.toInt() },
             location = geoPoint,
             mediaPaths = mediaPathsList ?: emptyList(),
             mainPhotoPath = doc.getString(AdDocument.FIELD_MAIN_PHOTO_PATH),

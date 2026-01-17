@@ -2,7 +2,6 @@ package com.gimlee.ads.domain.service
 
 import com.gimlee.ads.domain.model.Category
 import com.gimlee.ads.persistence.CategoryRepository
-import com.gimlee.common.UUIDv7
 import com.gimlee.common.toMicros
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.LoggerFactory
@@ -65,8 +64,8 @@ class CategorySyncService(
         val now = Instant.now().toMicros()
 
         // 1. Load existing map
-        val existingMap = categoryRepository.getSourceIdToUuidMapBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
-        val sourceIdToUuid = existingMap.toMutableMap()
+        val existingMap = categoryRepository.getSourceIdToIdMapBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
+        val sourceIdToId = existingMap.toMutableMap()
 
         // 2. Download and Parse taxonomies for all configured languages
         val languageMaps = mutableMapOf<String, MutableMap<String, ParsedCategory>>()
@@ -106,9 +105,19 @@ class CategorySyncService(
 
         val baseMap = languageMaps[baseLanguage]!!
 
-        // 3. Ensure all source IDs have a UUID
+        // 3. Ensure all source IDs have an ID
+        val usedIds = sourceIdToId.values.toMutableSet()
+        var nextId = (usedIds.maxOrNull() ?: categoryRepository.getMaxId()) + 1
+
         baseMap.keys.forEach { sourceId ->
-            sourceIdToUuid.getOrPut(sourceId) { UUIDv7.generate() }
+            if (!sourceIdToId.containsKey(sourceId)) {
+                while (usedIds.contains(nextId)) {
+                    nextId++
+                }
+                sourceIdToId[sourceId] = nextId
+                usedIds.add(nextId)
+                nextId++
+            }
         }
 
         // 4. Upsert
@@ -116,8 +125,8 @@ class CategorySyncService(
 
         baseMap.values.forEach { baseCategory ->
             val sourceId = baseCategory.sourceId
-            val uuid = sourceIdToUuid[sourceId]!!
-            val parentUuid = baseCategory.parentSourceId?.let { sourceIdToUuid[it] }
+            val id = sourceIdToId[sourceId]!!
+            val parentId = baseCategory.parentSourceId?.let { sourceIdToId[it] }
 
             val nameMap = mutableMapOf<String, Category.CategoryName>()
 
@@ -138,7 +147,7 @@ class CategorySyncService(
             }
 
             if (nameMap.isNotEmpty()) {
-                categoryRepository.upsertCategoryBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY, uuid, sourceId, parentUuid, nameMap, now)
+                categoryRepository.upsertCategoryBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY, id, sourceId, parentId, nameMap, now)
             }
         }
 

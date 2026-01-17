@@ -1,12 +1,9 @@
 package com.gimlee.ads.domain.model
 
-import com.gimlee.common.UUIDv7
-import java.util.*
-
 data class Category(
-    val id: UUID = UUIDv7.generate(),
+    val id: Int,
     val source: Source,
-    val parent: UUID? = null,
+    val parent: Int? = null,
     val flags: Map<String, Boolean> = emptyMap(),
     val name: Map<String, CategoryName> = emptyMap(),
     val createdAt: Long,

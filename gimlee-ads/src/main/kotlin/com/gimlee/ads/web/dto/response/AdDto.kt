@@ -17,7 +17,7 @@ data class AdDto(
     val createdAt: Instant,
     val updatedAt: Instant,
     val location: LocationWithCityDetailsDto?, // Changed type here
-    val categoryId: String?,
+    val categoryId: Int?,
     val mediaPaths: List<String>?,
     val mainPhotoPath: String?,
     val stock: Int,

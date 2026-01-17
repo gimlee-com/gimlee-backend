@@ -7,7 +7,7 @@ data class AdPreviewDto(
     val title: String,
     val price: CurrencyAmountDto? = null,
     val mainPhotoPath: String? = null,
-    val categoryId: String? = null,
+    val categoryId: Int? = null,
     val categoryPath: List<CategoryPathElementDto>? = null,
     val location: LocationWithCityDetailsDto? = null,
 ) {

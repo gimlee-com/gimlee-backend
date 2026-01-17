@@ -8,7 +8,7 @@ data class AdDetailsDto(
     val description: String?,
     val location: LocationWithCityDetailsDto?,
     val price: CurrencyAmountDto?,
-    val categoryId: String?,
+    val categoryId: Int?,
     val categoryPath: List<CategoryPathElementDto>?,
     val mediaPaths: List<String>?,
     val mainPhotoPath: String?,

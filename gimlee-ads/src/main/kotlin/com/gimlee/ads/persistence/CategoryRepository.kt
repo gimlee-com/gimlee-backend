@@ -5,6 +5,7 @@ import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Projections
+import com.mongodb.client.model.Sorts
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates
 import org.bson.Document
@@ -34,7 +35,7 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
         mongoDatabase.getCollection(COLLECTION_NAME)
     }
 
-    fun getSourceIdToUuidMapBySourceType(sourceType: Category.Source.Type): Map<String, UUID> {
+    fun getSourceIdToIdMapBySourceType(sourceType: Category.Source.Type): Map<String, Int> {
         val query = Filters.eq(FIELD_SOURCE_TYPE, sourceType.shortName)
         val projection = Projections.include(FIELD_ID, FIELD_SOURCE_ID)
 
@@ -43,7 +44,7 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
             .map { doc ->
                 val source = doc.get(FIELD_SOURCE, Document::class.java)
                 val sourceId = source.getString("id")
-                val id = doc.get(FIELD_ID, UUID::class.java)
+                val id = doc.getInteger(FIELD_ID)
                 sourceId to id
             }
             .toList()
@@ -52,9 +53,9 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
 
     fun upsertCategoryBySourceType(
         sourceType: Category.Source.Type,
-        uuid: UUID,
+        id: Int,
         sourceId: String,
-        parent: UUID?,
+        parent: Int?,
         nameMap: Map<String, Category.CategoryName>,
         now: Long
     ) {
@@ -64,7 +65,7 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
         )
 
         val updates = Updates.combine(
-            Updates.setOnInsert(FIELD_ID, uuid),
+            Updates.setOnInsert(FIELD_ID, id),
             Updates.setOnInsert(FIELD_CREATED_AT, now),
             Updates.setOnInsert(FIELD_SOURCE, Document("type", sourceType.shortName).append("id", sourceId)),
             Updates.set(FIELD_PARENT, parent),
@@ -101,6 +102,15 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
             .first() != null
     }
 
+    fun getMaxId(): Int {
+        val doc = collection.find()
+            .sort(Sorts.descending(FIELD_ID))
+            .projection(Projections.include(FIELD_ID))
+            .limit(1)
+            .first()
+        return doc?.getInteger(FIELD_ID) ?: 0
+    }
+
     private fun fromDocument(doc: Document): Category {
         val sourceDoc = doc.get(FIELD_SOURCE, Document::class.java)
         val nameDoc = doc.get(FIELD_NAME, Document::class.java)
@@ -114,12 +124,12 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
         val flagsMap = flagsDoc.mapValues { (_, value) -> value as Boolean }
 
         return Category(
-            id = doc.get(FIELD_ID, UUID::class.java),
+            id = doc.getInteger(FIELD_ID),
             source = Category.Source(
                 type = Category.Source.Type.fromShortName(sourceDoc.getString("type")),
                 id = sourceDoc.getString("id")
             ),
-            parent = doc.get(FIELD_PARENT, UUID::class.java),
+            parent = doc.getInteger(FIELD_PARENT),
             flags = flagsMap,
             name = nameMap,
             createdAt = doc.getLong(FIELD_CREATED_AT),

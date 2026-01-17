@@ -1,6 +1,6 @@
 package com.gimlee.ads.web.dto.response
 
 data class CategoryPathElementDto(
-    val id: String,
+    val id: Int,
     val name: String
 )

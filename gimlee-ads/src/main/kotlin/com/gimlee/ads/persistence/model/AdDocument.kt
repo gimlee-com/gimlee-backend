@@ -22,7 +22,7 @@ data class AdDocument(
     val createdAtMicros: Long,
     val updatedAtMicros: Long,
     val cityId: String?,
-    val categoryIds: List<java.util.UUID>? = emptyList(),
+    val categoryIds: List<Int>? = emptyList(),
     val location: GeoJsonPoint?,
     val mediaPaths: List<String>? = emptyList(),
     val mainPhotoPath: String?,
@@ -69,7 +69,7 @@ data class AdDocument(
             } else {
                 null
             },
-            categoryId = categoryIds?.lastOrNull()?.toString(),
+            categoryId = categoryIds?.lastOrNull(),
             mediaPaths = mediaPaths,
             mainPhotoPath = mainPhotoPath,
             stock = stock,

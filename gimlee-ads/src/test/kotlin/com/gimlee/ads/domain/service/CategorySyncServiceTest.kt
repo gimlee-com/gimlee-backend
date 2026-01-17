@@ -25,7 +25,8 @@ class CategorySyncServiceTest : BehaviorSpec({
 
         every { taxonomyDownloader.download(any()) } returns lines
         every { messageSource.getMessage("category.gpt.miscellaneous", null, any()) } returns "Miscellaneous"
-        every { categoryRepository.getSourceIdToUuidMapBySourceType(any()) } returns emptyMap()
+        every { categoryRepository.getSourceIdToIdMapBySourceType(any()) } returns emptyMap()
+        every { categoryRepository.getMaxId() } returns 0
         every { categoryRepository.upsertCategoryBySourceType(any(), any(), any(), any(), any(), any()) } just Runs
         every { categoryRepository.deprecateMissingCategoriesBySourceType(any(), any()) } just Runs
 
@@ -59,7 +60,7 @@ class CategorySyncServiceTest : BehaviorSpec({
             disabledService.syncCategories()
 
             Then("it should do nothing") {
-                verify(exactly = 0) { categoryRepository.getSourceIdToUuidMapBySourceType(any()) }
+                verify(exactly = 0) { categoryRepository.getSourceIdToIdMapBySourceType(any()) }
             }
         }
     }
