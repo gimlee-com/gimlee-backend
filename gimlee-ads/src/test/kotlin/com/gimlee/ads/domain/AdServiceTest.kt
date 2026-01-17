@@ -17,7 +17,8 @@ class AdServiceTest : StringSpec({
 
     val adRepository = mockk<AdRepository>()
     val adStockService = mockk<AdStockService>(relaxed = true)
-    val adService = AdService(adRepository, adStockService)
+    val categoryService = mockk<CategoryService>(relaxed = true)
+    val adService = AdService(adRepository, adStockService, categoryService)
 
     "createAd should set stock" {
         val userId = ObjectId().toHexString()
@@ -51,7 +52,7 @@ class AdServiceTest : StringSpec({
             createdAtMicros = 1000L,
             updatedAtMicros = 1000L,
             cityId = null,
-            categoryId = null,
+            categoryIds = null,
             location = null,
             mediaPaths = emptyList(),
             mainPhotoPath = null,
@@ -95,7 +96,7 @@ class AdServiceTest : StringSpec({
             createdAtMicros = 1000L,
             updatedAtMicros = 1000L,
             cityId = "city1",
-            categoryId = null,
+            categoryIds = null,
             location = org.springframework.data.mongodb.core.geo.GeoJsonPoint(1.0, 2.0),
             mediaPaths = emptyList(),
             mainPhotoPath = null,
@@ -125,7 +126,7 @@ class AdServiceTest : StringSpec({
             createdAtMicros = 1000L,
             updatedAtMicros = 1000L,
             cityId = null,
-            categoryId = null,
+            categoryIds = null,
             location = null,
             mediaPaths = emptyList(),
             mainPhotoPath = null,

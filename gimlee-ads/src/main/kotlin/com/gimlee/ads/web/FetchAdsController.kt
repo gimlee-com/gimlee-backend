@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.data.domain.Page
@@ -52,7 +53,7 @@ class FetchAdsController(
     @ApiResponse(responseCode = "200", description = "Paged list of ads")
     @Validated
     @GetMapping(path = ["/ads/"])
-    fun fetchAds(@Valid fetchAdsRequestDto: FetchAdsRequestDto): Page<AdPreviewDto> {
+    fun fetchAds(@Valid @ParameterObject fetchAdsRequestDto: FetchAdsRequestDto): Page<AdPreviewDto> {
         val pageOfAds = adService.getAds(
             filters = toAdFilters(fetchAdsRequestDto.filters),
             sorting = toAdSorting(fetchAdsRequestDto.sorting),

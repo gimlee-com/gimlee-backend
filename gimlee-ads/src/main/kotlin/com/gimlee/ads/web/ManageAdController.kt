@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.data.domain.Page
@@ -58,7 +59,7 @@ class ManageAdController(
     @ApiResponse(responseCode = "200", description = "Paged list of user's ads")
     @GetMapping("/")
     @Privileged("USER")
-    fun getMyAds(@Valid request: SalesAdsRequestDto): Page<AdDto> {
+    fun getMyAds(@Valid @ParameterObject request: SalesAdsRequestDto): Page<AdDto> {
         val principal = HttpServletRequestAuthUtil.getPrincipal()
         val pageOfMyAds = adService.getAds(
             filters = AdFilters(

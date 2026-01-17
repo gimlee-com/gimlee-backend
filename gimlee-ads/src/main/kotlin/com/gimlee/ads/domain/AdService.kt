@@ -19,7 +19,8 @@ import java.util.*
 @Service
 class AdService(
     private val adRepository: AdRepository,
-    private val adStockService: AdStockService
+    private val adStockService: AdStockService,
+    private val categoryService: CategoryService
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -46,7 +47,7 @@ class AdService(
             createdAtMicros = nowMicros,
             updatedAtMicros = nowMicros,
             cityId = null,
-            categoryId = categoryId?.let { UUID.fromString(it) },
+            categoryIds = categoryId?.let { categoryService.resolveCategoryPathIds(UUID.fromString(it)) },
             location = null,
             mediaPaths = emptyList(),
             mainPhotoPath = null,
@@ -131,7 +132,7 @@ class AdService(
             price = newPrice,
             currency = newCurrency,
             cityId = finalCityId,
-            categoryId = updateData.categoryId?.let { UUID.fromString(it) } ?: existingAdDoc.categoryId,
+            categoryIds = updateData.categoryId?.let { categoryService.resolveCategoryPathIds(UUID.fromString(it)) } ?: existingAdDoc.categoryIds,
             location = finalGeoPoint,
             mediaPaths = newMediaPaths,
             mainPhotoPath = newMainPhotoPath,

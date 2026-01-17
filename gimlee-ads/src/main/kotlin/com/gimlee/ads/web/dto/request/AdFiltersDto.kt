@@ -13,7 +13,8 @@ data class AdFiltersDto(
     val cityId: String?,
     val x: Double?,
     val y: Double?,
-    val radius: Double?
+    val radius: Double?,
+    val categoryId: String?
 ) {
     companion object {
         private const val KM_TO_RADIANS = 1 / 6378.1
@@ -33,6 +34,7 @@ data class AdFiltersDto(
                 text = adFiltersDto.text,
                 priceRange = adFiltersDto.priceRange,
                 location = locationFilter,
+                categoryId = adFiltersDto.categoryId
             )
         }
     }

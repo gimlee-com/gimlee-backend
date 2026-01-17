@@ -22,7 +22,7 @@ data class AdDocument(
     val createdAtMicros: Long,
     val updatedAtMicros: Long,
     val cityId: String?,
-    val categoryId: java.util.UUID?,
+    val categoryIds: List<java.util.UUID>? = emptyList(),
     val location: GeoJsonPoint?,
     val mediaPaths: List<String>? = emptyList(),
     val mainPhotoPath: String?,
@@ -40,7 +40,7 @@ data class AdDocument(
         const val FIELD_CREATED_AT = "crt"
         const val FIELD_UPDATED_AT = "upd"
         const val FIELD_CITY_ID = "cid"
-        const val FIELD_CATEGORY_ID = "catid"
+        const val FIELD_CATEGORY_IDS = "cats"
         const val FIELD_LOCATION = "loc"
         const val FIELD_MEDIA_PATHS = "mep"
         const val FIELD_MAIN_PHOTO_PATH = "mpp"
@@ -69,7 +69,7 @@ data class AdDocument(
             } else {
                 null
             },
-            categoryId = categoryId?.toString(),
+            categoryId = categoryIds?.lastOrNull()?.toString(),
             mediaPaths = mediaPaths,
             mainPhotoPath = mainPhotoPath,
             stock = stock,

@@ -47,6 +47,16 @@ GET {{host}}/api/ads/?cty=city-id-123&minp=100&maxp=500&by=CREATED_DATE&dir=ASC
 # (Paged response containing ads within the price range in the specified city)
 
 
+### Fetch Ads - With Category Filter
+# cat: category ID
+# @name GetAdsCategoryFilter
+GET {{host}}/api/ads/?cat=60f8f9b3a9d9e8f8a8b8c8d8
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+# (Paged response containing ads in the specified category or its subcategories)
+
+
 ### Fetch Ads - With Geographic Circle Filter
 # x: longitude
 # y: latitude
@@ -60,9 +70,9 @@ GET {{host}}/api/ads/?x=-73.985130&y=40.758896&r=10
 
 
 ### Fetch Ads - Combined Filters
-# Example combining text search, price range, city, and specific page, sorted ascending by price.
+# Example combining text search, price range, city, category, and specific page, sorted ascending by price.
 # @name GetAdsCombinedFilters
-GET {{host}}/api/ads/?t=Vintage%20Bike&minp=50&maxp=250&cty=another-city-id&by=PRICE&dir=ASC&p=0
+GET {{host}}/api/ads/?t=Vintage%20Bike&minp=50&maxp=250&cty=another-city-id&cat=some-category-id&by=PRICE&dir=ASC&p=0
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json

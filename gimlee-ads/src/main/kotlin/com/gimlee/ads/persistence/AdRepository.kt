@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
+import java.util.*
 
 @Repository
 class AdRepository(mongoDatabase: MongoDatabase) {
@@ -101,6 +102,9 @@ class AdRepository(mongoDatabase: MongoDatabase) {
 
         filters.createdBy?.let {
             queryFilters.add(Filters.eq(AdDocument.FIELD_USER_ID, ObjectId(it)))
+        }
+        filters.categoryId?.let {
+            queryFilters.add(Filters.eq<UUID>(AdDocument.FIELD_CATEGORY_IDS, UUID.fromString(it)))
         }
         filters.text?.let {
             val regexFilter = Filters.or(
@@ -228,7 +232,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             .append(AdDocument.FIELD_CREATED_AT, ad.createdAtMicros)
             .append(AdDocument.FIELD_UPDATED_AT, ad.updatedAtMicros)
             .append(AdDocument.FIELD_CITY_ID, ad.cityId) // Map cityId
-            .append(AdDocument.FIELD_CATEGORY_ID, ad.categoryId)
+            .append(AdDocument.FIELD_CATEGORY_IDS, ad.categoryIds)
             .append(AdDocument.FIELD_MEDIA_PATHS, ad.mediaPaths)
             .append(AdDocument.FIELD_MAIN_PHOTO_PATH, ad.mainPhotoPath)
             .append(AdDocument.FIELD_STOCK, ad.stock)
@@ -276,7 +280,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             createdAtMicros = doc.getLong(AdDocument.FIELD_CREATED_AT),
             updatedAtMicros = doc.getLong(AdDocument.FIELD_UPDATED_AT),
             cityId = doc.getString(AdDocument.FIELD_CITY_ID),
-            categoryId = doc.get(AdDocument.FIELD_CATEGORY_ID, java.util.UUID::class.java),
+            categoryIds = doc.getList(AdDocument.FIELD_CATEGORY_IDS, java.util.UUID::class.java),
             location = geoPoint,
             mediaPaths = mediaPathsList ?: emptyList(),
             mainPhotoPath = doc.getString(AdDocument.FIELD_MAIN_PHOTO_PATH),

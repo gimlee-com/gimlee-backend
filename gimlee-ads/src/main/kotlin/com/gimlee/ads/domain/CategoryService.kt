@@ -24,6 +24,15 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
     }
 
     /**
+     * Resolves the full path of category IDs starting from the leaf ID up to the root.
+     * Returns the list of UUIDs in order from root to leaf.
+     */
+    fun resolveCategoryPathIds(leafId: UUID): List<UUID> {
+        val categoryMap = categoryRepository.findAllGptCategories().associateBy { it.id }
+        return getPathIds(leafId, categoryMap)
+    }
+
+    /**
      * Reconstructs full category paths for a set of category IDs in bulk.
      */
     fun getFullCategoryPaths(categoryIds: Set<String>, language: String): Map<String, List<CategoryPathElementDto>> {
@@ -38,6 +47,12 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
                 null
             }
         }.mapNotNull { (id, path) -> if (path != null) id to path else null }.toMap()
+    }
+
+    private fun getPathIds(id: UUID, categoryMap: Map<UUID, Category>): List<UUID> {
+        val category = categoryMap[id] ?: return listOf(id)
+        val parentPath = category.parent?.let { getPathIds(it, categoryMap) } ?: emptyList()
+        return parentPath + id
     }
 
     private fun getPath(id: UUID, categoryMap: Map<UUID, Category>, language: String): List<CategoryPathElementDto>? {
