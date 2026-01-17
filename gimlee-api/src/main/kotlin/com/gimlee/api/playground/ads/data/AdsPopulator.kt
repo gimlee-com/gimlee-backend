@@ -4,6 +4,7 @@ import com.gimlee.common.domain.model.Currency
 import com.fasterxml.jackson.dataformat.csv.CsvMapper
 import com.fasterxml.jackson.dataformat.csv.CsvSchema
 import com.gimlee.ads.domain.AdService
+import com.gimlee.ads.domain.CategoryService
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.domain.model.CurrencyAmount
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component
 import java.io.InputStream
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -30,6 +32,7 @@ import kotlin.random.Random
 @Component
 class AdsPopulator(
     private val adService: AdService,
+    private val categoryService: CategoryService, // Inject CategoryService
     private val userRepository: UserRepository, // To get all users
     private val playgroundMediaRepository: PlaygroundMediaRepository // Inject PlaygroundMediaRepository
 ) {
@@ -196,10 +199,11 @@ class AdsPopulator(
                     .setScale(2, RoundingMode.HALF_UP)
                 val currency = forceCurrency ?: if (Random.nextBoolean()) Currency.YEC else Currency.ARRR
                 val location = Location(city.id, doubleArrayOf(city.lon, city.lat))
+                val randomCategoryId = categoryService.getRandomLeafCategoryId()?.toString()
 
                 // 1. Create inactive ad
                 val title = "$titlePrefix${template.title}"
-                val createdAd = adService.createAd(userId, title)
+                val createdAd = adService.createAd(userId, title, randomCategoryId)
 
                 // --- Media Population Logic ---
                 var adMediaPaths: List<String>? = null
