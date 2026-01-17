@@ -20,13 +20,23 @@ dependencies {
     implementation(libs.jakarta.validation)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.springdoc.openapi.starter.webmvc.api)
+    implementation(libs.shedlock.spring)
+    implementation(libs.shedlock.provider.mongo)
+    
+    testFixturesApi(libs.spring.boot.starter)
+    testFixturesApi(libs.spring.boot.starter.test)
+    testFixturesApi(libs.shedlock.spring)
+    testFixturesApi(libs.shedlock.provider.mongo)
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(platform(libs.kotest.bom))
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.property)
+    testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.mockk)
+    testImplementation(testFixtures(project))
+    testImplementation(testFixtures(project(":gimlee-common")))
 }
 
 sourceSets {

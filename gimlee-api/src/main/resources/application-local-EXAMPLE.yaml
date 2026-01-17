@@ -33,6 +33,18 @@ gimlee:
       jwt:
         key: "iamnotmeantforproduction" # JWT tokens will be signed with this key
 
+  # gimlee-ads properties
+  ads:
+    category:
+      sync:
+        cron: "0 0 0 1 * ?"
+        lock:
+          at-most: PT1H
+          at-least: PT5M
+    gpt:
+      url-template: https://www.google.com/basepages/producttype/taxonomy-with-ids.%s.txt
+      languages: en-US,pl-PL
+
   # gimlee-media-store properties
   media:
     store:

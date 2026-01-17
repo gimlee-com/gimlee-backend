@@ -1,0 +1,36 @@
+package com.gimlee.ads.domain.model
+
+import com.gimlee.common.UUIDv7
+import java.util.*
+
+data class Category(
+    val id: UUID = UUIDv7.generate(),
+    val source: Source,
+    val parent: UUID? = null,
+    val flags: Map<String, Boolean> = emptyMap(),
+    val name: Map<String, CategoryName> = emptyMap(),
+    val createdAt: Long,
+    val updatedAt: Long
+) {
+    data class Source(
+        val type: Type,
+        val id: String
+    ) {
+        enum class Type(val shortName: String) {
+            GOOGLE_PRODUCT_TAXONOMY("GPT"),
+            GIMLEE("GML");
+
+            companion object {
+                fun fromShortName(shortName: String): Type =
+                    entries.find { it.shortName == shortName }
+                        ?: throw IllegalArgumentException("Unknown Category.Source.Type shortName: $shortName")
+            }
+        }
+    }
+
+    data class CategoryName(
+        val name: String,
+        val slug: String
+    )
+}
+

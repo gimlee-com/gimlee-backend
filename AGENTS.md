@@ -32,6 +32,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **Timestamps:** All timestamps must be stored as **epoch microseconds** (Long). Use `Instant.toMicros` extension from `gimlee-common`.
 *   **Field Names:** Use abbreviations for all field names to minimize storage size.
 *   **Index Optimization:** Only index fields used in queries. Use partial indexes for low-cardinality statuses.
+*   **Enums with Short Names:** For enums persisted in the database, use descriptive names (e.g., `GOOGLE_PRODUCT_TAXONOMY`) but provide a `shortName` property (e.g., `GPT`) for persistence. This keeps the code self-explanatory while maintaining a compact database representation. Implement a `fromShortName` lookup method in the enum's companion object for mapping back from the database.
 
 ### 2. Testing (`docs/development/testing-guidelines.md`)
 *   **Framework:** Use **Kotest** for all tests.

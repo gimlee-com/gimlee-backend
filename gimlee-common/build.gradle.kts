@@ -17,6 +17,7 @@ dependencies {
     
     testFixturesApi(platform(libs.testcontainers.bom))
     testFixturesApi(libs.testcontainers.mongodb)
+    testFixturesApi(libs.wiremock.standalone)
 }
 
 sourceSets {

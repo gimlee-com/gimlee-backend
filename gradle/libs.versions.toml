@@ -16,6 +16,8 @@ mustache-java = "0.9.13"
 springdoc-openapi = "2.8.6"
 httpclient5 = "5.4.3"
 simmetrics = "4.1.1"
+shedlock = "5.13.0"
+wiremock = "3.2.0"
 
 # --- Testing ---
 kotest = "5.9.1"
@@ -65,6 +67,8 @@ httpclient5 = { module = "org.apache.httpcomponents.client5:httpclient5", versio
 micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
 simmetrics-core = { module = "com.github.mpkorstanje:simmetrics-core", version.ref = "simmetrics" }
 bson = { module = "org.mongodb:bson" }
+shedlock-spring = { module = "net.javacrumbs.shedlock:shedlock-spring", version.ref = "shedlock" }
+shedlock-provider-mongo = { module = "net.javacrumbs.shedlock:shedlock-provider-mongo", version.ref = "shedlock" }
 
 # --- Testing Libraries ---
 kotest-bom = { group = "io.kotest", name = "kotest-bom", version.ref = "kotest"}
@@ -76,6 +80,7 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 springmockk = { module = "com.ninjasquad:springmockk", version.ref = "springmockk" }
 testcontainers-bom = { group = "org.testcontainers", name = "testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-mongodb = { group = "org.testcontainers", name = "mongodb" }
+wiremock-standalone = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
 
 
 [plugins]

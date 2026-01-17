@@ -1,0 +1,12 @@
+# Google Product Taxonomy
+1 - Animals & Pet Supplies
+3237 - Animals & Pet Supplies > Live Animals
+2 - Animals & Pet Supplies > Pet Supplies
+3124 - Animals & Pet Supplies > Pet Supplies > Bird Supplies
+3 - Animals & Pet Supplies > Pet Supplies > Bird Supplies > Bird Cages & Stands
+4 - Animals & Pet Supplies > Pet Supplies > Bird Supplies > Bird Food
+8 - Arts & Entertainment
+166 - Apparel & Accessories
+167 - Apparel & Accessories > Clothing
+168 - Apparel & Accessories > Clothing > Activewear
+

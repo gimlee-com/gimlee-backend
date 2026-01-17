@@ -1,6 +1,8 @@
 package com.gimlee.common
 
 import com.gimlee.common.config.MongoClientConfig
+import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import org.springframework.boot.test.context.SpringBootTest
@@ -15,6 +17,17 @@ import org.testcontainers.containers.MongoDBContainer
 @Import(MongoClientConfig::class)
 abstract class BaseIntegrationTest(body: BehaviorSpec.() -> Unit) : BehaviorSpec({
     extensions(SpringExtension)
+
+    beforeSpec {
+        if (!wireMockServer.isRunning) {
+            wireMockServer.start()
+        }
+    }
+
+    afterSpec {
+        wireMockServer.stop()
+    }
+
     body()
 }) {
     companion object {
@@ -22,10 +35,15 @@ abstract class BaseIntegrationTest(body: BehaviorSpec.() -> Unit) : BehaviorSpec
             start()
         }
 
+        val wireMockServer = WireMockServer(WireMockConfiguration.wireMockConfig().dynamicPort()).apply {
+            start()
+        }
+
         @JvmStatic
         @DynamicPropertySource
         fun setProperties(registry: DynamicPropertyRegistry) {
             registry.add("spring.data.mongodb.uri") { mongodb.replicaSetUrl }
+            registry.add("wiremock.server.port") { wireMockServer.port() }
         }
     }
 }
