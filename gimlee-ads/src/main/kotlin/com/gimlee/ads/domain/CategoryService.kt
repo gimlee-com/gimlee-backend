@@ -1,13 +1,23 @@
 package com.gimlee.ads.domain
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.gimlee.ads.domain.model.Category
 import com.gimlee.ads.persistence.CategoryRepository
 import com.gimlee.ads.web.dto.response.CategoryPathElementDto
 import org.springframework.stereotype.Service
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 @Service
 class CategoryService(private val categoryRepository: CategoryRepository) {
+
+    private val categoriesCache = Caffeine.newBuilder()
+        .expireAfterWrite(1, TimeUnit.HOURS)
+        .build<String, List<Category>>()
+
+    private fun getAllCategories(): List<Category> {
+        return categoriesCache.get("all") { categoryRepository.findAllGptCategories() } ?: emptyList()
+    }
 
     /**
      * Reconstructs the full category path for a given category ID and language.
@@ -19,7 +29,7 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
         } catch (e: Exception) {
             return null
         }
-        val categoryMap = categoryRepository.findAllGptCategories().associateBy { it.id }
+        val categoryMap = getAllCategories().associateBy { it.id }
         return getPath(uuid, categoryMap, language)
     }
 
@@ -28,7 +38,7 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
      * Returns the list of UUIDs in order from root to leaf.
      */
     fun resolveCategoryPathIds(leafId: UUID): List<UUID> {
-        val categoryMap = categoryRepository.findAllGptCategories().associateBy { it.id }
+        val categoryMap = getAllCategories().associateBy { it.id }
         return getPathIds(leafId, categoryMap)
     }
 
@@ -38,7 +48,7 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
     fun getFullCategoryPaths(categoryIds: Set<String>, language: String): Map<String, List<CategoryPathElementDto>> {
         if (categoryIds.isEmpty()) return emptyMap()
 
-        val categoryMap = categoryRepository.findAllGptCategories().associateBy { it.id }
+        val categoryMap = getAllCategories().associateBy { it.id }
         return categoryIds.associateWith { id ->
             try {
                 val uuid = UUID.fromString(id)
@@ -47,6 +57,27 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
                 null
             }
         }.mapNotNull { (id, path) -> if (path != null) id to path else null }.toMap()
+    }
+
+    /**
+     * Checks if a category is a leaf (i.e., it has no subcategories).
+     */
+    fun isLeaf(categoryId: UUID): Boolean {
+        val categories = getAllCategories()
+        val categoryExists = categories.any { it.id == categoryId }
+        if (!categoryExists) return false
+
+        val parentIds = categories.mapNotNull { it.parent }.toSet()
+        return !parentIds.contains(categoryId)
+    }
+
+    /**
+     * Returns a random leaf category ID. Useful for data population.
+     */
+    fun getRandomLeafCategoryId(): UUID? {
+        val categories = getAllCategories()
+        val parentIds = categories.mapNotNull { it.parent }.toSet()
+        return categories.filter { it.id !in parentIds }.randomOrNull()?.id
     }
 
     private fun getPathIds(id: UUID, categoryMap: Map<UUID, Category>): List<UUID> {

@@ -47,7 +47,7 @@ class AdService(
             createdAtMicros = nowMicros,
             updatedAtMicros = nowMicros,
             cityId = null,
-            categoryIds = categoryId?.let { categoryService.resolveCategoryPathIds(UUID.fromString(it)) },
+            categoryIds = resolveCategoryPath(categoryId),
             location = null,
             mediaPaths = emptyList(),
             mainPhotoPath = null,
@@ -132,7 +132,7 @@ class AdService(
             price = newPrice,
             currency = newCurrency,
             cityId = finalCityId,
-            categoryIds = updateData.categoryId?.let { categoryService.resolveCategoryPathIds(UUID.fromString(it)) } ?: existingAdDoc.categoryIds,
+            categoryIds = if (updateData.categoryId != null) resolveCategoryPath(updateData.categoryId) else existingAdDoc.categoryIds,
             location = finalGeoPoint,
             mediaPaths = newMediaPaths,
             mainPhotoPath = newMainPhotoPath,
@@ -287,5 +287,18 @@ class AdService(
             )
             throw AdOperationException("Ad cannot be activated until title, description, price, location and stock are all set. Stock must be greater than 0.")
         }
+    }
+
+    private fun resolveCategoryPath(categoryId: String?): List<UUID>? {
+        if (categoryId == null) return null
+        val uuid = try {
+            UUID.fromString(categoryId)
+        } catch (e: Exception) {
+            throw AdOperationException("Invalid category ID format.")
+        }
+        if (!categoryService.isLeaf(uuid)) {
+            throw AdOperationException("Category must be a leaf node.")
+        }
+        return categoryService.resolveCategoryPathIds(uuid)
     }
 }

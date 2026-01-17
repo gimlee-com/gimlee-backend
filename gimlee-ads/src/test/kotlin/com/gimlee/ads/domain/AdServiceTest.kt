@@ -145,4 +145,52 @@ class AdServiceTest : StringSpec({
 
         exception.message shouldBe "Stock (4) cannot be lower than locked stock (5)."
     }
+
+    "createAd should fail if category is not a leaf" {
+        val userId = ObjectId().toHexString()
+        val title = "Test Ad"
+        val categoryId = java.util.UUID.randomUUID().toString()
+
+        every { categoryService.isLeaf(any()) } returns false
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+            adService.createAd(userId, title, categoryId)
+        }
+
+        exception.message shouldBe "Category must be a leaf node."
+    }
+
+    "updateAd should fail if category is not a leaf" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val categoryId = java.util.UUID.randomUUID().toString()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Title",
+            description = null,
+            price = null,
+            currency = null,
+            status = AdStatus.INACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = null,
+            categoryIds = null,
+            location = null,
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 10
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+        every { categoryService.isLeaf(any()) } returns false
+
+        val updateRequest = UpdateAdRequest(categoryId = categoryId)
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+            adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+        }
+
+        exception.message shouldBe "Category must be a leaf node."
+    }
 })

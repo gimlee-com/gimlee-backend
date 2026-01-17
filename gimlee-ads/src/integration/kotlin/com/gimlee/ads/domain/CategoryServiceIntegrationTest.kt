@@ -73,5 +73,20 @@ class CategoryServiceIntegrationTest(
                 paths[grandchildId.toString()]?.get(2)?.name shouldBe "Food"
             }
         }
+
+        When("checking if categories are leaf") {
+            Then("root should not be a leaf") {
+                categoryService.isLeaf(rootId) shouldBe false
+            }
+            Then("child should not be a leaf") {
+                categoryService.isLeaf(childId) shouldBe false
+            }
+            Then("grandchild should be a leaf") {
+                categoryService.isLeaf(grandchildId) shouldBe true
+            }
+            Then("non-existent category should not be a leaf") {
+                categoryService.isLeaf(UUIDv7.generate()) shouldBe false
+            }
+        }
     }
 })

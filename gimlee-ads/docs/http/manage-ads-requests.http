@@ -44,6 +44,7 @@ Content-Type: application/json
   "description": "This is a detailed description of the item.",
   "price": 19.99,
   "currency": "YEC",
+  "categoryId": "60f8f9b3a9d9e8f8a8b8c8d8",
   "location": {
     "cityId": "city-id-123",
     "point": {
@@ -105,6 +106,10 @@ Content-Type: application/json
 # or
 # {
 #   "error": "Stock (2) cannot be lower than locked stock (3)."
+# }
+# or
+# {
+#   "error": "Category must be a leaf node."
 # }
 
 
