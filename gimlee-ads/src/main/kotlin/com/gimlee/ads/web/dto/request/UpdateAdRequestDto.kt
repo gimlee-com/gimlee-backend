@@ -1,14 +1,13 @@
 package com.gimlee.ads.web.dto.request
-import com.gimlee.common.domain.model.Currency
 
+import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
-import com.gimlee.ads.domain.model.CurrencyAmount
+import com.gimlee.common.domain.model.Currency
 import com.gimlee.location.cities.data.cityDataById
 import jakarta.validation.Valid
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Size
-
 import java.math.BigDecimal
 
 
@@ -23,6 +22,8 @@ data class UpdateAdRequestDto(
     val price: BigDecimal?,
 
     val currency: Currency?,
+
+    val categoryId: String?,
 
     @field:Valid
     val location: LocationDto?,
@@ -48,6 +49,7 @@ data class UpdateAdRequestDto(
                 requireNotNull(point) { "Location point is mandatory and city ID '${dto.cityId}' is invalid." }
                 Location(cityId = dto.cityId, point = point)
             },
+            categoryId = categoryId,
             mediaPaths = mediaPaths,
             mainPhotoPath = mainPhotoPath,
             stock = stock

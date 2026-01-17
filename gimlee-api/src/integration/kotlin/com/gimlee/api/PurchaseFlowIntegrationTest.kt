@@ -1,21 +1,21 @@
 package com.gimlee.api
-import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
+import com.gimlee.common.BaseIntegrationTest
+import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.toMicros
 import com.gimlee.events.PaymentEvent
-import com.gimlee.purchases.domain.PurchaseService
-import com.gimlee.purchases.domain.model.PurchaseStatus
-import com.gimlee.payments.domain.model.PaymentMethod
-import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
+import com.gimlee.payments.domain.model.PaymentMethod
+import com.gimlee.payments.domain.model.PaymentStatus
+import com.gimlee.purchases.domain.PurchaseService
+import com.gimlee.purchases.domain.model.PurchaseStatus
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
@@ -46,7 +46,7 @@ class PurchaseFlowIntegrationTest(
         )
         userWalletAddressRepository.addAddressToUser(sellerId, addressInfo)
 
-        val ad = adService.createAd(sellerId.toHexString(), "Test Item", 10)
+        val ad = adService.createAd(sellerId.toHexString(), "Test Item", null, 10)
         adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
             description = "Test Description",
             price = CurrencyAmount(BigDecimal("10.00"), Currency.ARRR),

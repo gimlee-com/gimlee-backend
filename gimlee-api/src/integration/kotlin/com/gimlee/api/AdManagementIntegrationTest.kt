@@ -1,20 +1,20 @@
 package com.gimlee.api
-import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.common.BaseIntegrationTest
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.web.dto.request.UpdateAdRequestDto
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
-import com.gimlee.purchases.domain.PurchaseService
-import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import com.gimlee.auth.persistence.UserRoleRepository
+import com.gimlee.common.BaseIntegrationTest
+import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.toMicros
 import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.gimlee.purchases.domain.PurchaseService
+import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -52,7 +52,7 @@ class AdManagementIntegrationTest(
 
         val principal = Principal(userId = sellerId.toHexString(), username = "seller", roles = listOf(Role.USER, Role.PIRATE))
         
-        val ad = adService.createAd(sellerId.toHexString(), "Test Ad", 10)
+        val ad = adService.createAd(sellerId.toHexString(), "Test Ad", null, 10)
         adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
             description = "Desc",
             price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
@@ -85,6 +85,7 @@ class AdManagementIntegrationTest(
                 description = null,
                 price = null,
                 currency = null,
+                categoryId = null,
                 location = null,
                 mediaPaths = null,
                 mainPhotoPath = null,
@@ -107,6 +108,7 @@ class AdManagementIntegrationTest(
                 description = null,
                 price = null,
                 currency = null,
+                categoryId = null,
                 location = null,
                 mediaPaths = null,
                 mainPhotoPath = null,

@@ -1,13 +1,13 @@
 package com.gimlee.api
-import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
+import com.gimlee.common.BaseIntegrationTest
+import com.gimlee.common.domain.model.Currency
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -29,7 +29,7 @@ class AdVisibilityIntegrationTest(
         val sellerIdStr = sellerId.toHexString()
 
         // 1. Create an ACTIVE ad
-        val activeAd = adService.createAd(sellerIdStr, "Active Ad", 10)
+        val activeAd = adService.createAd(sellerIdStr, "Active Ad", null, 10)
         adService.updateAd(activeAd.id, sellerIdStr, UpdateAdRequest(
             description = "Desc",
             price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
@@ -39,7 +39,7 @@ class AdVisibilityIntegrationTest(
         adService.activateAd(activeAd.id, sellerIdStr)
 
         // 2. Create an INACTIVE ad
-        val inactiveAd = adService.createAd(sellerIdStr, "Inactive Ad", 10)
+        val inactiveAd = adService.createAd(sellerIdStr, "Inactive Ad", null, 10)
         // Remains INACTIVE by default
 
         // 3. Create another ad and DEACTIVATE it (though it's basically INACTIVE status)

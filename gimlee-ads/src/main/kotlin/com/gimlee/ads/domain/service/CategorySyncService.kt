@@ -7,6 +7,7 @@ import com.gimlee.common.toMicros
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.MessageSource
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.text.Normalizer
@@ -18,6 +19,7 @@ import java.util.regex.Pattern
 class CategorySyncService(
     private val categoryRepository: CategoryRepository,
     private val taxonomyDownloader: TaxonomyDownloader,
+    private val messageSource: MessageSource,
     @Value("\${gimlee.ads.gpt.url-template:https://www.google.com/basepages/producttype/taxonomy-with-ids.%s.txt}")
     private val gptUrlTemplate: String,
     @Value("\${gimlee.ads.gpt.languages:en-US,pl-PL}")
@@ -41,14 +43,14 @@ class CategorySyncService(
         val sourceIdToUuid = existingMap.toMutableMap()
 
         // 2. Download and Parse taxonomies for all configured languages
-        val languageMaps = mutableMapOf<String, Map<String, ParsedCategory>>()
+        val languageMaps = mutableMapOf<String, MutableMap<String, ParsedCategory>>()
 
         languages.forEach { lang ->
             val url = String.format(gptUrlTemplate, lang)
             try {
                 val taxonomyLines = taxonomyDownloader.download(url)
                 val parsed = parseTaxonomy(taxonomyLines)
-                languageMaps[lang] = parsed.associateBy { it.sourceId }
+                languageMaps[lang] = parsed.associateBy { it.sourceId }.toMutableMap()
                 LOGGER.debug("Downloaded and parsed {} categories for language: {}", parsed.size, lang)
             } catch (e: Exception) {
                 LOGGER.error("Failed to download or parse taxonomy for language: $lang", e)
@@ -60,8 +62,22 @@ class CategorySyncService(
             return
         }
 
-        // Use en-US as base for structure if available, otherwise just pick one
+        // Enrich with "Miscellaneous" children for non-leaf nodes
         val baseLanguage = if (languageMaps.containsKey("en-US")) "en-US" else languageMaps.keys.first()
+        val baseMapForStructure = languageMaps[baseLanguage]!!
+        val nonLeafSourceIds = baseMapForStructure.values.mapNotNull { it.parentSourceId }.toSet()
+
+        nonLeafSourceIds.forEach { parentId ->
+            val miscSourceId = "$parentId-misc"
+            languages.forEach { lang ->
+                val langMap = languageMaps[lang] ?: return@forEach
+                val parentInLang = langMap[parentId] ?: return@forEach
+                val miscName = messageSource.getMessage("category.gpt.miscellaneous", null, Locale.forLanguageTag(lang))
+                val miscFullPath = "${parentInLang.fullPath} > $miscName"
+                langMap[miscSourceId] = ParsedCategory(miscSourceId, miscFullPath, miscName, parentId)
+            }
+        }
+
         val baseMap = languageMaps[baseLanguage]!!
 
         // 3. Ensure all source IDs have a UUID

@@ -1,9 +1,12 @@
 package com.gimlee.ads.persistence.model
-import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.ads.domain.model.*
-import com.gimlee.location.cities.data.cityDataById
+import com.gimlee.ads.domain.model.Ad
+import com.gimlee.ads.domain.model.AdStatus
+import com.gimlee.ads.domain.model.CurrencyAmount
+import com.gimlee.ads.domain.model.Location
 import com.gimlee.common.InstantUtils.fromMicros
+import com.gimlee.common.domain.model.Currency
+import com.gimlee.location.cities.data.cityDataById
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import java.math.BigDecimal
@@ -19,6 +22,7 @@ data class AdDocument(
     val createdAtMicros: Long,
     val updatedAtMicros: Long,
     val cityId: String?,
+    val categoryId: java.util.UUID?,
     val location: GeoJsonPoint?,
     val mediaPaths: List<String>? = emptyList(),
     val mainPhotoPath: String?,
@@ -36,6 +40,7 @@ data class AdDocument(
         const val FIELD_CREATED_AT = "crt"
         const val FIELD_UPDATED_AT = "upd"
         const val FIELD_CITY_ID = "cid"
+        const val FIELD_CATEGORY_ID = "catid"
         const val FIELD_LOCATION = "loc"
         const val FIELD_MEDIA_PATHS = "mep"
         const val FIELD_MAIN_PHOTO_PATH = "mpp"
@@ -64,6 +69,7 @@ data class AdDocument(
             } else {
                 null
             },
+            categoryId = categoryId?.toString(),
             mediaPaths = mediaPaths,
             mainPhotoPath = mainPhotoPath,
             stock = stock,

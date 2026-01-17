@@ -1,8 +1,10 @@
 package com.gimlee.ads.web
-import com.gimlee.common.domain.model.Currency
 
+import com.gimlee.ads.domain.AdOutcome
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.*
+import com.gimlee.ads.domain.model.AdFilters
+import com.gimlee.ads.domain.model.AdSorting
+import com.gimlee.ads.domain.model.AdStatus
 import com.gimlee.ads.web.dto.request.CreateAdRequestDto
 import com.gimlee.ads.web.dto.request.SalesAdsRequestDto
 import com.gimlee.ads.web.dto.request.UpdateAdRequestDto
@@ -10,17 +12,17 @@ import com.gimlee.ads.web.dto.response.AdDto
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
-import com.gimlee.ads.domain.AdOutcome
-import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.domain.model.CommonOutcome
+import com.gimlee.common.domain.model.Currency
+import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.web.dto.StatusResponseDto
-import jakarta.validation.Valid
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
@@ -120,7 +122,7 @@ class ManageAdController(
         val principal = HttpServletRequestAuthUtil.Companion.getPrincipal()
         log.info("User {} attempting to create ad with title '{}'", principal.userId, request.title)
         return try {
-            val createdAdDomain = adService.createAd(principal.userId, request.title)
+            val createdAdDomain = adService.createAd(principal.userId, request.title, request.categoryId)
             ResponseEntity.status(HttpStatus.CREATED).body(AdDto.Companion.fromDomain(createdAdDomain))
         } catch (e: Exception) {
             log.error("Error creating ad for user {}: {}", principal.userId, e.message, e)

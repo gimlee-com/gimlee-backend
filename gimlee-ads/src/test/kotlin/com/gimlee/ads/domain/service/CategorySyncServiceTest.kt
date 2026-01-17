@@ -3,12 +3,14 @@ package com.gimlee.ads.domain.service
 import com.gimlee.ads.persistence.CategoryRepository
 import io.kotest.core.spec.style.BehaviorSpec
 import io.mockk.*
+import org.springframework.context.MessageSource
 
 class CategorySyncServiceTest : BehaviorSpec({
 
     val categoryRepository = mockk<CategoryRepository>()
     val taxonomyDownloader = mockk<TaxonomyDownloader>()
-    val service = CategorySyncService(categoryRepository, taxonomyDownloader, "http://localhost/test", listOf("en-US"))
+    val messageSource = mockk<MessageSource>()
+    val service = CategorySyncService(categoryRepository, taxonomyDownloader, messageSource, "http://localhost/test", listOf("en-US"))
 
     Given("A valid taxonomy file content") {
         val lines = listOf(
@@ -21,6 +23,7 @@ class CategorySyncServiceTest : BehaviorSpec({
         )
 
         every { taxonomyDownloader.download(any()) } returns lines
+        every { messageSource.getMessage("category.gpt.miscellaneous", null, any()) } returns "Miscellaneous"
         every { categoryRepository.getGptSourceIdToUuidMap() } returns emptyMap()
         every { categoryRepository.upsertGptCategory(any(), any(), any(), any(), any()) } just Runs
         every { categoryRepository.deprecateMissingGptCategories(any()) } just Runs
@@ -29,7 +32,7 @@ class CategorySyncServiceTest : BehaviorSpec({
             service.syncCategories()
 
             Then("it should upsert all categories correctly resolving parents") {
-                verify(exactly = 5) {
+                verify(exactly = 7) {
                     categoryRepository.upsertGptCategory(any(), any(), any(), any(), any())
                 }
 

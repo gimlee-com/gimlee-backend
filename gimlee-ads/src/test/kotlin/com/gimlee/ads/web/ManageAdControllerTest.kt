@@ -44,6 +44,7 @@ class ManageAdControllerTest : StringSpec({
             price = BigDecimal("10"),
             currency = Currency.ARRR,
             location = null,
+            categoryId = null,
             mediaPaths = null,
             mainPhotoPath = null,
             stock = 1
@@ -71,6 +72,7 @@ class ManageAdControllerTest : StringSpec({
             price = BigDecimal("10"),
             currency = Currency.ARRR,
             location = null,
+            categoryId = null,
             mediaPaths = null,
             mainPhotoPath = null,
             stock = 1

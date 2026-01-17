@@ -1,5 +1,4 @@
 package com.gimlee.api
-import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.CurrencyAmount
@@ -8,9 +7,10 @@ import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.domain.User
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
-import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.auth.persistence.UserRepository
+import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
+import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.toMicros
 import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
@@ -53,7 +53,7 @@ class OrderHistoryIntegrationTest(
         val buyerId = ObjectId.get()
         userRepository.save(User(id = buyerId, username = "buyer_user"))
 
-        val ad = adService.createAd(sellerId.toHexString(), "Test Ad Title", 10)
+        val ad = adService.createAd(sellerId.toHexString(), "Test Ad Title", null, 10)
         adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
             description = "Desc",
             price = CurrencyAmount(BigDecimal("50.00"), Currency.ARRR),

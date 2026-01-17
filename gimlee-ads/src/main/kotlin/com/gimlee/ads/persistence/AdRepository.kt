@@ -1,12 +1,8 @@
 package com.gimlee.ads.persistence
-import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.ads.domain.model.AdFilters
-import com.gimlee.ads.domain.model.AdSorting
-import com.gimlee.ads.domain.model.By
-import com.gimlee.ads.domain.model.Direction
-import com.gimlee.ads.domain.model.AdStatus
+import com.gimlee.ads.domain.model.*
 import com.gimlee.ads.persistence.model.AdDocument
+import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.persistence.mongo.MongoExceptionUtils
 import com.mongodb.MongoException
 import com.mongodb.client.MongoCollection
@@ -232,6 +228,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             .append(AdDocument.FIELD_CREATED_AT, ad.createdAtMicros)
             .append(AdDocument.FIELD_UPDATED_AT, ad.updatedAtMicros)
             .append(AdDocument.FIELD_CITY_ID, ad.cityId) // Map cityId
+            .append(AdDocument.FIELD_CATEGORY_ID, ad.categoryId)
             .append(AdDocument.FIELD_MEDIA_PATHS, ad.mediaPaths)
             .append(AdDocument.FIELD_MAIN_PHOTO_PATH, ad.mainPhotoPath)
             .append(AdDocument.FIELD_STOCK, ad.stock)
@@ -279,6 +276,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             createdAtMicros = doc.getLong(AdDocument.FIELD_CREATED_AT),
             updatedAtMicros = doc.getLong(AdDocument.FIELD_UPDATED_AT),
             cityId = doc.getString(AdDocument.FIELD_CITY_ID),
+            categoryId = doc.get(AdDocument.FIELD_CATEGORY_ID, java.util.UUID::class.java),
             location = geoPoint,
             mediaPaths = mediaPathsList ?: emptyList(),
             mainPhotoPath = doc.getString(AdDocument.FIELD_MAIN_PHOTO_PATH),

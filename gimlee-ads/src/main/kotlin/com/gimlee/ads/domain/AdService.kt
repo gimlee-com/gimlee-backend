@@ -3,8 +3,8 @@ package com.gimlee.ads.domain
 import com.gimlee.ads.domain.model.*
 import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.ads.persistence.model.AdDocument
-import com.gimlee.location.cities.data.cityDataById
 import com.gimlee.common.toMicros
+import com.gimlee.location.cities.data.cityDataById
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.util.*
 
 
 @Service
@@ -32,7 +33,7 @@ class AdService(
     /**
      * Initiates a new ad with a title in the INACTIVE state. Location and other details are set via updateAd.
      */
-    fun createAd(userId: String, title: String, stock: Int = 0): Ad {
+    fun createAd(userId: String, title: String, categoryId: String? = null, stock: Int = 0): Ad {
         val nowMicros = Instant.now().toMicros()
         val adDocument = AdDocument(
             id = ObjectId(),
@@ -45,6 +46,7 @@ class AdService(
             createdAtMicros = nowMicros,
             updatedAtMicros = nowMicros,
             cityId = null,
+            categoryId = categoryId?.let { UUID.fromString(it) },
             location = null,
             mediaPaths = emptyList(),
             mainPhotoPath = null,
@@ -129,6 +131,7 @@ class AdService(
             price = newPrice,
             currency = newCurrency,
             cityId = finalCityId,
+            categoryId = updateData.categoryId?.let { UUID.fromString(it) } ?: existingAdDoc.categoryId,
             location = finalGeoPoint,
             mediaPaths = newMediaPaths,
             mainPhotoPath = newMainPhotoPath,

@@ -24,10 +24,6 @@ abstract class BaseIntegrationTest(body: BehaviorSpec.() -> Unit) : BehaviorSpec
         }
     }
 
-    afterSpec {
-        wireMockServer.stop()
-    }
-
     body()
 }) {
     companion object {

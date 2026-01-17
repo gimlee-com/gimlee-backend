@@ -18,7 +18,8 @@ import kotlin.time.Duration.Companion.seconds
     "gimlee.ads.category.sync.cron=*/1 * * * * ?",
     "gimlee.ads.category.sync.lock.at-most=PT2S",
     "gimlee.ads.category.sync.lock.at-least=PT1S",
-    "gimlee.ads.gpt.languages=en-US,pl-PL"
+    "gimlee.ads.gpt.languages=en-US,pl-PL",
+    "spring.messages.basename=i18n/ads/messages"
 ])
 class CategorySyncIntegrationTest(
     private val categoryRepository: CategoryRepository
@@ -43,7 +44,7 @@ class CategorySyncIntegrationTest(
             Then("categories should be inserted into the database") {
                 eventually(15.seconds) {
                     val map = categoryRepository.getGptSourceIdToUuidMap()
-                    map shouldHaveSize 10
+                    map shouldHaveSize 15
                 }
             }
 
@@ -57,6 +58,15 @@ class CategorySyncIntegrationTest(
                 root!!.name["en-US"]?.slug shouldBe "animals-pet-supplies"
                 root.name["pl-PL"]?.slug shouldBe "zwierzeta-i-artykuly-dla-zwierzat"
                 root.parent shouldBe null
+
+                // Miscellaneous child for root: 1-misc
+                val rootMisc = bySourceId["1-misc"]
+                rootMisc shouldNotBe null
+                rootMisc!!.name["en-US"]?.name shouldBe "Miscellaneous"
+                rootMisc.name["en-US"]?.slug shouldBe "miscellaneous"
+                rootMisc.name["pl-PL"]?.name shouldBe "Pozostałe"
+                rootMisc.name["pl-PL"]?.slug shouldBe "pozostale"
+                rootMisc.parent shouldBe root.id
 
                 // Child category: 3237 - Animals & Pet Supplies > Live Animals / Żywe zwierzęta
                 val child = bySourceId["3237"]

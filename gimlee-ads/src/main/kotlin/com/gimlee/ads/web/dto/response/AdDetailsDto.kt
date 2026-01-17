@@ -8,17 +8,21 @@ data class AdDetailsDto(
     val description: String?,
     val location: LocationWithCityDetailsDto?,
     val price: CurrencyAmountDto?,
+    val categoryId: String?,
+    val categoryPath: List<CategoryPathElementDto>?,
     val mediaPaths: List<String>?,
     val mainPhotoPath: String?,
 ) {
     companion object {
-        fun fromAd(ad: Ad): AdDetailsDto {
+        fun fromAd(ad: Ad, categoryPath: List<CategoryPathElementDto>? = null): AdDetailsDto {
             return AdDetailsDto(
                 id = ad.id,
                 title = ad.title,
                 description = ad.description,
                 location = LocationWithCityDetailsDto.fromDomain(ad.location),
                 price = CurrencyAmountDto.fromDomain(ad.price),
+                categoryId = ad.categoryId,
+                categoryPath = categoryPath,
                 mediaPaths = ad.mediaPaths,
                 mainPhotoPath = ad.mainPhotoPath,
             )

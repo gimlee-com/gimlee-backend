@@ -1,17 +1,16 @@
 package com.gimlee.ads.web
 
+import com.gimlee.ads.domain.AdOutcome
 import com.gimlee.ads.domain.AdService
+import com.gimlee.ads.domain.CategoryService
 import com.gimlee.ads.domain.model.*
 import com.gimlee.ads.web.dto.request.AdFiltersDto.Companion.toAdFilters
 import com.gimlee.ads.web.dto.request.AdSortingDto.Companion.toAdSorting
 import com.gimlee.ads.web.dto.request.FetchAdsRequestDto
 import com.gimlee.ads.web.dto.response.AdDetailsDto
 import com.gimlee.ads.web.dto.response.AdPreviewDto
-import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
-import com.gimlee.ads.domain.AdOutcome
 import com.gimlee.common.domain.model.Outcome
-import com.gimlee.common.domain.model.CommonOutcome
 import com.gimlee.common.web.dto.StatusResponseDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -24,8 +23,6 @@ import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Pageable
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
@@ -36,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class FetchAdsController(
     private val adService: AdService,
+    private val categoryService: CategoryService,
     private val messageSource: MessageSource
 ) {
     companion object {
@@ -60,7 +58,9 @@ class FetchAdsController(
             sorting = toAdSorting(fetchAdsRequestDto.sorting),
             pageRequest = PageRequest.of(fetchAdsRequestDto.page, PAGE_SIZE)
         )
-        return pageOfAds.map { AdPreviewDto.fromAd(it) }
+        val categoryIds = pageOfAds.content.mapNotNull { it.categoryId }.toSet()
+        val categoryPaths = categoryService.getFullCategoryPaths(categoryIds, LocaleContextHolder.getLocale().toLanguageTag())
+        return pageOfAds.map { AdPreviewDto.fromAd(it, it.categoryId?.let { id -> categoryPaths[id] }) }
     }
 
     @Operation(
@@ -71,7 +71,9 @@ class FetchAdsController(
     @GetMapping(path = ["/ads/featured/"])
     fun fetchFeaturedAds(): Page<AdPreviewDto> {
         val pageOfFeaturedAds = adService.getFeaturedAds()
-        return pageOfFeaturedAds.map { AdPreviewDto.fromAd(it) }
+        val categoryIds = pageOfFeaturedAds.content.mapNotNull { it.categoryId }.toSet()
+        val categoryPaths = categoryService.getFullCategoryPaths(categoryIds, LocaleContextHolder.getLocale().toLanguageTag())
+        return pageOfFeaturedAds.map { AdPreviewDto.fromAd(it, it.categoryId?.let { id -> categoryPaths[id] }) }
     }
 
 
@@ -106,7 +108,9 @@ class FetchAdsController(
                 return handleOutcome(AdOutcome.AD_NOT_FOUND)
             }
         }
-
-        return ResponseEntity.ok(AdDetailsDto.fromAd(ad))
+        val categoryPath = ad.categoryId?.let {
+            categoryService.getFullCategoryPath(it, LocaleContextHolder.getLocale().toLanguageTag())
+        }
+        return ResponseEntity.ok(AdDetailsDto.fromAd(ad, categoryPath))
     }
 }

@@ -1,9 +1,10 @@
 package com.gimlee.ads.domain
-import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.ads.domain.model.*
+import com.gimlee.ads.domain.model.AdStatus
+import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.ads.persistence.model.AdDocument
+import com.gimlee.common.domain.model.Currency
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -11,7 +12,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.bson.types.ObjectId
 import java.math.BigDecimal
-import java.time.Instant
 
 class AdServiceTest : StringSpec({
 
@@ -26,7 +26,7 @@ class AdServiceTest : StringSpec({
 
         every { adRepository.save(any()) } answers { it.invocation.args[0] as AdDocument }
 
-        val result = adService.createAd(userId, title, stock)
+        val result = adService.createAd(userId, title, null, stock)
 
         result.title shouldBe title
         result.stock shouldBe stock
@@ -51,6 +51,7 @@ class AdServiceTest : StringSpec({
             createdAtMicros = 1000L,
             updatedAtMicros = 1000L,
             cityId = null,
+            categoryId = null,
             location = null,
             mediaPaths = emptyList(),
             mainPhotoPath = null,
@@ -94,6 +95,7 @@ class AdServiceTest : StringSpec({
             createdAtMicros = 1000L,
             updatedAtMicros = 1000L,
             cityId = "city1",
+            categoryId = null,
             location = org.springframework.data.mongodb.core.geo.GeoJsonPoint(1.0, 2.0),
             mediaPaths = emptyList(),
             mainPhotoPath = null,
@@ -123,6 +125,7 @@ class AdServiceTest : StringSpec({
             createdAtMicros = 1000L,
             updatedAtMicros = 1000L,
             cityId = null,
+            categoryId = null,
             location = null,
             mediaPaths = emptyList(),
             mainPhotoPath = null,

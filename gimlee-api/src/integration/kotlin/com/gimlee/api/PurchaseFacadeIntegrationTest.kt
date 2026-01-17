@@ -1,7 +1,6 @@
 package com.gimlee.api
-import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.common.BaseIntegrationTest
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
@@ -11,13 +10,14 @@ import com.gimlee.api.web.dto.PurchaseStatusResponseDto
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
+import com.gimlee.common.BaseIntegrationTest
+import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.toMicros
+import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
+import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
 import com.gimlee.purchases.domain.model.PurchaseStatus
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import com.gimlee.purchases.web.dto.request.PurchaseRequestDto
-import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
-import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.bson.types.ObjectId
@@ -53,7 +53,7 @@ class PurchaseFacadeIntegrationTest(
         )
         userWalletAddressRepository.addAddressToUser(sellerId, addressInfo)
 
-        val ad = adService.createAd(sellerId.toHexString(), "Test Item", 10)
+        val ad = adService.createAd(sellerId.toHexString(), "Test Item", null, 10)
         adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
             description = "Test Description",
             price = CurrencyAmount(BigDecimal("10.00"), Currency.ARRR),
@@ -185,7 +185,7 @@ class PurchaseFacadeIntegrationTest(
                 userRoleRepository.add(anotherSellerId, Role.USER)
                 userRoleRepository.add(anotherSellerId, Role.PIRATE)
 
-                val ad2 = adService.createAd(anotherSellerId.toHexString(), "Another Seller Item", 5)
+                val ad2 = adService.createAd(anotherSellerId.toHexString(), "Another Seller Item", null, 5)
                 adService.updateAd(ad2.id, anotherSellerId.toHexString(), UpdateAdRequest(
                     description = "Another Description",
                     price = CurrencyAmount(BigDecimal("5.00"), Currency.ARRR),
@@ -213,7 +213,7 @@ class PurchaseFacadeIntegrationTest(
             }
 
             When("the buyer attempts to purchase multiple items with individual price mismatches but same total") {
-                val ad2 = adService.createAd(sellerId.toHexString(), "Same Seller Item", 5)
+                val ad2 = adService.createAd(sellerId.toHexString(), "Same Seller Item", null, 5)
                 adService.updateAd(ad2.id, sellerId.toHexString(), UpdateAdRequest(
                     description = "Same Seller Item Description",
                     price = CurrencyAmount(BigDecimal("20.00"), Currency.ARRR),
@@ -245,7 +245,7 @@ class PurchaseFacadeIntegrationTest(
             }
 
             When("the buyer attempts to purchase an inactive ad") {
-                val inactiveAd = adService.createAd(sellerId.toHexString(), "Inactive Item", 5)
+                val inactiveAd = adService.createAd(sellerId.toHexString(), "Inactive Item", null, 5)
                 // We don't activate it
 
                 val request = PurchaseRequestDto(
