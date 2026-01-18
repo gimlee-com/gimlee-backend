@@ -7,7 +7,8 @@ data class Category(
     val flags: Map<String, Boolean> = emptyMap(),
     val name: Map<String, CategoryName> = emptyMap(),
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val children: List<Category> = emptyList()
 ) {
     data class Source(
         val type: Type,

@@ -23,7 +23,7 @@ data class UpdateAdRequestDto(
 
     val currency: Currency?,
 
-    val categoryId: String?,
+    val categoryId: Int?,
 
     @field:Valid
     val location: LocationDto?,

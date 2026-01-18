@@ -9,5 +9,5 @@ data class AdFilters(
     val createdBy: String? = null,
     val priceRange: Range<BigDecimal>? = null,
     val statuses: List<AdStatus>? = null,
-    val categoryId: String? = null
+    val categoryId: Int? = null
 )

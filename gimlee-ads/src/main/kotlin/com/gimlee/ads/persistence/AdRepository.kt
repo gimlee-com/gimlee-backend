@@ -102,10 +102,8 @@ class AdRepository(mongoDatabase: MongoDatabase) {
         filters.createdBy?.let {
             queryFilters.add(Filters.eq(AdDocument.FIELD_USER_ID, ObjectId(it)))
         }
-        filters.categoryId?.let {
-            it.toIntOrNull()?.let { intId ->
-                queryFilters.add(Filters.eq(AdDocument.FIELD_CATEGORY_IDS, intId))
-            }
+        filters.categoryId?.let { intId ->
+            queryFilters.add(Filters.eq(AdDocument.FIELD_CATEGORY_IDS, intId))
         }
         filters.text?.let {
             val regexFilter = Filters.or(

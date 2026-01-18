@@ -1,18 +1,18 @@
 package com.gimlee.api.playground.ads.data
-import com.gimlee.common.domain.model.Currency
 
 import com.fasterxml.jackson.dataformat.csv.CsvMapper
 import com.fasterxml.jackson.dataformat.csv.CsvSchema
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.CategoryService
+import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
-import com.gimlee.ads.domain.model.CurrencyAmount
-import com.gimlee.location.cities.data.cityDataUnsorted // Import the city data list
 import com.gimlee.api.playground.ads.domain.AdTemplate
-import com.gimlee.api.playground.media.data.PlaygroundMediaRepository // Import PlaygroundMediaRepository
-import com.gimlee.auth.domain.User // Assuming this is the correct User class
+import com.gimlee.api.playground.media.data.PlaygroundMediaRepository
+import com.gimlee.auth.domain.User
 import com.gimlee.auth.persistence.UserRepository
+import com.gimlee.common.domain.model.Currency
+import com.gimlee.location.cities.data.cityDataUnsorted
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import org.apache.logging.log4j.LogManager
@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component
 import java.io.InputStream
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -199,7 +198,7 @@ class AdsPopulator(
                     .setScale(2, RoundingMode.HALF_UP)
                 val currency = forceCurrency ?: if (Random.nextBoolean()) Currency.YEC else Currency.ARRR
                 val location = Location(city.id, doubleArrayOf(city.lon, city.lat))
-                val randomCategoryId = categoryService.getRandomLeafCategoryId()?.toString()
+                val randomCategoryId = categoryService.getRandomLeafCategoryId()
 
                 // 1. Create inactive ad
                 val title = "$titlePrefix${template.title}"

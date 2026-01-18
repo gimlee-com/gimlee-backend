@@ -1,9 +1,10 @@
 package com.gimlee.ads.domain
 
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.gimlee.ads.domain.model.Category
 import com.gimlee.ads.persistence.CategoryRepository
 import com.gimlee.ads.web.dto.response.CategoryPathElementDto
+import com.gimlee.ads.web.dto.response.CategoryTreeDto
+import com.github.benmanes.caffeine.cache.Caffeine
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 
@@ -15,7 +16,66 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
         .build<String, List<Category>>()
 
     private fun getAllCategories(): List<Category> {
-        return categoriesCache.get("all") { categoryRepository.findAllCategoriesBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY) } ?: emptyList()
+        return categoriesCache.get("all") {
+            val flatCategories = categoryRepository.findAllCategoriesBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
+            buildCategoryTree(flatCategories)
+        } ?: emptyList()
+    }
+
+    private fun buildCategoryTree(flatCategories: List<Category>): List<Category> {
+        val childrenMap = flatCategories.groupBy { it.parent }
+        val categoryMap = flatCategories.associateBy { it.id }
+
+        val nodesWithChildren = mutableMapOf<Int, Category>()
+
+        fun getOrCreateNode(id: Int): Category {
+            nodesWithChildren[id]?.let { return it }
+            val original = categoryMap[id] ?: return Category(
+                id = id,
+                source = Category.Source(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY, "unknown"),
+                createdAt = 0,
+                updatedAt = 0
+            ) // Should not happen with consistent data
+            val children = childrenMap[id]?.map { getOrCreateNode(it.id) } ?: emptyList()
+            val node = original.copy(children = children)
+            nodesWithChildren[id] = node
+            return node
+        }
+
+        return flatCategories.map { getOrCreateNode(it.id) }
+    }
+
+    /**
+     * Returns children of a given parent category.
+     * If parentId is null, returns root categories.
+     * depth parameter controls how many levels of children to return.
+     */
+    fun getChildren(parentId: Int?, depth: Int, language: String): List<CategoryTreeDto> {
+        val allCategories = getAllCategories()
+        val targetCategories = if (parentId == null || parentId == 0) {
+            allCategories.filter { it.parent == null }
+        } else {
+            allCategories.find { it.id == parentId }?.children ?: emptyList()
+        }
+
+        return targetCategories.map { toTreeDto(it, depth, language) }
+    }
+
+    private fun toTreeDto(category: Category, depth: Int, language: String): CategoryTreeDto {
+        val nameObj = category.name[language] ?: category.name["en-US"]
+        val children = if (depth > 1) {
+            category.children.map { toTreeDto(it, depth - 1, language) }
+        } else {
+            null
+        }
+
+        return CategoryTreeDto(
+            id = category.id,
+            name = nameObj?.name ?: "Unknown",
+            slug = nameObj?.slug ?: "",
+            hasChildren = category.children.isNotEmpty(),
+            children = children
+        )
     }
 
     /**
@@ -67,6 +127,10 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
         val categories = getAllCategories()
         val parentIds = categories.mapNotNull { it.parent }.toSet()
         return categories.filter { it.id !in parentIds }.randomOrNull()?.id
+    }
+
+    fun clearCache() {
+        categoriesCache.invalidateAll()
     }
 
     private fun getPathIds(id: Int, categoryMap: Map<Int, Category>): List<Int> {

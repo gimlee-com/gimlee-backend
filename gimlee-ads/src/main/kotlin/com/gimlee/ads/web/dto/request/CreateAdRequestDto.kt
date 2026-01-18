@@ -11,5 +11,5 @@ data class CreateAdRequestDto(
     @field:Size(max = 100, message = "Title cannot exceed 100 characters.")
     val title: String,
 
-    val categoryId: String? = null
+    val categoryId: Int? = null
 )

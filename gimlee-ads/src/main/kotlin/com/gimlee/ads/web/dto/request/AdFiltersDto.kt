@@ -14,7 +14,7 @@ data class AdFiltersDto(
     val x: Double?,
     val y: Double?,
     val radius: Double?,
-    val categoryId: String?
+    val categoryId: Int?
 ) {
     companion object {
         private const val KM_TO_RADIANS = 1 / 6378.1

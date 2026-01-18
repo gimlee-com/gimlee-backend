@@ -16,7 +16,7 @@ class FetchAdsRequestDto(
     @field:Parameter(description = "City ID filter")
     val cty: String?,
     @field:Parameter(description = "Category ID filter (matches category or any of its subcategories)")
-    val cat: String?,
+    val cat: Int?,
     @field:Parameter(description = "Center longitude for geographic search")
     val x: Double?,
     @field:Parameter(description = "Center latitude for geographic search")

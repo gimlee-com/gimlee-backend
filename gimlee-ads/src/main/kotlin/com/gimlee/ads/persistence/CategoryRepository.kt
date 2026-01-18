@@ -3,14 +3,9 @@ package com.gimlee.ads.persistence
 import com.gimlee.ads.domain.model.Category
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.Projections
-import com.mongodb.client.model.Sorts
-import com.mongodb.client.model.UpdateOptions
-import com.mongodb.client.model.Updates
+import com.mongodb.client.model.*
 import org.bson.Document
 import org.springframework.stereotype.Repository
-import java.util.*
 
 @Repository
 class CategoryRepository(mongoDatabase: MongoDatabase) {
@@ -109,6 +104,10 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
             .limit(1)
             .first()
         return doc?.getInteger(FIELD_ID) ?: 0
+    }
+
+    fun clear() {
+        collection.deleteMany(Document())
     }
 
     private fun fromDocument(doc: Document): Category {

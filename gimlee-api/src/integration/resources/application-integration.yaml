@@ -32,6 +32,10 @@ spring:
       reply-to: dummy@dummy.com
 
 gimlee:
+  ads:
+    category:
+      sync:
+        enabled: false
   # gimlee-auth properties
   auth:
     jwt:
@@ -48,7 +52,7 @@ gimlee:
         - /v3/api-docs/**
         - /api/v3/api-docs
         - /api/v3/api-docs/**
-        - /ads/featured
+        - /ads/**
         - /auth/register
         - /auth/register/**
         - /auth/login

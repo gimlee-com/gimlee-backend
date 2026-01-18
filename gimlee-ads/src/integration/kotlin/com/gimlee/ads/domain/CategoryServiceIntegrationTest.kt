@@ -3,7 +3,6 @@ package com.gimlee.ads.domain
 import com.gimlee.ads.domain.model.Category
 import com.gimlee.ads.persistence.CategoryRepository
 import com.gimlee.common.BaseIntegrationTest
-import com.gimlee.common.UUIDv7
 import io.kotest.matchers.shouldBe
 
 class CategoryServiceIntegrationTest(
@@ -11,11 +10,16 @@ class CategoryServiceIntegrationTest(
     private val categoryRepository: CategoryRepository
 ) : BaseIntegrationTest({
 
+    beforeSpec {
+        categoryRepository.clear()
+        categoryService.clearCache()
+    }
+
     Given("Some categories in the database") {
         val now = System.currentTimeMillis()
-        val rootId = UUIDv7.generate()
-        val childId = UUIDv7.generate()
-        val grandchildId = UUIDv7.generate()
+        val rootId = 1
+        val childId = 2
+        val grandchildId = 3
 
         categoryRepository.upsertCategoryBySourceType(
             Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY,
@@ -40,7 +44,7 @@ class CategoryServiceIntegrationTest(
         )
 
         When("fetching full category path for grandchild in en-US") {
-            val path = categoryService.getFullCategoryPath(grandchildId.toString(), "en-US")
+            val path = categoryService.getFullCategoryPath(grandchildId, "en-US")
             Then("it should return the correct breadcrumb") {
                 path?.size shouldBe 3
                 path?.get(0)?.name shouldBe "Animals"
@@ -50,7 +54,7 @@ class CategoryServiceIntegrationTest(
         }
 
         When("fetching full category path for grandchild in pl-PL") {
-            val path = categoryService.getFullCategoryPath(grandchildId.toString(), "pl-PL")
+            val path = categoryService.getFullCategoryPath(grandchildId, "pl-PL")
             Then("it should return the correct breadcrumb in Polish") {
                 path?.size shouldBe 3
                 path?.get(0)?.name shouldBe "Zwierzęta"
@@ -60,7 +64,7 @@ class CategoryServiceIntegrationTest(
         }
 
         When("fetching full category path for grandchild in de-DE (fallback)") {
-            val path = categoryService.getFullCategoryPath(grandchildId.toString(), "de-DE")
+            val path = categoryService.getFullCategoryPath(grandchildId, "de-DE")
             Then("it should return the correct breadcrumb in en-US as fallback") {
                 path?.size shouldBe 3
                 path?.get(0)?.name shouldBe "Animals"
@@ -68,12 +72,12 @@ class CategoryServiceIntegrationTest(
         }
 
         When("fetching bulk category paths") {
-            val paths = categoryService.getFullCategoryPaths(setOf(rootId.toString(), grandchildId.toString()), "en-US")
+            val paths = categoryService.getFullCategoryPaths(setOf(rootId, grandchildId), "en-US")
             Then("it should return a map with correct paths") {
-                paths[rootId.toString()]?.size shouldBe 1
-                paths[rootId.toString()]?.get(0)?.name shouldBe "Animals"
-                paths[grandchildId.toString()]?.size shouldBe 3
-                paths[grandchildId.toString()]?.get(2)?.name shouldBe "Food"
+                paths[rootId]?.size shouldBe 1
+                paths[rootId]?.get(0)?.name shouldBe "Animals"
+                paths[grandchildId]?.size shouldBe 3
+                paths[grandchildId]?.get(2)?.name shouldBe "Food"
             }
         }
 
@@ -88,7 +92,7 @@ class CategoryServiceIntegrationTest(
                 categoryService.isLeaf(grandchildId) shouldBe true
             }
             Then("non-existent category should not be a leaf") {
-                categoryService.isLeaf(UUIDv7.generate()) shouldBe false
+                categoryService.isLeaf(999) shouldBe false
             }
         }
     }

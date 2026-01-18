@@ -8,7 +8,7 @@ data class UpdateAdRequest(
     val description: String? = null,
     val price: CurrencyAmount? = null,
     val location: Location? = null,
-    val categoryId: String? = null,
+    val categoryId: Int? = null,
     val mediaPaths: List<String>? = null,
     val mainPhotoPath: String? = null,
     val stock: Int? = null,

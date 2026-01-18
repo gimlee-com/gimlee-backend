@@ -27,6 +27,10 @@ class CategorySyncIntegrationTest(
     private val categoryRepository: CategoryRepository
 ) : BaseIntegrationTest({
     
+    beforeSpec {
+        categoryRepository.clear()
+    }
+
     Given("Google Product Taxonomy files") {
 
         val enUsContent = Files.readString(Paths.get("src/integration/resources/taxonomy-with-ids.en-US.txt"))
@@ -45,7 +49,7 @@ class CategorySyncIntegrationTest(
         When("The sync job runs") {
             Then("categories should be inserted into the database") {
                 eventually(15.seconds) {
-                    val map = categoryRepository.getSourceIdToUuidMapBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
+                    val map = categoryRepository.getSourceIdToIdMapBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
                     map shouldHaveSize 15
                 }
             }

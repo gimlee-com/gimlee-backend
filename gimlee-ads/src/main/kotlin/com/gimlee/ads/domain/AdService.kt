@@ -33,7 +33,7 @@ class AdService(
     /**
      * Initiates a new ad with a title in the INACTIVE state. Location and other details are set via updateAd.
      */
-    fun createAd(userId: String, title: String, categoryId: String? = null, stock: Int = 0): Ad {
+    fun createAd(userId: String, title: String, categoryId: Int? = null, stock: Int = 0): Ad {
         val nowMicros = Instant.now().toMicros()
         val adDocument = AdDocument(
             id = ObjectId(),
@@ -288,13 +288,12 @@ class AdService(
         }
     }
 
-    private fun resolveCategoryPath(categoryId: String?): List<Int>? {
+    private fun resolveCategoryPath(categoryId: Int?): List<Int>? {
         if (categoryId == null) return null
-        val id = categoryId.toIntOrNull() ?: throw AdOperationException("Invalid category ID format.")
         
-        if (!categoryService.isLeaf(id)) {
+        if (!categoryService.isLeaf(categoryId)) {
             throw AdOperationException("Category must be a leaf node.")
         }
-        return categoryService.resolveCategoryPathIds(id)
+        return categoryService.resolveCategoryPathIds(categoryId)
     }
 }
