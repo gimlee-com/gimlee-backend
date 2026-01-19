@@ -40,7 +40,11 @@ class CategorySyncServiceTest : BehaviorSpec({
 
                 // Verify structure
                 // 1 -> Root
-                verify { categoryRepository.upsertCategoryBySourceType(any(), any(), "1", null, any(), any()) }
+                verify {
+                    categoryRepository.upsertCategoryBySourceType(any(), any(), "1", null, match {
+                        it["en-US"]?.slug == "animals-and-pet-supplies"
+                    }, any())
+                }
 
                 // 3237 -> Parent is 1
                 verify { categoryRepository.upsertCategoryBySourceType(any(), any(), "3237", any(), any(), any()) }

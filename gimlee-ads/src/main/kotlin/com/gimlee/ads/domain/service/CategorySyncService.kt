@@ -205,7 +205,8 @@ class CategorySyncService(
     }
 
     private fun slugify(input: String): String {
-        val nowhitespace = WHITESPACE.matcher(input).replaceAll("-")
+        val withAnd = input.replace("&", " and ")
+        val nowhitespace = WHITESPACE.matcher(withAnd).replaceAll("-")
         val withSpecialReplaced = nowhitespace.replace("ł", "l").replace("Ł", "L")
         val normalized = Normalizer.normalize(withSpecialReplaced, Normalizer.Form.NFD)
         val slug = NON_LATIN.matcher(normalized).replaceAll("")

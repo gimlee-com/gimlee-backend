@@ -61,7 +61,7 @@ class CategorySyncIntegrationTest(
                 // Root category: 1 - Animals & Pet Supplies / Zwierzęta i artykuły dla zwierząt
                 val root = bySourceId["1"]
                 root shouldNotBe null
-                root!!.name["en-US"]?.slug shouldBe "animals-pet-supplies"
+                root!!.name["en-US"]?.slug shouldBe "animals-and-pet-supplies"
                 root.name["pl-PL"]?.slug shouldBe "zwierzeta-i-artykuly-dla-zwierzat"
                 root.parent shouldBe null
 
@@ -84,7 +84,7 @@ class CategorySyncIntegrationTest(
                 // Deep child: 3 - Animals & Pet Supplies > ... > Bird Cages & Stands / Klatki i stojaki dla ptaków
                 val deepChild = bySourceId["3"]
                 deepChild shouldNotBe null
-                deepChild!!.name["en-US"]?.slug shouldBe "bird-cages-stands"
+                deepChild!!.name["en-US"]?.slug shouldBe "bird-cages-and-stands"
                 deepChild.name["pl-PL"]?.slug shouldBe "klatki-i-stojaki-dla-ptakow"
                 
                 val birdSupplies = bySourceId["3124"]
