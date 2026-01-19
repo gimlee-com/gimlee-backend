@@ -58,6 +58,7 @@ abstract class CryptoPaymentMonitor(
         val minConfs = when (cryptoCurrency) {
             Currency.ARRR -> paymentProperties.pirateChain.minConfirmations
             Currency.YEC -> paymentProperties.ycash.minConfirmations
+            else -> throw IllegalArgumentException("Currency $cryptoCurrency is not a settlement crypto currency")
         }
         val response = cryptoClient.getReceivedByAddress(address, minConfs)
         val transactions = response.result?.map { it.toReceivedTransaction() } ?: emptyList()

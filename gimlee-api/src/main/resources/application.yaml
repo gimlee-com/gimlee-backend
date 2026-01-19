@@ -82,3 +82,9 @@ gimlee:
         max-connections: 2
         response-timeout-millis: 1000
         connection-request-timeout-millis: 300
+    exchange:
+      update-interval-ms: 60000
+      bitmart:
+        base-url: https://api-cloud.bitmart.com
+        volatility-threshold: 0.05
+        volatility-klines-limit: 10

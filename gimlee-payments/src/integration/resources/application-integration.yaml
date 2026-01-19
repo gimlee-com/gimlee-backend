@@ -1,0 +1,37 @@
+server:
+  servlet:
+    context-path: /api
+gimlee:
+  payments:
+    timeout-hours: 1
+    pirate-chain:
+      memo-prefix: "gimlee:"
+      monitor-delay-ms: 10000
+      min-confirmations: 1
+      monitor-threads: 1
+      client:
+        rpc-url: http://localhost:8231
+        user: user
+        password: password
+        max-connections: 1
+        connection-request-timeout-millis: 1000
+        response-timeout-millis: 1000
+    ycash:
+      memo-prefix: "gimlee:"
+      monitor-delay-ms: 10000
+      min-confirmations: 1
+      monitor-threads: 1
+      client:
+        rpc-url: http://localhost:8232
+        user: user
+        password: password
+        max-connections: 1
+        connection-request-timeout-millis: 1000
+        response-timeout-millis: 1000
+    exchange:
+      update-interval-ms: 3600000
+      bitmart:
+        base-url: http://localhost:${wiremock.server.port}
+  auth:
+    rest:
+      unsecured-paths: "/api/playground/**,/payments/currency/**"

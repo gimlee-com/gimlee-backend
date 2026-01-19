@@ -109,7 +109,7 @@ class PurchaseFacadeController(
             handleOutcome(PurchaseOutcome.PRICE_MISMATCH, mapOf(
                 "currentPrices" to e.currentPrices.mapValues { (_, amount) ->
                     mapOf(
-                        "amount" to amount.amount,
+                        "targetAmount" to amount.amount,
                         "currency" to amount.currency
                     )
                 }

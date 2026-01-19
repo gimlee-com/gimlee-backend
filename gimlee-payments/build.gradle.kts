@@ -21,7 +21,15 @@ dependencies {
     implementation(libs.jackson.module.kotlin)
     implementation(libs.springdoc.openapi.starter.webmvc.api)
 
+    testFixturesApi(libs.spring.boot.starter)
+    testFixturesApi(libs.spring.boot.starter.test)
+    testFixturesImplementation(project(":gimlee-auth"))
+    testFixturesImplementation(project(":gimlee-notifications"))
+    testFixturesImplementation(libs.mockk)
+
     testImplementation(libs.spring.boot.starter.test)
+    testImplementation(testFixtures(project))
+    testImplementation(testFixtures(project(":gimlee-common")))
     testImplementation(platform(libs.kotest.bom))
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)

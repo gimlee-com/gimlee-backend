@@ -7,10 +7,19 @@ enum class CurrencyType {
 /**
  * Represents the supported currencies for ad pricing and payments.
  */
-enum class Currency(val type: CurrencyType) {
+enum class Currency(val type: CurrencyType, val decimalPlaces: Int) {
     /** Pirate Chain */
-    ARRR(CurrencyType.CRYPTO),
+    ARRR(CurrencyType.CRYPTO, 8),
 
     /** YCash */
-    YEC(CurrencyType.CRYPTO);
+    YEC(CurrencyType.CRYPTO, 8),
+
+    /** Tether */
+    USDT(CurrencyType.CRYPTO, 8),
+
+    /** US Dollar */
+    USD(CurrencyType.FIAT, 2),
+
+    /** Polish Zloty */
+    PLN(CurrencyType.FIAT, 2);
 }

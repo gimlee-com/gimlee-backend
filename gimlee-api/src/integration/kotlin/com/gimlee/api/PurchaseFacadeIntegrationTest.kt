@@ -163,7 +163,7 @@ class PurchaseFacadeIntegrationTest(
                 }
             }
 
-            When("the buyer attempts to make a purchase with a mismatched amount") {
+            When("the buyer attempts to make a purchase with a mismatched targetAmount") {
                 val maliciousRequest = PurchaseRequestDto(
                     items = listOf(PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("1.00"))),
                     currency = Currency.ARRR
@@ -176,7 +176,7 @@ class PurchaseFacadeIntegrationTest(
                 }.andExpect {
                     status { isConflict() }
                     jsonPath("$.status") { value("PURCHASE_PRICE_MISMATCH") }
-                    jsonPath("$.data.currentPrices['${ad.id}'].amount") { value(10.0) }
+                    jsonPath("$.data.currentPrices['${ad.id}'].targetAmount") { value(10.0) }
                 }
             }
 
@@ -239,8 +239,8 @@ class PurchaseFacadeIntegrationTest(
                 }.andExpect {
                     status { isConflict() }
                     jsonPath("$.status") { value("PURCHASE_PRICE_MISMATCH") }
-                    jsonPath("$.data.currentPrices['${ad.id}'].amount") { value(10.0) }
-                    jsonPath("$.data.currentPrices['${ad2.id}'].amount") { value(20.0) }
+                    jsonPath("$.data.currentPrices['${ad.id}'].targetAmount") { value(10.0) }
+                    jsonPath("$.data.currentPrices['${ad2.id}'].targetAmount") { value(20.0) }
                 }
             }
 

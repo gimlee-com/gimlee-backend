@@ -1,10 +1,10 @@
 package com.gimlee.purchases.domain
-import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Ad
 import com.gimlee.ads.domain.model.AdStatus
+import com.gimlee.ads.domain.model.CurrencyAmount
+import com.gimlee.common.domain.model.Currency
 import com.gimlee.events.PaymentEvent
 import com.gimlee.payments.domain.PaymentService
 import com.gimlee.payments.domain.model.PaymentMethod
@@ -12,8 +12,8 @@ import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.purchases.domain.model.Purchase
 import com.gimlee.purchases.domain.model.PurchaseItem
 import com.gimlee.purchases.domain.model.PurchaseStatus
-import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import com.gimlee.purchases.persistence.PurchaseRepository
+import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
@@ -72,6 +72,7 @@ class PurchaseService(
     private fun getPaymentMethod(currency: Currency): PaymentMethod = when (currency) {
         Currency.ARRR -> PaymentMethod.PIRATE_CHAIN
         Currency.YEC -> PaymentMethod.YCASH
+        else -> throw IllegalArgumentException("Unsupported payment currency: $currency")
     }
 
     private fun validateAdsExist(items: List<PurchaseItemRequestDto>, ads: Map<String, Ad>) {
