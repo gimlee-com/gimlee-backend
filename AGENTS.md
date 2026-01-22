@@ -38,6 +38,9 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **Framework:** Use **Kotest** for all tests.
 *   **Priority:** Integration tests are the primary focus.
 *   **Database:** Use **Testcontainers** with MongoDB for integration tests via `BaseIntegrationTest`.
+*   **Test Isolation:** Since integration tests share the same MongoDB container (via `BaseIntegrationTest`), you **MUST** clear relevant collections in `beforeSpec` or `beforeTest` to ensure test independence.
+*   **External API Mocking:** Use **WireMock** (available via `wireMockServer` in `BaseIntegrationTest`) to stub responses for all external service calls (e.g., exchange APIs, blockchain nodes) during integration tests.
+*   **Test-Specific Configurations:** If an interface design offers flexibility that is not currently required in production code, do not implement unnecessary features in the production codebase just to satisfy integration tests. Instead, use `@TestConfiguration` within the test class to provide mock or stub beans to achieve a complete test context.
 *   **Shared Test Fixtures:** Use the Gradle `java-test-fixtures` plugin (primarily in `gimlee-common`) to share common test utilities, base classes, and mocks across the project modules.
 *   **Authentication Mocking:** When testing controllers that depend on `HttpServletRequestAuthUtil.getPrincipal()`, use `mockMvc` with `requestAttr("principal", principal)` to simulate an authenticated user.
 *   **Unit Tests:** Use sparingly, only for quirky internal logic. Keep them simple with minimal context/mocking.
@@ -62,6 +65,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **Domain Components:** Extract complex business logic into dedicated domain components (e.g., `AdStockService`) to maintain SRP and testability.
 *   **Facade Controllers:** Use `gimlee-api` for facade controllers that coordinate multiple module services. This minimizes front-end requests.
 *   **Decorator Pattern:** For complex initialization responses (e.g., `SessionInitController`), use a decorator pattern. Clients should be able to request specific data subsets via query parameters to optimize response payload and backend processing.
+*   **Component Precedence:** When multiple implementations of an interface are used (e.g., multiple price providers), use Spring's `@Order` annotation to define their precedence (lowest value = highest priority). Ensure the consuming service implements a robust fallback mechanism if a high-priority provider fails.
 
 ### 5. Configuration (`docs/development/configuration-guidelines.md`)
 *   **Externalize Everything:** Timeouts, prefixes, and monitoring delays must be configurable via `application.yaml`.
@@ -89,6 +93,8 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **Validation:** Use `@IsoCountryCode` and `@IetfLanguageTag` annotations from `gimlee-common` for DTO validation.
 *   **Module-Specific Bundles:** Each module maintains its own message bundles at `src/main/resources/i18n/{module}/messages.properties` to avoid classpath collisions.
 *   **Basenames:** All module-specific bundles must be registered in the `spring.messages.basename` property in `application.yaml`.
+*   **Currency Precision:** Always respect the `decimalPlaces` property defined in the `Currency` enum. When performing calculations or returning results, use `setScale(currency.decimalPlaces, RoundingMode.HALF_UP)` to ensure consistent precision across the system.
+*   **Authoritative Timestamps:** When fetching data from external providers (e.g., exchange APIs), prioritize the authoritative timestamp provided by the source over the local fetch time to ensure data freshness is accurately represented in the system.
 
 ### 9. Unified API Status responses and Outcome System
 *   **Outcome Interface:** Operations must return or report results using the `Outcome` interface from `gimlee-common`. Each module defines its own implementation (e.g., `AuthOutcome`, `AdOutcome`).
