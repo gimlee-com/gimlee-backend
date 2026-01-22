@@ -76,6 +76,12 @@ gimlee:
         password: <fillme>
     exchange:
       update-interval-ms: 60000
+      cleanup:
+        cron: "0 0 1 * * ?"
+        retention-days: 365
+        lock:
+          at-most: PT1H
+          at-least: PT5M
       bitmart:
         base-url: https://api-cloud.bitmart.com
       open-exchange-rates:

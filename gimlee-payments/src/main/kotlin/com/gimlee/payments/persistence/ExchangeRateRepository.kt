@@ -68,6 +68,15 @@ class ExchangeRateRepository(
         collection.deleteMany(Document())
     }
 
+    fun count(): Long {
+        return collection.countDocuments()
+    }
+
+    fun deleteOlderThan(timestampMicros: Long): Long {
+        val filter = Filters.lt(FIELD_UPDATED_AT, timestampMicros)
+        return collection.deleteMany(filter).deletedCount
+    }
+
     private fun ExchangeRate.toDocument(): ExchangeRateDocument =
         ExchangeRateDocument(
             baseCurrency = baseCurrency.name,

@@ -20,6 +20,8 @@ dependencies {
     implementation(libs.jakarta.validation)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.springdoc.openapi.starter.webmvc.api)
+    implementation(libs.shedlock.spring)
+    implementation(libs.shedlock.provider.mongo)
 
     testFixturesApi(libs.spring.boot.starter)
     testFixturesApi(libs.spring.boot.starter.test)

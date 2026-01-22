@@ -68,7 +68,7 @@ Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitat
 *   **Component Precedence:** When multiple implementations of an interface are used (e.g., multiple price providers), use Spring's `@Order` annotation to define their precedence (lowest value = highest priority). Ensure the consuming service implements a robust fallback mechanism if a high-priority provider fails.
 
 ### 5. Configuration (`docs/development/configuration-guidelines.md`)
-*   **Externalize Everything:** Timeouts, prefixes, and monitoring delays must be configurable via `application.yaml`.
+*   **Externalize Everything:** Timeouts, prefixes, retention periods, and monitoring delays must be configurable via `application.yaml`.
 *   **Documentation:** Maintain `application-local-EXAMPLE.yaml` with all available properties.
 
 ### 6. API Documentation (`docs/development/api-documentation-guidelines.md`)
