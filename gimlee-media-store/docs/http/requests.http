@@ -4,6 +4,7 @@
 # @name uploadMediaJpeg
 POST {{host}}/api/media/upload
 Content-Type: multipart/form-data; boundary=boundary
+Authorization: Bearer {{auth_token}}
 
 --boundary
 Content-Disposition: form-data; name="files[]"; filename="image.jpg"
@@ -27,6 +28,7 @@ Content-Disposition: form-data; name="files[]"; filename="image.jpg"
 # @name uploadMediaPng
 POST {{host}}/api/media/upload
 Content-Type: multipart/form-data; boundary=boundary
+Authorization: Bearer {{auth_token}}
 
 --boundary
 Content-Disposition: form-data; name="files[]"; filename="photo.png"

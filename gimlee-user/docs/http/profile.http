@@ -1,5 +1,5 @@
 ### Update User Avatar
-PUT {{host}}/user/profile/avatar
+PUT {{host}}/api/user/profile/avatar
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 

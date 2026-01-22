@@ -1,20 +1,22 @@
 ### Get Category Roots
 # Fetches the root level categories for marketplace navigation.
-GET {{host}}/categories?depth=1
+GET {{host}}/api/ads/categories?depth=1
 Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
 
 ### Get Category Roots with depth 2
 # Fetches the root level categories and their immediate children.
-GET {{host}}/categories?depth=2
+GET {{host}}/api/ads/categories?depth=2
 Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
 
 ### Get Category Children
 # Fetches the subcategories of a given category to allow deeper traversal.
 # Replace {categoryId} with an actual ID from the roots request.
-GET {{host}}/categories/1/children?depth=1
+GET {{host}}/api/ads/categories/1/children?depth=1
 Accept-Language: en-US
 
 ### Get Category Children with depth 2
 # Fetches the subcategories and their own subcategories.
-GET {{host}}/categories/1/children?depth=2
+GET {{host}}/api/ads/categories/1/children?depth=2
 Accept-Language: en-US

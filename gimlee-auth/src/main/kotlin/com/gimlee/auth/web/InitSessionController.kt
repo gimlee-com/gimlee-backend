@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 class InitSessionController {
     @Operation(
         summary = "Init Session",
-        description = "Checks the current authentication status based on the JWT cookie."
+        description = "Checks the current authentication status based on the Authorization header."
     )
     @ApiResponse(responseCode = "200", description = "Session status returned")
     @GetMapping(path = ["/auth/session/init"])

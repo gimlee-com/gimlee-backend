@@ -1,20 +1,15 @@
 package com.gimlee.auth.aspect
 
-import org.apache.commons.lang3.ArrayUtils
+import com.gimlee.auth.annotation.CSRFProtected
+import com.gimlee.auth.exception.AuthenticationException
+import jakarta.annotation.Resource
+import jakarta.servlet.http.HttpServletRequest
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
 import org.aspectj.lang.annotation.Pointcut
 import org.springframework.core.Ordered.HIGHEST_PRECEDENCE
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
-import com.gimlee.auth.annotation.Privileged
-import com.gimlee.auth.exception.AuthenticationException
-import com.gimlee.auth.model.Role
-import com.gimlee.auth.util.HttpServletRequestAuthUtil
-import jakarta.annotation.Resource
-import jakarta.servlet.http.Cookie
-import jakarta.servlet.http.HttpServletRequest
-import com.gimlee.auth.annotation.CSRFProtected
 
 @Aspect
 @Component

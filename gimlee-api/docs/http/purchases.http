@@ -10,6 +10,7 @@
 # @name placePurchase
 POST {{host}}/api/purchases
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "items": [
@@ -76,6 +77,7 @@ Content-Type: application/json
 #
 # @name getPurchaseStatus
 GET {{host}}/api/purchases/60f8f9b3a9d9e8f8a8b8c8d8/status
+Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
@@ -104,6 +106,7 @@ GET {{host}}/api/purchases/60f8f9b3a9d9e8f8a8b8c8d8/status
 # Allows the buyer to cancel a purchase that is awaiting payment.
 # @name cancelPurchase
 POST {{host}}/api/purchases/60f8f9b3a9d9e8f8a8b8c8d8/cancel
+Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 204 No Content):
 # HTTP/1.1 204 No Content
@@ -114,6 +117,7 @@ POST {{host}}/api/purchases/60f8f9b3a9d9e8f8a8b8c8d8/cancel
 # Fetches purchase history for the authenticated buyer.
 # @name /purchases/ [GET]
 GET {{host}}/api/purchases/?p=0
+Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json

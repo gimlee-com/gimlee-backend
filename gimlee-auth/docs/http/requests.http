@@ -15,9 +15,9 @@ Content-Type: application/json
 # Content-Type: application/json
 #
 # {
+#   "success": true,
 #   "status": "SUCCESS",
-#   "code": 0,
-#   "message": "Success"
+#   "message": "Operation completed successfully."
 # }
 
 
@@ -33,12 +33,21 @@ Content-Type: application/json
   "password": "Password123!"
 }
 
+> {%
+    if (response.body.accessToken) {
+        client.global.set("auth_token", response.body.accessToken);
+        client.global.set("access_token", response.body.accessToken);
+    }
+%}
+
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
 #
 # {
-#   "verificationRequired": true,
-#   "username": "testuser"
+#   "success": true,
+#   "status": "SUCCESS",
+#   "message": "Operation completed successfully.",
+#   "accessToken": "..."
 # }
 
 
@@ -48,17 +57,27 @@ Content-Type: application/json
 # @name verifyUser
 POST {{host}}/api/auth/verifyUser
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "code": "123456"
 }
 
+> {%
+    if (response.body.accessToken) {
+        client.global.set("auth_token", response.body.accessToken);
+        client.global.set("access_token", response.body.accessToken);
+    }
+%}
+
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
 #
 # {
-#   "verificationRequired": false,
-#   "username": "testuser"
+#   "success": true,
+#   "status": "SUCCESS",
+#   "message": "Operation completed successfully.",
+#   "accessToken": "..."
 # }
 
 
@@ -99,9 +118,17 @@ Content-Type: application/json
 
 
 ### Init Session
-# Checks the current authentication status based on the JWT cookie.
+# Checks the current authentication status based on the Authorization header.
 # @name initSession
 GET {{host}}/api/auth/session/init
+Authorization: Bearer {{auth_token}}
+
+> {%
+    if (response.body.accessToken) {
+        client.global.set("auth_token", response.body.accessToken);
+        client.global.set("access_token", response.body.accessToken);
+    }
+%}
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
@@ -117,6 +144,7 @@ GET {{host}}/api/auth/session/init
 # @name changePassword
 POST {{host}}/api/auth/changePassword
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "oldPassword": "OldPassword123!",
@@ -127,7 +155,7 @@ Content-Type: application/json
 # Content-Type: application/json
 #
 # {
+#   "success": true,
 #   "status": "SUCCESS",
-#   "code": 0,
-#   "message": "Success"
+#   "message": "Operation completed successfully."
 # }

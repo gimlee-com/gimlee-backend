@@ -3,6 +3,7 @@
 # Fetches orders for the authenticated seller.
 # @name /sales/orders/ [GET]
 GET {{host}}/api/sales/orders/?p=0
+Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json

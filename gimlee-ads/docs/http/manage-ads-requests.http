@@ -4,6 +4,7 @@
 # @name /sales/ads [POST]
 POST {{host}}/api/sales/ads
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "title": "My Awesome New Ad Title"
@@ -38,6 +39,7 @@ Content-Type: application/json
 # @name /sales/ads/{adId} [PUT]
 PUT {{host}}/api/sales/ads/{adId}
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "title": "Updated Ad Title",
@@ -119,6 +121,7 @@ Content-Type: application/json
 # Replace {adId} with the actual ID of the ad you want to activate.
 # @name /sales/ads/{adId}/activate [POST]
 POST {{host}}/api/sales/ads/{adId}/activate
+Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
@@ -171,6 +174,7 @@ POST {{host}}/api/sales/ads/{adId}/activate
 # Replace {adId} with the actual ID of the ad you want to deactivate.
 # @name /sales/ads/{adId}/deactivate [POST]
 POST {{host}}/api/sales/ads/{adId}/deactivate
+Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
@@ -200,6 +204,7 @@ POST {{host}}/api/sales/ads/{adId}/deactivate
 # Fetches ads belonging to the authenticated user.
 # @name /sales/ads/ [GET]
 GET {{host}}/api/sales/ads/?p=0&t=Awesome&s=ACTIVE,INACTIVE
+Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
@@ -226,6 +231,7 @@ GET {{host}}/api/sales/ads/?p=0&t=Awesome&s=ACTIVE,INACTIVE
 # Fetches full details for a specific ad owned by the seller.
 # @name /sales/ads/{adId} [GET]
 GET {{host}}/api/sales/ads/{adId}
+Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json

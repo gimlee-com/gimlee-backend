@@ -5,6 +5,7 @@
 # @name addViewKey
 POST {{host}}/api/payments/piratechain/addresses/view-key
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "viewKey": "zxview..."
@@ -19,6 +20,7 @@ Content-Type: application/json
 # @name addViewKeyValidationError
 POST {{host}}/api/payments/piratechain/addresses/view-key
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "viewKey": ""
@@ -42,6 +44,7 @@ Content-Type: application/json
 # @name getUserTransactions
 GET {{host}}/api/payments/piratechain/transactions
 Accept: application/json
+Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json

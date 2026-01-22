@@ -1,5 +1,5 @@
 ### Add Delivery Address
-POST {{host}}/user/delivery-addresses
+POST {{host}}/api/user/delivery-addresses
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
@@ -15,15 +15,15 @@ Authorization: Bearer {{auth_token}}
 }
 
 ### Get Delivery Addresses
-GET {{host}}/user/delivery-addresses/
+GET {{host}}/api/user/delivery-addresses/
 Authorization: Bearer {{auth_token}}
 
 ### Get User Preferences
-GET {{host}}/user/preferences
+GET {{host}}/api/user/preferences
 Authorization: Bearer {{auth_token}}
 
 ### Update User Preferences
-PUT {{host}}/user/preferences
+PUT {{host}}/api/user/preferences
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 

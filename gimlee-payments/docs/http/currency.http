@@ -1,11 +1,14 @@
 ### Convert YEC to PLN
 GET {{host}}/api/payments/currency/convert?amount=10&from=YEC&to=PLN
 Accept: application/json
+Authorization: Bearer {{auth_token}}
 
 ### Convert ARRR to USD
 GET {{host}}/api/payments/currency/convert?amount=100&from=ARRR&to=USD
 Accept: application/json
+Authorization: Bearer {{auth_token}}
 
 ### Convert PLN to YEC (Inverse)
 GET {{host}}/api/payments/currency/convert?amount=100&from=PLN&to=YEC
 Accept: application/json
+Authorization: Bearer {{auth_token}}
