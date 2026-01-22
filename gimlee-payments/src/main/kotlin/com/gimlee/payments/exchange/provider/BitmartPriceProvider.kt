@@ -12,11 +12,13 @@ import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.core5.http.io.entity.EntityUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.Instant
 
 @Component
+@Order(10)
 class BitmartPriceProvider(
     @Qualifier(ExchangeConfig.EXCHANGE_HTTP_CLIENT) private val httpClient: HttpClient,
     private val objectMapper: ObjectMapper,

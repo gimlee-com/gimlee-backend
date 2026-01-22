@@ -88,3 +88,6 @@ gimlee:
         base-url: https://api-cloud.bitmart.com
         volatility-threshold: 0.05
         volatility-klines-limit: 10
+      open-exchange-rates:
+        base-url: https://openexchangerates.org/api
+        update-interval-ms: 21600000

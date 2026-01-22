@@ -57,7 +57,7 @@ class CurrencyConverterServiceTest : StringSpec({
         result.targetAmount.stripTrailingZeros() shouldBe BigDecimal("3").stripTrailingZeros()
         result.targetAmount.scale() shouldBe 8
         result.steps.size shouldBe 1
-        result.steps[0].rate shouldBe BigDecimal("0.25") // 1 / 4.0
+        result.steps[0].rate.stripTrailingZeros() shouldBe BigDecimal("0.25") // 1 / 4.0
     }
 
     "should throw exception if no path found" {
@@ -65,5 +65,22 @@ class CurrencyConverterServiceTest : StringSpec({
         shouldThrow<RuntimeException> {
             service.convert(BigDecimal.ONE, Currency.YEC, Currency.PLN)
         }
+    }
+
+    "should convert YEC to XAU" {
+        // YEC -> USDT (1.5)
+        // USDT -> USD (1.0)
+        // USD -> XAU (0.0005)
+        // Total: 1 * 1.5 * 1.0 * 0.0005 = 0.00075
+        val amount = BigDecimal("1")
+        val rate1 = ExchangeRate(Currency.YEC, Currency.USDT, BigDecimal("1.5"), Instant.now(), "Source1")
+        val rate2 = ExchangeRate(Currency.USDT, Currency.USD, BigDecimal("1.0"), Instant.now(), "Source2")
+        val rate3 = ExchangeRate(Currency.USD, Currency.XAU, BigDecimal("0.0005"), Instant.now(), "Source3")
+        every { repository.findAllLatest() } returns listOf(rate1, rate2, rate3)
+
+        val result = service.convert(amount, Currency.YEC, Currency.XAU)
+        result.targetAmount.stripTrailingZeros() shouldBe BigDecimal("0.00075").stripTrailingZeros()
+        result.targetAmount.scale() shouldBe 6
+        result.steps.size shouldBe 3
     }
 })

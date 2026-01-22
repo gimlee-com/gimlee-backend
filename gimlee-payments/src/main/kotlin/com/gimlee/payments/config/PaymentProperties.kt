@@ -36,6 +36,7 @@ data class YcashProperties(
 
 data class ExchangeProperties(
     val bitmart: BitmartProperties = BitmartProperties(),
+    val openExchangeRates: OpenExchangeRatesProperties = OpenExchangeRatesProperties(),
     @DefaultValue("60000")
     val updateIntervalMs: Long = 60000
 )
@@ -47,4 +48,12 @@ data class BitmartProperties(
     val volatilityThreshold: Double = 0.05,
     @DefaultValue("10")
     val volatilityKlinesLimit: Int = 10
+)
+
+data class OpenExchangeRatesProperties(
+    @DefaultValue("https://openexchangerates.org/api")
+    val baseUrl: String = "https://openexchangerates.org/api",
+    val appId: String? = null,
+    @DefaultValue("21600000") // 6 hours
+    val updateIntervalMs: Long = 21600000
 )

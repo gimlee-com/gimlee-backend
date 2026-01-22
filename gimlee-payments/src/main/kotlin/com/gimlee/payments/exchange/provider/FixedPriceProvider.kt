@@ -3,16 +3,17 @@ package com.gimlee.payments.exchange.provider
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.payments.exchange.domain.ExchangePriceProvider
 import com.gimlee.payments.exchange.domain.ExchangePriceResult
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 
 @Component
+@Order(100)
 class FixedPriceProvider : ExchangePriceProvider {
     override val name: String = "Fixed"
 
     private val rates = mapOf(
         (Currency.USDT to Currency.USD) to BigDecimal.ONE,
-        (Currency.USD to Currency.PLN) to BigDecimal("4.0"),
         (Currency.ARRR to Currency.USDT) to BigDecimal("0.2")
     )
 

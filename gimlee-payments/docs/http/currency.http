@@ -12,3 +12,8 @@ Authorization: Bearer {{auth_token}}
 GET {{host}}/api/payments/currency/convert?amount=100&from=PLN&to=YEC
 Accept: application/json
 Authorization: Bearer {{auth_token}}
+
+### Convert USD to XAU (Gold)
+GET {{host}}/api/payments/currency/convert?amount=2000&from=USD&to=XAU
+Accept: application/json
+Authorization: Bearer {{auth_token}}

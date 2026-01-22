@@ -74,6 +74,13 @@ gimlee:
         rpc-url: <fillme>
         user: <fillme>
         password: <fillme>
+    exchange:
+      update-interval-ms: 60000
+      bitmart:
+        base-url: https://api-cloud.bitmart.com
+      open-exchange-rates:
+        app-id: <fillme>
+        update-interval-ms: 21600000
 
 # Metrics related configurations
 management:

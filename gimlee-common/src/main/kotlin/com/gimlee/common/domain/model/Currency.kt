@@ -21,5 +21,8 @@ enum class Currency(val type: CurrencyType, val decimalPlaces: Int) {
     USD(CurrencyType.FIAT, 2),
 
     /** Polish Zloty */
-    PLN(CurrencyType.FIAT, 2);
+    PLN(CurrencyType.FIAT, 2),
+
+    /** Gold (Troy Ounce) */
+    XAU(CurrencyType.FIAT, 6);
 }

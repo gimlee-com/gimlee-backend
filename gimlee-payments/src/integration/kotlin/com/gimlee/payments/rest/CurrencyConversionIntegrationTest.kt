@@ -4,17 +4,23 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.payments.domain.model.ConversionResult
+import com.gimlee.payments.exchange.domain.ExchangePriceProvider
+import com.gimlee.payments.exchange.domain.ExchangePriceResult
 import com.gimlee.payments.exchange.domain.ExchangeRateService
 import com.gimlee.payments.persistence.ExchangeRateRepository
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import io.kotest.matchers.shouldBe
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import java.math.BigDecimal
 
 @AutoConfigureMockMvc
+@Import(CurrencyConversionIntegrationTest.TestConfig::class)
 class CurrencyConversionIntegrationTest(
     private val mockMvc: MockMvc,
     private val objectMapper: ObjectMapper,
@@ -110,4 +116,19 @@ class CurrencyConversionIntegrationTest(
             }
         }
     }
-})
+}) {
+    @TestConfiguration
+    class TestConfig {
+        @Bean
+        fun testPriceProvider(): ExchangePriceProvider = object : ExchangePriceProvider {
+            override val name: String = "TestProvider"
+            private val rates = mapOf(
+                (Currency.USD to Currency.PLN) to BigDecimal("4.0"),
+                (Currency.USD to Currency.XAU) to BigDecimal("0.0005")
+            )
+            override fun supports(base: Currency, quote: Currency): Boolean = rates.containsKey(base to quote)
+            override fun fetchPrice(base: Currency, quote: Currency): ExchangePriceResult? =
+                rates[base to quote]?.let { ExchangePriceResult(it) }
+        }
+    }
+}

@@ -39,6 +39,7 @@
           GIMLEE_MEDIA_STORE_S3_BUCKET: "{{ s3_bucket_name }}"
           GIMLEE_MEDIA_STORE_S3_ACCESS_KEY: "{{ s3_access_key }}"
           GIMLEE_MEDIA_STORE_S3_SECRET_KEY: "{{ s3_secret_key }}"
+          GIMLEE_PAYMENTS_EXCHANGE_OPEN_EXCHANGE_RATES_APP_ID: "{{ openexchangerates_app_id }}"
         labels:
           traefik.enable: "true"
           # Create the main router for HTTPS on port 443 (websecure)
