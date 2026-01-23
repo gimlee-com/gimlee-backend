@@ -1,7 +1,9 @@
 ### Fetch Ads - Basic
 # Fetches ads with default pagination (page 0) and default sorting (created date descending).
+# Includes price in preferred currency (determined by Accept-Language or user preferences).
 # @name GetAdsBasic
 GET {{host}}/api/ads/
+Accept-Language: pl-PL
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
@@ -11,13 +13,11 @@ GET {{host}}/api/ads/
 #     {
 #       "id": "60f8f9b3a9d9e8f8a8b8c8d8",
 #       "title": "Ad Title",
-#       "status": "ACTIVE",
+#       "price": { "amount": 100, "currency": "ARRR" },
+#       "preferredPrice": { "amount": 50.00, "currency": "PLN" },
 #       ...
 #     }
 #   ],
-#   "totalPages": 5,
-#   "totalElements": 50,
-#   "last": false,
 #   ...
 # }
 
@@ -93,9 +93,11 @@ GET {{host}}/api/ads/featured/
 
 ### Fetch Single Ad Details
 # Fetches details for a specific ad by its ID.
+# Includes price in preferred currency.
 # Replace {adId} with an actual Ad ID.
 # @name GetAdById
 GET {{host}}/api/ads/some-ad-id-12345
+Accept-Language: en-US
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
@@ -103,7 +105,8 @@ GET {{host}}/api/ads/some-ad-id-12345
 # {
 #   "id": "some-ad-id-12345",
 #   "title": "Ad Title",
-#   "status": "ACTIVE",
+#   "price": { "amount": 100, "currency": "ARRR" },
+#   "preferredPrice": { "amount": 25.50, "currency": "USD" },
 #   ...
 # }
 
