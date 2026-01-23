@@ -99,12 +99,14 @@ ansible-playbook -i ../inventory.ini deploy-app.yml \
   --extra-vars "piratechain_password=YOUR_RPC_PASSWORD" \
   --extra-vars "ycash_user=YOUR_YCASH_RPC_USER" \
   --extra-vars "ycash_password=YOUR_YCASH_RPC_PASSWORD" \
-  --extra-vars "ycash_rpc_port=19232" # Use 18232 for gimlee-internal-testnet
+  --extra-vars "ycash_rpc_port=19232" \
+  --extra-vars "openexchangerates_app_id=YOUR_APP_ID"
 ```
 
 **Where to get these values:**
 * `spring_profile`: The Spring Boot profile to activate (e.g., `test`, `prod`).
 * `mail_password` & `jwt_key`: These are secrets you should generate and manage.
+* `openexchangerates_app_id`: Get this from your [Open Exchange Rates](https://openexchangerates.org/) account.
 * `s3_*` variables: These come from your object storage provider.
   * If using DigitalOcean, run `terraform output` in the `terraform-digitalocean` directory to get the keys and bucket name.
   * If using Hetzner, you will have these from the manual setup process.

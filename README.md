@@ -76,6 +76,8 @@ This section guides developers looking to contribute or run a local instance for
     transaction verification during development. (*Note: By default, this node will connect to the YCash mainnet.*)
 *   **SMTP Server:** A configured SMTP server is necessary for the application to send emails (e.g., notifications,
     confirmations).
+*   **Open Exchange Rates API Account:** An API key from [Open Exchange Rates](https://openexchangerates.org/)
+    is required for fiat-to-crypto currency conversions.
 
 ### Configuration
 
@@ -95,6 +97,7 @@ Before running the application for the first time:
         *   **For local storage (default):** Set `gimlee.media.store.storage-type` to `LOCAL` (or omit it). Then, configure `gimlee.media.store.local.directory` with the absolute path where files should be saved.
         *   **For S3-compatible storage:** Set `gimlee.media.store.storage-type` to `S3`. Then, configure the properties under `gimlee.media.store.s3`, including `endpoint`, `region`, `bucket`, `access-key`, and `secret-key`.
     *   **Email:** Configure the `spring.mail` section with valid SMTP server details.
+    *   **Open Exchange Rates:** Set your API key for `gimlee.payments.exchange.open-exchange-rates.app-id`.
     *   **JWT Key:** Set a secure secret key for `gimlee.auth.rest.jwt.key`.
 
 ### Running the Application
