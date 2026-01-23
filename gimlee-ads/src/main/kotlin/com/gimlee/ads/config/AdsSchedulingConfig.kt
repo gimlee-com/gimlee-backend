@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration
 class AdsSchedulingConfig {
 
     @Bean
-    fun lockProvider(mongoDatabase: MongoDatabase): LockProvider {
+    fun adsLockProvider(mongoDatabase: MongoDatabase): LockProvider {
         return MongoLockProvider(mongoDatabase.getCollection("gimlee-ads-shedlock"))
     }
 }

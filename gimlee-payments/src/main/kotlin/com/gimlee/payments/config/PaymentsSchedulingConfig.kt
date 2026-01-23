@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration
 class PaymentsSchedulingConfig {
 
     @Bean
-    fun lockProvider(mongoDatabase: MongoDatabase): LockProvider {
+    fun paymentsLockProvider(mongoDatabase: MongoDatabase): LockProvider {
         return MongoLockProvider(mongoDatabase.getCollection("gimlee-payments-shedlock"))
     }
 }
