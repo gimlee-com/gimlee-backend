@@ -31,6 +31,7 @@ class SessionInitController(
             Available decorators:
             * `accessToken`: Adds `accessToken` (String?) with the current JWT token.
             * `userProfile`: Adds `userProfile` (UserProfileDto?) with the user's profile details.
+            * `preferredCurrency`: Adds `preferredCurrency` (String?) with the user's preferred currency (e.g., USD, PLN).
         """
     )
     @ApiResponse(
@@ -42,7 +43,7 @@ class SessionInitController(
     fun init(
         @Parameter(
             description = "List of decorators to include in the response",
-            array = ArraySchema(schema = Schema(allowableValues = ["accessToken", "userProfile"]))
+            array = ArraySchema(schema = Schema(allowableValues = ["accessToken", "userProfile", "preferredCurrency"]))
         )
         @RequestParam(required = false) decorators: List<String>?,
         request: HttpServletRequest

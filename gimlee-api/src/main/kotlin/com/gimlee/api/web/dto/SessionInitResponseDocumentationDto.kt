@@ -9,5 +9,8 @@ data class SessionInitResponseDocumentationDto(
     val accessToken: String? = null,
 
     @Schema(description = "The user profile (included if 'userProfile' decorator is requested)")
-    val userProfile: UserProfileDto? = null
+    val userProfile: UserProfileDto? = null,
+
+    @Schema(description = "The user's preferred currency (included if 'preferredCurrency' decorator is requested)", example = "USD")
+    val preferredCurrency: String? = null
 )

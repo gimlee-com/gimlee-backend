@@ -21,6 +21,7 @@ Authorization: Bearer {{auth_token}}
 ### Get User Preferences
 GET {{host}}/api/user/preferences
 Authorization: Bearer {{auth_token}}
+Accept-Language: pl-PL
 
 ### Update User Preferences
 PUT {{host}}/api/user/preferences
@@ -28,5 +29,6 @@ Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
 {
-  "language": "en-US"
+  "language": "pl-PL",
+  "preferredCurrency": "PLN"
 }

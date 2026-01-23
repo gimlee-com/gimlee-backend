@@ -1,0 +1,6 @@
+gimlee:
+  user:
+    preferences:
+      default-currency: USD
+      currency-mappings:
+        pl-PL: PLN

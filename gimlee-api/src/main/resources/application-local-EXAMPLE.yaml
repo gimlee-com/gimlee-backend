@@ -33,6 +33,13 @@ gimlee:
       jwt:
         key: "iamnotmeantforproduction" # JWT tokens will be signed with this key
 
+  # gimlee-user properties
+  user:
+    preferences:
+      default-currency: USD
+      currency-mappings:
+        pl-PL: PLN
+
   # gimlee-ads properties
   ads:
     category:

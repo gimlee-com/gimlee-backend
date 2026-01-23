@@ -1,6 +1,12 @@
 ### Initialize Session with all decorators
-GET {{host}}/api/session/init?decorators=accessToken,userProfile
+GET {{host}}/api/session/init?decorators=accessToken,userProfile,preferredCurrency
 Accept: application/json
+Accept-Language: pl-PL
+
+### Initialize Session with only preferredCurrency
+GET {{host}}/api/session/init?decorators=preferredCurrency
+Accept: application/json
+Accept-Language: pl-PL
 
 ### Initialize Session with only accessToken
 GET {{host}}/api/session/init?decorators=accessToken

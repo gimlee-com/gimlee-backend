@@ -49,7 +49,7 @@ class ValidationIntegrationTest(
 
     Given("an UpdateUserPreferencesRequestDto") {
         When("validating with an invalid IETF language tag") {
-            val dto = UpdateUserPreferencesRequestDto(language = "en_US") // Invalid, should be en-US
+            val dto = UpdateUserPreferencesRequestDto(language = "en_US", preferredCurrency = "USD") // Invalid, should be en-US
             val violations = validator.validate(dto)
             
             Then("it should have a validation error for language") {
@@ -58,7 +58,7 @@ class ValidationIntegrationTest(
         }
 
         When("validating with a non-existent language code") {
-            val dto = UpdateUserPreferencesRequestDto(language = "xx-US")
+            val dto = UpdateUserPreferencesRequestDto(language = "xx-US", preferredCurrency = "USD")
             val violations = validator.validate(dto)
             
             Then("it should have a validation error for language") {
@@ -67,7 +67,7 @@ class ValidationIntegrationTest(
         }
 
         When("validating with a valid IETF language tag") {
-            val dto = UpdateUserPreferencesRequestDto(language = "en-US")
+            val dto = UpdateUserPreferencesRequestDto(language = "en-US", preferredCurrency = "USD")
             val violations = validator.validate(dto)
             
             Then("it should have no validation errors") {

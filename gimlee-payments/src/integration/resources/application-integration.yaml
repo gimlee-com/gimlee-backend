@@ -1,6 +1,9 @@
 server:
   servlet:
     context-path: /api
+spring:
+  messages:
+    basename: i18n/payments/messages
 gimlee:
   payments:
     timeout-hours: 1

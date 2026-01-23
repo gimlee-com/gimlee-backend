@@ -51,9 +51,17 @@ gimlee:
         /auth/register,
         /auth/register/**,
         /auth/login,
+        /payments/currency/list,
         /session/init,
         /media,
         /playground/**
+
+  # gimlee-user properties
+  user:
+    preferences:
+      default-currency: USD
+      currency-mappings:
+        pl-PL: PLN
 
   # gimlee-ads properties
   ads:

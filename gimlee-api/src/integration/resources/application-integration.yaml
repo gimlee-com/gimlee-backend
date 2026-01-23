@@ -32,6 +32,11 @@ spring:
       reply-to: dummy@dummy.com
 
 gimlee:
+  user:
+    preferences:
+      default-currency: USD
+      currency-mappings:
+        pl-PL: PLN
   ads:
     category:
       sync:

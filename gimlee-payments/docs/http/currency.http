@@ -1,3 +1,8 @@
+### List all supported currencies
+GET {{host}}/api/payments/currency/list
+Accept: application/json
+Accept-Language: pl-PL
+
 ### Convert YEC to PLN
 GET {{host}}/api/payments/currency/convert?amount=10&from=YEC&to=PLN
 Accept: application/json

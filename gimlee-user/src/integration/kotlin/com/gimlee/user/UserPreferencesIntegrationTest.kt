@@ -1,28 +1,25 @@
 package com.gimlee.user
     
-import com.gimlee.common.BaseIntegrationTest
-import com.gimlee.user.domain.UserPreferencesService
-import com.gimlee.user.web.dto.request.UpdateUserPreferencesRequestDto
-import io.kotest.matchers.shouldBe
-import org.bson.types.ObjectId
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.web.client.TestRestTemplate
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpMethod
-import org.springframework.http.HttpStatus
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
+import com.gimlee.common.BaseIntegrationTest
+import com.gimlee.user.config.UserPreferencesProperties
+import com.gimlee.user.domain.UserPreferencesService
+import io.kotest.matchers.shouldBe
 import io.mockk.every
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import org.bson.types.ObjectId
+import org.springframework.boot.test.web.client.TestRestTemplate
+import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.web.context.request.RequestAttributes
 import org.springframework.web.context.request.RequestContextHolder
+import java.util.*
 
 class UserPreferencesIntegrationTest(
     private val restTemplate: TestRestTemplate,
-    private val userPreferencesService: UserPreferencesService
+    private val userPreferencesService: UserPreferencesService,
+    private val properties: UserPreferencesProperties
 ) : BaseIntegrationTest({
 
     Given("a user") {
@@ -41,22 +38,36 @@ class UserPreferencesIntegrationTest(
 
         afterTest {
             unmockkAll()
+            LocaleContextHolder.resetLocaleContext()
         }
 
         When("getting default user preferences") {
             val response = userPreferencesService.getUserPreferences(userId)
             
-            Then("the default language should be en-US") {
+            Then("the default language should be en-US and default currency should be as configured in properties") {
                 response.language shouldBe "en-US"
+                response.preferredCurrency shouldBe properties.defaultCurrency
             }
         }
 
-        When("updating user preferences with valid IETF tag") {
-            val updated = userPreferencesService.updateUserPreferences(userId, "pl-PL")
+        When("getting default user preferences with locale matching a mapping") {
+            LocaleContextHolder.setLocale(Locale.forLanguageTag("pl-PL"))
+            val response = userPreferencesService.getUserPreferences(userId)
+
+            Then("the default currency should be the one configured in mappings for that locale") {
+                response.preferredCurrency shouldBe properties.currencyMappings["pl-PL"]
+            }
+        }
+
+        When("updating user preferences with valid IETF tag and currency") {
+            val updated = userPreferencesService.updateUserPreferences(userId, "pl-PL", "EUR")
             
             Then("the preferences should be updated") {
                 updated.language shouldBe "pl-PL"
-                userPreferencesService.getUserPreferences(userId).language shouldBe "pl-PL"
+                updated.preferredCurrency shouldBe "EUR"
+                val fetched = userPreferencesService.getUserPreferences(userId)
+                fetched.language shouldBe "pl-PL"
+                fetched.preferredCurrency shouldBe "EUR"
             }
         }
     }

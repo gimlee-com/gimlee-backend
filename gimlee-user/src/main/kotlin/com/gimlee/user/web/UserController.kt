@@ -73,7 +73,7 @@ class UserController(
 
     @Operation(
         summary = "Update User Preferences",
-        description = "Updates user preferences (e.g., language). Language must follow IETF standard (e.g., en-US). Requires USER role."
+        description = "Updates user preferences (e.g., language, preferred currency). Language must follow IETF standard (e.g., en-US). Requires USER role."
     )
     @ApiResponse(
         responseCode = "200",
@@ -92,7 +92,11 @@ class UserController(
         log.info("User {} updating preferences", principal.userId)
 
         return try {
-            val preferences = userPreferencesService.updateUserPreferences(principal.userId, request.language)
+            val preferences = userPreferencesService.updateUserPreferences(
+                principal.userId,
+                request.language,
+                request.preferredCurrency
+            )
             ResponseEntity.ok(UserPreferencesDto.fromDomain(preferences))
         } catch (e: Exception) {
             log.error("Error updating preferences for user {}: {}", principal.userId, e.message, e)
