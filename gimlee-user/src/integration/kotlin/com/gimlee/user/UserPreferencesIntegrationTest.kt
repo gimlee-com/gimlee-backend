@@ -70,5 +70,29 @@ class UserPreferencesIntegrationTest(
                 fetched.preferredCurrency shouldBe "EUR"
             }
         }
+
+        When("partially updating user preferences") {
+            val partiallyUpdated = userPreferencesService.patchUserPreferences(userId, null, "PLN")
+
+            Then("only the provided fields should be updated") {
+                partiallyUpdated.language shouldBe "pl-PL" // kept from previous step
+                partiallyUpdated.preferredCurrency shouldBe "PLN"
+                val fetched = userPreferencesService.getUserPreferences(userId)
+                fetched.language shouldBe "pl-PL"
+                fetched.preferredCurrency shouldBe "PLN"
+            }
+        }
+
+        When("partially updating user preferences with language only") {
+            val partiallyUpdated = userPreferencesService.patchUserPreferences(userId, "en-US", null)
+
+            Then("only the language should be updated") {
+                partiallyUpdated.language shouldBe "en-US"
+                partiallyUpdated.preferredCurrency shouldBe "PLN" // kept from previous step
+                val fetched = userPreferencesService.getUserPreferences(userId)
+                fetched.language shouldBe "en-US"
+                fetched.preferredCurrency shouldBe "PLN"
+            }
+        }
     }
 })

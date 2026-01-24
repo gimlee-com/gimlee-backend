@@ -6,6 +6,7 @@ import com.gimlee.user.domain.DeliveryAddressService
 import com.gimlee.user.domain.UserPreferencesService
 import com.gimlee.user.domain.UserOutcome
 import com.gimlee.user.web.dto.request.AddDeliveryAddressRequestDto
+import com.gimlee.user.web.dto.request.PatchUserPreferencesRequestDto
 import com.gimlee.user.web.dto.request.UpdateUserPreferencesRequestDto
 import com.gimlee.user.web.dto.response.DeliveryAddressDto
 import com.gimlee.user.web.dto.response.UserPreferencesDto
@@ -100,6 +101,39 @@ class UserController(
             ResponseEntity.ok(UserPreferencesDto.fromDomain(preferences))
         } catch (e: Exception) {
             log.error("Error updating preferences for user {}: {}", principal.userId, e.message, e)
+            handleOutcome(CommonOutcome.INTERNAL_ERROR)
+        }
+    }
+
+    @Operation(
+        summary = "Partially Update User Preferences",
+        description = "Partially updates user preferences (e.g., language, preferred currency). All fields are optional. Requires USER role."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Preferences updated successfully",
+        content = [Content(schema = Schema(implementation = UserPreferencesDto::class))]
+    )
+    @ApiResponse(
+        responseCode = "500",
+        description = "Internal server error. Possible status codes: INTERNAL_ERROR",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @PatchMapping("/preferences")
+    @Privileged(role = "USER")
+    fun patchUserPreferences(@Valid @RequestBody request: PatchUserPreferencesRequestDto): ResponseEntity<Any> {
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
+        log.info("User {} partially updating preferences", principal.userId)
+
+        return try {
+            val preferences = userPreferencesService.patchUserPreferences(
+                principal.userId,
+                request.language,
+                request.preferredCurrency
+            )
+            ResponseEntity.ok(UserPreferencesDto.fromDomain(preferences))
+        } catch (e: Exception) {
+            log.error("Error partially updating preferences for user {}: {}", principal.userId, e.message, e)
             handleOutcome(CommonOutcome.INTERNAL_ERROR)
         }
     }

@@ -42,4 +42,14 @@ class UserPreferencesService(
         userPreferencesRepository.save(UserPreferencesDocument.fromDomain(preferences))
         return preferences
     }
+
+    fun patchUserPreferences(userId: String, language: String?, preferredCurrency: String?): UserPreferences {
+        val existing = getUserPreferences(userId)
+        val updatedLanguage = language ?: existing.language
+        val updatedCurrency = preferredCurrency ?: existing.preferredCurrency
+
+        val preferences = UserPreferences(userId, updatedLanguage, updatedCurrency)
+        userPreferencesRepository.save(UserPreferencesDocument.fromDomain(preferences))
+        return preferences
+    }
 }
