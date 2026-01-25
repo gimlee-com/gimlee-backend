@@ -70,10 +70,27 @@ class PirateChainRpcClient(
                     }
 
                     rpcResponse.error?.let {
-                        throw PirateChainRpcException("RPC Error: ${it["message"]} (Code: ${it["code"]})")
+                        val errorMsg = it["message"] as? String ?: "Unknown RPC error"
+                        val errorCode = it["code"] as? Int
+                        throw PirateChainRpcException("RPC Error: $errorMsg (Code: $errorCode)", errorCode, errorMsg)
                     }
                     rpcResponse
                 } else {
+                    // Attempt to parse JSON error even on non-2xx status codes
+                    val rpcError = try {
+                        val errorType = determineResponseType<Any>(method)
+                        val rpcResponse: RpcResponse<Any> = objectMapper.readValue(jsonResponse, errorType)
+                        rpcResponse.error
+                    } catch (ignore: Exception) {
+                        null
+                    }
+
+                    rpcError?.let {
+                        val errorMsg = it["message"] as? String ?: "Unknown RPC error"
+                        val errorCode = it["code"] as? Int
+                        throw PirateChainRpcException("RPC Error: $errorMsg (Code: $errorCode)", errorCode, errorMsg)
+                    }
+
                     val errorReason = response.reasonPhrase ?: "Unknown Error"
                     EntityUtils.consumeQuietly(entity)
                     throw IOException("HTTP Error: $statusCode $errorReason. Response: $jsonResponse")
@@ -81,6 +98,8 @@ class PirateChainRpcClient(
             }
         } catch (e: IOException) {
             throw IOException("Failed to execute RPC request '$method': ${e.message}", e)
+        } catch (e: PirateChainRpcException) {
+            throw e
         } catch (e: Exception) {
              log.error("Unexpected error during RPC call processing for method '{}': {}", method, e.message, e)
             throw PirateChainRpcException("Failed to process RPC response for method '$method': ${e.message}")
@@ -113,5 +132,9 @@ class PirateChainRpcClient(
     override fun getReceivedByAddress(address: String, minConfirmations: Int): RpcResponse<List<RawReceivedTransaction>> =
         callRpc(RPC_LIST_RECEIVED_BY_ADDRESS, listOf(address, minConfirmations))
 
-    class PirateChainRpcException(message: String) : Exception(message)
+    class PirateChainRpcException(
+        message: String,
+        val errorCode: Int? = null,
+        val errorMsg: String? = null
+    ) : Exception(message)
 }

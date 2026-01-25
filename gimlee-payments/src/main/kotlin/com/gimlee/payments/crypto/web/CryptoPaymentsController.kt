@@ -12,8 +12,10 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
+import com.gimlee.payments.crypto.piratechain.client.PirateChainRpcClient
 import com.gimlee.payments.crypto.piratechain.domain.PirateChainAddressService
 import com.gimlee.payments.crypto.piratechain.domain.PirateChainPaymentService
+import com.gimlee.payments.crypto.ycash.client.YcashRpcClient
 import com.gimlee.payments.crypto.ycash.domain.YcashAddressService
 import com.gimlee.payments.crypto.ycash.domain.YcashPaymentService
 import com.gimlee.payments.crypto.web.dto.AddViewKeyRequest
@@ -65,7 +67,7 @@ class CryptoPaymentsController(
     )
     @ApiResponse(
         responseCode = "400",
-        description = "Invalid view key or state error. Possible status codes: PAYMENT_INVALID_PAYMENT_DATA",
+        description = "Invalid view key or state error. Possible status codes: PAYMENT_INVALID_PAYMENT_DATA, PAYMENT_INVALID_VIEWING_KEY",
         content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
     )
     @ApiResponse(
@@ -99,6 +101,20 @@ class CryptoPaymentsController(
         } catch (e: IllegalStateException) {
             log.warn("State error during addViewKey for user {} ({}): {}", userId, crypto, e.message)
             handleOutcome(PaymentOutcome.INVALID_PAYMENT_DATA)
+        } catch (e: PirateChainRpcClient.PirateChainRpcException) {
+            log.warn("Pirate Chain RPC error during addViewKey for user {} ({}): {}", userId, crypto, e.message)
+            if (e.errorCode == -5) {
+                handleOutcome(PaymentOutcome.INVALID_VIEWING_KEY)
+            } else {
+                handleOutcome(PaymentOutcome.NODE_COMMUNICATION_ERROR)
+            }
+        } catch (e: YcashRpcClient.YcashRpcException) {
+            log.warn("Ycash RPC error during addViewKey for user {} ({}): {}", userId, crypto, e.message)
+            if (e.errorCode == -5) {
+                handleOutcome(PaymentOutcome.INVALID_VIEWING_KEY)
+            } else {
+                handleOutcome(PaymentOutcome.NODE_COMMUNICATION_ERROR)
+            }
         } catch (e: Exception) {
             log.error("Error during addViewKey for user {} ({}): {}", userId, crypto, e.message, e)
             // Determine if it was a communication error (this is a bit loose but maintains original logic)
