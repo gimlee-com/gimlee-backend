@@ -38,6 +38,8 @@ class ManageAdControllerTest : StringSpec({
         val principal = Principal(userId = "user1", username = "user1", roles = listOf(Role.USER))
         every { RequestContextHolder.getRequestAttributes()!!.getAttribute("principal", RequestAttributes.SCOPE_REQUEST) } returns principal
 
+        every { adService.updateAd(any(), any(), any()) } throws AdService.AdCurrencyRoleException(com.gimlee.ads.domain.AdOutcome.PIRATE_ROLE_REQUIRED)
+
         val request = UpdateAdRequestDto(
             title = "Test",
             description = null,

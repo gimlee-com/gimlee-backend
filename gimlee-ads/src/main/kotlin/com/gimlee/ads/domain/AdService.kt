@@ -3,8 +3,12 @@ package com.gimlee.ads.domain
 import com.gimlee.ads.domain.model.*
 import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.ads.persistence.model.AdDocument
+import com.gimlee.auth.persistence.UserRoleRepository
+import com.gimlee.common.domain.model.Currency
+import com.gimlee.common.model.Range
 import com.gimlee.common.toMicros
 import com.gimlee.location.cities.data.cityDataById
+import com.gimlee.payments.domain.service.CurrencyConverterService
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
@@ -12,6 +16,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 import java.time.Instant
 
 
@@ -19,13 +24,19 @@ import java.time.Instant
 class AdService(
     private val adRepository: AdRepository,
     private val adStockService: AdStockService,
-    private val categoryService: CategoryService
+    private val categoryService: CategoryService,
+    private val currencyConverterService: CurrencyConverterService,
+    private val adCurrencyValidator: AdCurrencyValidator,
+    private val userRoleRepository: UserRoleRepository
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
     /** Thrown when an ad operation cannot be performed due to business rules. */
     class AdOperationException(message: String) : RuntimeException(message)
+
+    /** Thrown when a user lacks the required role for a currency. */
+    class AdCurrencyRoleException(val outcome: AdOutcome) : RuntimeException()
 
     /** Thrown when an ad is not found. */
     class AdNotFoundException(adId: String) : RuntimeException("Ad not found with ID: $adId")
@@ -118,6 +129,11 @@ class AdService(
         val newPrice = updateData.price?.amount ?: existingAdDoc.price
         val newCurrency = updateData.price?.currency ?: existingAdDoc.currency
 
+        if (newCurrency != null) {
+            val roles = userRoleRepository.getAll(userObjectId)
+            adCurrencyValidator.validateUserCanListInCurrency(roles, newCurrency)
+        }
+
         val newStock = updateData.stock ?: existingAdDoc.stock
         try {
             adStockService.validateStockLevel(adObjectId, newStock)
@@ -179,8 +195,35 @@ class AdService(
 
     fun getAds(filters: AdFilters, sorting: AdSorting, pageRequest: Pageable): Page<Ad> {
         log.debug("Fetching ads with filters: {}, sorting: {}, page: {}", filters, sorting, pageRequest)
-        val pageOfAdDocuments = adRepository.find(filters, sorting, pageRequest)
+        
+        val effectiveFilters = if (filters.priceRange != null && filters.preferredCurrency != null && filters.priceRanges == null) {
+            val translatedRanges = translatePriceRange(filters.priceRange, filters.preferredCurrency)
+            filters.copy(priceRanges = translatedRanges)
+        } else {
+            filters
+        }
+        
+        val pageOfAdDocuments = adRepository.find(effectiveFilters, sorting, pageRequest)
         return pageOfAdDocuments.map { it.toDomain() }
+    }
+
+    private fun translatePriceRange(range: Range<BigDecimal>, preferredCurrency: Currency): Map<Currency, Range<BigDecimal>> {
+        val result = mutableMapOf<Currency, Range<BigDecimal>>()
+
+        Currency.entries.forEach { targetCurrency ->
+            try {
+                val from = range.from?.let { currencyConverterService.convert(it, preferredCurrency, targetCurrency).targetAmount }
+                val to = range.to?.let { currencyConverterService.convert(it, preferredCurrency, targetCurrency).targetAmount }
+
+                if (from != null || to != null) {
+                    result[targetCurrency] = Range(from, to)
+                }
+            } catch (e: Exception) {
+                log.warn("Could not translate price range from {} to {}: {}", preferredCurrency, targetCurrency, e.message)
+            }
+        }
+
+        return result
     }
 
 
@@ -216,6 +259,11 @@ class AdService(
         if (existingAdDoc.status != AdStatus.INACTIVE) {
             log.warn("Attempted to activate ad {} which is not in INACTIVE state (current: {})", adId, existingAdDoc.status)
             throw AdOperationException("Ad can only be activated when in INACTIVE state.")
+        }
+
+        existingAdDoc.currency?.let {
+            val roles = userRoleRepository.getAll(userObjectId)
+            adCurrencyValidator.validateUserCanListInCurrency(roles, it)
         }
 
         checkForCompleteness(existingAdDoc, adId)
@@ -267,24 +315,26 @@ class AdService(
         val isComplete = existingAd.title.isNotBlank() &&
                 !existingAd.description.isNullOrBlank() &&
                 existingAd.price != null &&
-                existingAd.currency != null
-                && existingAd.cityId != null
-                && existingAd.location != null
-                && existingAd.stock > 0
+                existingAd.currency != null &&
+                existingAd.currency.isSettlement &&
+                existingAd.cityId != null &&
+                existingAd.location != null &&
+                existingAd.stock > 0
 
         if (!isComplete) {
             log.warn(
-                "Attempted to activate incomplete ad {}: title={}, desc={}, price={}, curr={}, cityId={}, location={}, stock={}",
+                "Attempted to activate incomplete ad {}: title={}, desc={}, price={}, curr={}, currSettlement={}, cityId={}, location={}, stock={}",
                 adId,
                 existingAd.title.isNotBlank(),
                 !existingAd.description.isNullOrBlank(),
                 existingAd.price != null,
                 existingAd.currency != null,
+                existingAd.currency?.isSettlement == true,
                 existingAd.cityId != null,
                 existingAd.location != null,
                 existingAd.stock
             )
-            throw AdOperationException("Ad cannot be activated until title, description, price, location and stock are all set. Stock must be greater than 0.")
+            throw AdOperationException("Ad cannot be activated until title, description, price (in a supported settlement currency), location and stock are all set. Stock must be greater than 0.")
         }
     }
 

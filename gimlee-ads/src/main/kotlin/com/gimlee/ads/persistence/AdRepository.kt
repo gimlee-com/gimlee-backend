@@ -13,7 +13,9 @@ import com.mongodb.client.model.Sorts
 import com.mongodb.client.model.Updates
 import org.bson.Document
 import org.bson.conversions.Bson
+import org.bson.types.Decimal128
 import org.bson.types.ObjectId
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
@@ -112,10 +114,22 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             )
             queryFilters.add(regexFilter)
         }
-        filters.priceRange?.let { range ->
+        if (filters.priceRanges != null) {
+            val currencyFilters = filters.priceRanges.map { (currency, range) ->
+                val conditions = mutableListOf<Bson>()
+                conditions.add(Filters.eq(AdDocument.FIELD_CURRENCY, currency.name))
+                range.from?.let { conditions.add(Filters.gte(AdDocument.FIELD_PRICE, Decimal128(it))) }
+                range.to?.let { conditions.add(Filters.lte(AdDocument.FIELD_PRICE, Decimal128(it))) }
+                Filters.and(conditions)
+            }
+            if (currencyFilters.isNotEmpty()) {
+                queryFilters.add(Filters.or(currencyFilters))
+            }
+        } else if (filters.priceRange != null) {
+            val range = filters.priceRange
             val priceFilters = mutableListOf<Bson>()
-            range.from?.let { priceFilters.add(Filters.gte(AdDocument.FIELD_PRICE, it.toPlainString())) }
-            range.to?.let { priceFilters.add(Filters.lte(AdDocument.FIELD_PRICE, it.toPlainString())) }
+            range.from?.let { priceFilters.add(Filters.gte(AdDocument.FIELD_PRICE, Decimal128(it))) }
+            range.to?.let { priceFilters.add(Filters.lte(AdDocument.FIELD_PRICE, Decimal128(it))) }
             if (priceFilters.isNotEmpty()) {
                 queryFilters.add(Filters.and(priceFilters))
             }
@@ -225,7 +239,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             .append(AdDocument.FIELD_USER_ID, ad.userId)
             .append(AdDocument.FIELD_TITLE, ad.title)
             .append(AdDocument.FIELD_DESCRIPTION, ad.description)
-            .append(AdDocument.FIELD_PRICE, ad.price?.toPlainString())
+            .append(AdDocument.FIELD_PRICE, ad.price?.let { Decimal128(it) })
             .append(AdDocument.FIELD_CURRENCY, ad.currency?.name)
             .append(AdDocument.FIELD_STATUS, ad.status.name)
             .append(AdDocument.FIELD_CREATED_AT, ad.createdAtMicros)
@@ -250,7 +264,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
     }
 
     private fun mapToAdDocument(doc: Document): AdDocument {
-        val priceString = doc.getString(AdDocument.FIELD_PRICE)
+        val price = doc.get(AdDocument.FIELD_PRICE, Decimal128::class.java)?.bigDecimalValue()
         val currencyString = doc.getString(AdDocument.FIELD_CURRENCY)
         val statusString = doc.getString(AdDocument.FIELD_STATUS)
 
@@ -273,7 +287,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             userId = doc.getObjectId(AdDocument.FIELD_USER_ID),
             title = doc.getString(AdDocument.FIELD_TITLE),
             description = doc.getString(AdDocument.FIELD_DESCRIPTION),
-            price = priceString?.let { BigDecimal(it) },
+            price = price,
             currency = currencyString?.let { Currency.valueOf(it)},
             status = AdStatus.valueOf(statusString ?: AdStatus.INACTIVE.name),
             createdAtMicros = doc.getLong(AdDocument.FIELD_CREATED_AT),

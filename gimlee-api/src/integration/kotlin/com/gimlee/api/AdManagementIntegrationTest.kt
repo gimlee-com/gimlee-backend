@@ -98,7 +98,7 @@ class AdManagementIntegrationTest(
                 content = objectMapper.writeValueAsString(updateRequest)
             }.andExpect {
                 status { isBadRequest() }
-                jsonPath("$.status") { value("AD_INVALID_AD_STATUS") }
+                jsonPath("$.status") { value("AD_INVALID_OPERATION") }
             }
         }
 

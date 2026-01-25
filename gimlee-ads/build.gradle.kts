@@ -4,6 +4,7 @@ dependencies {
     implementation(project(":gimlee-events"))
     implementation(project(":gimlee-auth"))
     implementation(project(":gimlee-location"))
+    implementation(project(":gimlee-payments"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)
@@ -27,6 +28,9 @@ dependencies {
     testFixturesApi(libs.spring.boot.starter.test)
     testFixturesApi(libs.shedlock.spring)
     testFixturesApi(libs.shedlock.provider.mongo)
+    testFixturesImplementation(project(":gimlee-payments"))
+    testFixturesImplementation(project(":gimlee-auth"))
+    testFixturesImplementation(libs.mockk)
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(platform(libs.kotest.bom))

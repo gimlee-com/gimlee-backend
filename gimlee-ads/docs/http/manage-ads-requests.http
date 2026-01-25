@@ -103,15 +103,31 @@ Authorization: Bearer {{auth_token}}
 # Content-Type: application/json
 #
 # {
-#   "error": "Cannot update an ad that is not INACTIVE."
+#   "success": false,
+#   "status": "AD_INVALID_AD_STATUS",
+#   "message": "Invalid ad status for this operation. Ad can only be updated when in INACTIVE state.",
+#   "data": null
 # }
 # or
 # {
-#   "error": "Stock (2) cannot be lower than locked stock (3)."
+#   "success": false,
+#   "status": "AD_INVALID_OPERATION",
+#   "message": "Invalid ad operation: Currency USD is not allowed for settlement.",
+#   "data": null
 # }
 # or
 # {
-#   "error": "Category must be a leaf node."
+#   "success": false,
+#   "status": "AD_INVALID_OPERATION",
+#   "message": "Invalid ad operation: Stock (2) cannot be lower than locked stock (3).",
+#   "data": null
+# }
+# or
+# {
+#   "success": false,
+#   "status": "AD_INVALID_OPERATION",
+#   "message": "Invalid ad operation: Category must be a leaf node.",
+#   "data": null
 # }
 
 

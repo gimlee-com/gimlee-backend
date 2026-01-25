@@ -5,6 +5,7 @@ import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
+import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.payments.domain.model.ExchangeRate
@@ -24,19 +25,24 @@ class AdDiscoveryIntegrationTest(
     private val mockMvc: MockMvc,
     private val adService: AdService,
     private val exchangeRateRepository: ExchangeRateRepository,
-    private val userPreferencesService: UserPreferencesService
+    private val userPreferencesService: UserPreferencesService,
+    private val userRoleRepository: UserRoleRepository
 ) : BaseIntegrationTest({
 
     Given("an ad and exchange rates") {
-        val sellerId = ObjectId.get().toHexString()
-        val ad = adService.createAd(sellerId, "Test Ad", null, 10)
-        adService.updateAd(ad.id, sellerId, UpdateAdRequest(
+        val sellerId = ObjectId.get()
+        userRoleRepository.add(sellerId, Role.USER)
+        userRoleRepository.add(sellerId, Role.PIRATE)
+        val sellerIdStr = sellerId.toHexString()
+        
+        val ad = adService.createAd(sellerIdStr, "Test Ad", null, 10)
+        adService.updateAd(ad.id, sellerIdStr, UpdateAdRequest(
             description = "Description",
             price = CurrencyAmount(BigDecimal("100"), Currency.ARRR),
             location = com.gimlee.ads.domain.model.Location("city", doubleArrayOf(0.0, 0.0)),
             stock = 10
         ))
-        adService.activateAd(ad.id, sellerId)
+        adService.activateAd(ad.id, sellerIdStr)
 
         // ARRR to USD rate: 1 ARRR = 0.5 USD
         exchangeRateRepository.save(ExchangeRate(
@@ -54,7 +60,6 @@ class AdDiscoveryIntegrationTest(
             }.andReturn()
 
             val content = result.response.contentAsString
-            println("[DEBUG_LOG] Content: $content")
             
             Then("it should include the price in USD") {
                 content.contains("\"price\":{\"amount\":100,\"currency\":\"ARRR\"}") shouldBe true

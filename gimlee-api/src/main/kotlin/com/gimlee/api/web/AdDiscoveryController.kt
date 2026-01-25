@@ -67,12 +67,17 @@ class AdDiscoveryController(
     @Validated
     @GetMapping(path = ["/ads/"])
     fun fetchAds(@Valid @ParameterObject fetchAdsRequestDto: FetchAdsRequestDto): Page<AdDiscoveryPreviewDto> {
+        val preferredCurrency = getPreferredCurrency()
+        val filters = toAdFilters(fetchAdsRequestDto.filters).copy(
+            preferredCurrency = preferredCurrency
+        )
+
         val pageOfAds = adService.getAds(
-            filters = toAdFilters(fetchAdsRequestDto.filters),
+            filters = filters,
             sorting = toAdSorting(fetchAdsRequestDto.sorting),
             pageRequest = PageRequest.of(fetchAdsRequestDto.page, PAGE_SIZE)
         )
-        val preferredCurrency = getPreferredCurrency()
+        
         val categoryIds = pageOfAds.content.mapNotNull { it.categoryId }.toSet()
         val categoryPaths = categoryService.getFullCategoryPaths(categoryIds, LocaleContextHolder.getLocale().toLanguageTag())
         

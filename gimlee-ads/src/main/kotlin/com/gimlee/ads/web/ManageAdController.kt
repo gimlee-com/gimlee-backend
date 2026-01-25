@@ -170,11 +170,6 @@ class ManageAdController(
         val principal = HttpServletRequestAuthUtil.Companion.getPrincipal()
         log.info("User {} attempting to update ad {}", principal.userId, adId)
 
-        if (request.currency == Currency.ARRR && !principal.roles.contains(Role.PIRATE)) {
-            log.warn("User {} attempted to use ARRR without PIRATE role", principal.userId)
-            return handleOutcome(AdOutcome.PIRATE_ROLE_REQUIRED)
-        }
-
         return try {
             val updatedAdDomain = adService.updateAd(
                 adId = adId,
@@ -185,9 +180,14 @@ class ManageAdController(
         } catch (e: AdService.AdNotFoundException) {
             log.warn("Update failed: Ad {} not found (requested by user {})", adId, principal.userId)
             handleOutcome(AdOutcome.AD_NOT_FOUND)
+        } catch (e: AdService.AdCurrencyRoleException) {
+            log.warn("Update failed: Role required for currency (requested by user {})", principal.userId)
+            handleOutcome(e.outcome)
         } catch (e: AdService.AdOperationException) {
             log.warn("Update failed for ad {}: {} (requested by user {})", adId, e.message, principal.userId)
-            handleOutcome(AdOutcome.INVALID_AD_STATUS)
+            val outcome = AdOutcome.INVALID_OPERATION
+            val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
+            return ResponseEntity.status(outcome.httpCode).body(StatusResponseDto.fromOutcome(outcome, "$message ${e.message}"))
         } catch (e: IllegalArgumentException) { // Catch invalid ObjectId format or other validation issues from toDomain()
             log.warn("Update failed: {} for ad {} by user {}", e.message, adId, principal.userId)
             handleOutcome(AdOutcome.INVALID_AD_ID)
@@ -235,9 +235,14 @@ class ManageAdController(
         } catch (e: AdService.AdNotFoundException) {
             log.warn("Activation failed: Ad {} not found (requested by user {})", adId, principal.userId)
             handleOutcome(AdOutcome.AD_NOT_FOUND)
+        } catch (e: AdService.AdCurrencyRoleException) {
+            log.warn("Activation failed: Role required for currency (requested by user {})", principal.userId)
+            handleOutcome(e.outcome)
         } catch (e: AdService.AdOperationException) {
             log.warn("Activation failed for ad {}: {} (requested by user {})", adId, e.message, principal.userId)
-            handleOutcome(AdOutcome.INVALID_AD_STATUS)
+            val outcome = AdOutcome.INVALID_OPERATION
+            val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
+            return ResponseEntity.status(outcome.httpCode).body(StatusResponseDto.fromOutcome(outcome, "$message ${e.message}"))
         } catch (e: IllegalArgumentException) { // Catch invalid ObjectId format for adId
             log.warn("Activation failed: Invalid ID format {} for ad {} by user {}", e.message, adId, principal.userId)
             handleOutcome(AdOutcome.INVALID_AD_ID)

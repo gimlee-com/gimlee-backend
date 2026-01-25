@@ -26,6 +26,7 @@ class AdVisibilityIntegrationTest(
     Given("ads with different statuses") {
         val sellerId = ObjectId.get()
         userRoleRepository.add(sellerId, Role.USER)
+        userRoleRepository.add(sellerId, Role.PIRATE)
         val sellerIdStr = sellerId.toHexString()
 
         // 1. Create an ACTIVE ad

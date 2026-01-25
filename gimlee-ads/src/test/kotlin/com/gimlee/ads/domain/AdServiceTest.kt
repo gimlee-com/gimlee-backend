@@ -4,7 +4,10 @@ import com.gimlee.ads.domain.model.AdStatus
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.ads.persistence.model.AdDocument
+import com.gimlee.auth.model.Role
+import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.domain.model.Currency
+import com.gimlee.payments.domain.service.CurrencyConverterService
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -18,7 +21,181 @@ class AdServiceTest : StringSpec({
     val adRepository = mockk<AdRepository>()
     val adStockService = mockk<AdStockService>(relaxed = true)
     val categoryService = mockk<CategoryService>(relaxed = true)
-    val adService = AdService(adRepository, adStockService, categoryService)
+    val currencyConverterService = mockk<CurrencyConverterService>(relaxed = true)
+    val userRoleRepository = mockk<UserRoleRepository>(relaxed = true)
+    val adCurrencyService = AdCurrencyService()
+    val adCurrencyValidator = AdCurrencyValidator(adCurrencyService)
+    val adService = AdService(adRepository, adStockService, categoryService, currencyConverterService, adCurrencyValidator, userRoleRepository)
+
+    "updateAd should fail if using ARRR without PIRATE role" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Title",
+            description = null,
+            price = null,
+            currency = null,
+            status = AdStatus.INACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = null,
+            categoryIds = null,
+            location = null,
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 10
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+        every { userRoleRepository.getAll(userId) } returns listOf(Role.USER) // No PIRATE role
+
+        val updateRequest = com.gimlee.ads.domain.model.UpdateAdRequest(
+            price = com.gimlee.ads.domain.model.CurrencyAmount(BigDecimal("100"), Currency.ARRR)
+        )
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdCurrencyRoleException> {
+            adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+        }
+
+        exception.outcome shouldBe AdOutcome.PIRATE_ROLE_REQUIRED
+    }
+
+    "updateAd should succeed if using ARRR with PIRATE role" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Title",
+            description = null,
+            price = null,
+            currency = null,
+            status = AdStatus.INACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = null,
+            categoryIds = null,
+            location = null,
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 10
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+        every { userRoleRepository.getAll(userId) } returns listOf(Role.USER, Role.PIRATE)
+        every { adRepository.save(any()) } answers { it.invocation.args[0] as AdDocument }
+
+        val updateRequest = com.gimlee.ads.domain.model.UpdateAdRequest(
+            price = com.gimlee.ads.domain.model.CurrencyAmount(BigDecimal("100"), Currency.ARRR)
+        )
+
+        val result = adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+        result.price?.currency shouldBe Currency.ARRR
+    }
+
+    "updateAd should fail if using YEC without YCASH role" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Title",
+            description = null,
+            price = null,
+            currency = null,
+            status = AdStatus.INACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = null,
+            categoryIds = null,
+            location = null,
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 10
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+        every { userRoleRepository.getAll(userId) } returns listOf(Role.USER) // No YCASH role
+
+        val updateRequest = com.gimlee.ads.domain.model.UpdateAdRequest(
+            price = com.gimlee.ads.domain.model.CurrencyAmount(BigDecimal("100"), Currency.YEC)
+        )
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdCurrencyRoleException> {
+            adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+        }
+
+        exception.outcome shouldBe AdOutcome.YCASH_ROLE_REQUIRED
+    }
+
+    "updateAd should succeed if using YEC with YCASH role" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Title",
+            description = null,
+            price = null,
+            currency = null,
+            status = AdStatus.INACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = null,
+            categoryIds = null,
+            location = null,
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 10
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+        every { userRoleRepository.getAll(userId) } returns listOf(Role.USER, Role.YCASH)
+        every { adRepository.save(any()) } answers { it.invocation.args[0] as AdDocument }
+
+        val updateRequest = com.gimlee.ads.domain.model.UpdateAdRequest(
+            price = com.gimlee.ads.domain.model.CurrencyAmount(BigDecimal("100"), Currency.YEC)
+        )
+
+        val result = adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+        result.price?.currency shouldBe Currency.YEC
+    }
+
+    "updateAd should fail if using non-settlement currency" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Title",
+            description = null,
+            price = null,
+            currency = null,
+            status = AdStatus.INACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = null,
+            categoryIds = null,
+            location = null,
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 10
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+
+        val updateRequest = com.gimlee.ads.domain.model.UpdateAdRequest(
+            price = com.gimlee.ads.domain.model.CurrencyAmount(BigDecimal("100"), Currency.USD)
+        )
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+            adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+        }
+
+        exception.message shouldBe "Currency USD is not allowed for settlement."
+    }
 
     "createAd should set stock" {
         val userId = ObjectId().toHexString()
@@ -104,12 +281,44 @@ class AdServiceTest : StringSpec({
         )
 
         every { adRepository.findById(adId) } returns existingDoc
+        every { userRoleRepository.getAll(userId) } returns listOf(Role.USER, Role.PIRATE)
 
         val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
             adService.activateAd(adId.toHexString(), userId.toHexString())
         }
 
-        exception.message shouldBe "Ad cannot be activated until title, description, price, location and stock are all set. Stock must be greater than 0."
+        exception.message shouldBe "Ad cannot be activated until title, description, price (in a supported settlement currency), location and stock are all set. Stock must be greater than 0."
+    }
+
+    "activateAd should fail if currency is not a settlement one" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Test Ad",
+            description = "Description",
+            price = BigDecimal("100"),
+            currency = Currency.USD,
+            status = AdStatus.INACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = "city1",
+            categoryIds = null,
+            location = org.springframework.data.mongodb.core.geo.GeoJsonPoint(1.0, 2.0),
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 10
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+        every { userRoleRepository.getAll(userId) } returns listOf(Role.USER)
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+            adService.activateAd(adId.toHexString(), userId.toHexString())
+        }
+
+        exception.message shouldBe "Currency USD is not allowed for settlement."
     }
 
     "updateAd should fail if repository throws IllegalStateException (stock constraint)" {
