@@ -9,6 +9,7 @@ import com.gimlee.ads.web.dto.request.CreateAdRequestDto
 import com.gimlee.ads.web.dto.request.SalesAdsRequestDto
 import com.gimlee.ads.web.dto.request.UpdateAdRequestDto
 import com.gimlee.ads.web.dto.response.AdDto
+import com.gimlee.ads.web.dto.response.CurrencyInfoDto
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
@@ -80,10 +81,16 @@ class ManageAdController(
     @ApiResponse(responseCode = "200", description = "List of allowed settlement currencies")
     @GetMapping("/allowed-currencies")
     @Privileged("USER")
-    fun getAllowedCurrencies(): ResponseEntity<List<Currency>> {
+    fun getAllowedCurrencies(): ResponseEntity<List<CurrencyInfoDto>> {
         val principal = HttpServletRequestAuthUtil.getPrincipal()
         val allowedCurrencies = adService.getAllowedCurrencies(principal.userId)
-        return ResponseEntity.ok(allowedCurrencies)
+        val currencyInfos = allowedCurrencies.map { currency ->
+            CurrencyInfoDto(
+                code = currency,
+                name = messageSource.getMessage(currency.messageKey, null, LocaleContextHolder.getLocale())
+            )
+        }
+        return ResponseEntity.ok(currencyInfos)
     }
 
     @Operation(

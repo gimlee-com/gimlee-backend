@@ -3,7 +3,7 @@ server:
     context-path: /api
 spring:
   messages:
-    basename: i18n/payments/messages
+    basename: i18n/common/messages,i18n/payments/messages
 gimlee:
   payments:
     timeout-hours: 1

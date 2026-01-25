@@ -25,4 +25,6 @@ enum class Currency(val type: CurrencyType, val decimalPlaces: Int, val isSettle
 
     /** Gold (Troy Ounce) */
     XAU(CurrencyType.FIAT, 6, false);
+
+    val messageKey: String get() = "currency.name.$name"
 }

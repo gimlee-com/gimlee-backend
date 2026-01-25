@@ -254,8 +254,14 @@ Authorization: Bearer {{auth_token}}
 # Content-Type: application/json
 #
 # [
-#   "ARRR",
-#   "YEC"
+#   {
+#     "code": "ARRR",
+#     "name": "Pirate Chain"
+#   },
+#   {
+#     "code": "YEC",
+#     "name": "YCash"
+#   }
 # ]
 
 

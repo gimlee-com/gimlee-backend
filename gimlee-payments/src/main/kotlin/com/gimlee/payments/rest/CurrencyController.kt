@@ -49,7 +49,7 @@ class CurrencyController(
     fun listCurrencies(): List<CurrencyDto> {
         val locale = LocaleContextHolder.getLocale()
         return Currency.entries.map { currency ->
-            val localizedName = messageSource.getMessage("currency.${currency.name}", null, currency.name, locale)
+            val localizedName = messageSource.getMessage(currency.messageKey, null, currency.name, locale)
                 ?: currency.name
             CurrencyDto.fromDomain(currency, localizedName)
         }
