@@ -242,6 +242,23 @@ Authorization: Bearer {{auth_token}}
 #   ...
 # }
 
+
+### Get Allowed Settlement Currencies
+# Requires USER role authentication
+# Retrieves the list of settlement currencies the authenticated user is allowed to list ads in.
+# @name /sales/ads/allowed-currencies [GET]
+GET {{host}}/api/sales/ads/allowed-currencies
+Authorization: Bearer {{auth_token}}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# [
+#   "ARRR",
+#   "YEC"
+# ]
+
+
 ### Fetch Single Ad for Seller
 # Requires USER role authentication
 # Fetches full details for a specific ad owned by the seller.

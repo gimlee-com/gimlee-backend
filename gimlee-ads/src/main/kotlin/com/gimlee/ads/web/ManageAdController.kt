@@ -74,6 +74,19 @@ class ManageAdController(
     }
 
     @Operation(
+        summary = "Get Allowed Settlement Currencies",
+        description = "Retrieves the list of settlement currencies the authenticated user is allowed to list ads in."
+    )
+    @ApiResponse(responseCode = "200", description = "List of allowed settlement currencies")
+    @GetMapping("/allowed-currencies")
+    @Privileged("USER")
+    fun getAllowedCurrencies(): ResponseEntity<List<Currency>> {
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
+        val allowedCurrencies = adService.getAllowedCurrencies(principal.userId)
+        return ResponseEntity.ok(allowedCurrencies)
+    }
+
+    @Operation(
         summary = "Fetch Single Ad for Seller",
         description = "Fetches full details for a specific ad owned by the seller."
     )

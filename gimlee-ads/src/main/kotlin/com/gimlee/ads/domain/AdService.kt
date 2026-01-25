@@ -27,6 +27,7 @@ class AdService(
     private val categoryService: CategoryService,
     private val currencyConverterService: CurrencyConverterService,
     private val adCurrencyValidator: AdCurrencyValidator,
+    private val adCurrencyService: AdCurrencyService,
     private val userRoleRepository: UserRoleRepository
 ) {
 
@@ -191,6 +192,14 @@ class AdService(
         }
         if (objectIds.isEmpty()) return emptyList()
         return adRepository.findAllByIds(objectIds).map { it.toDomain() }
+    }
+
+    /**
+     * Retrieves the list of settlement currencies a user is allowed to list ads in.
+     */
+    fun getAllowedCurrencies(userId: String): List<Currency> {
+        val roles = userRoleRepository.getAll(ObjectId(userId))
+        return adCurrencyService.getAllowedCurrencies(roles)
     }
 
     fun getAds(filters: AdFilters, sorting: AdSorting, pageRequest: Pageable): Page<Ad> {
