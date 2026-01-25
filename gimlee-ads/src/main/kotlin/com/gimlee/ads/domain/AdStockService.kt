@@ -28,7 +28,7 @@ class AdStockService(private val adRepository: AdRepository) {
         val ad = adRepository.findById(adId) ?: return
         if (newStock < ad.lockedStock) {
             log.warn("Validation failed for ad {}: requested stock {} is lower than locked stock {}", adId, newStock, ad.lockedStock)
-            throw IllegalStateException("Stock ($newStock) cannot be lower than locked stock (${ad.lockedStock}).")
+            throw AdService.AdOperationException(AdOutcome.STOCK_LOWER_THAN_LOCKED, newStock, ad.lockedStock)
         }
     }
 }

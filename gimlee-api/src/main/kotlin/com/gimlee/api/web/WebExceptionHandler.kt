@@ -40,12 +40,12 @@ class WebExceptionHandler(private val messageSource: MessageSource) : ResponseEn
 
     @ExceptionHandler(AdService.AdOperationException::class)
     fun handleAdOperationException(ex: AdService.AdOperationException, req: WebRequest): ResponseEntity<Any>? {
-        log.warn("Ad operation failed: ${ex.message}")
-        val outcome = AdOutcome.INVALID_OPERATION
-        val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
+        val outcome = ex.outcome
+        val message = messageSource.getMessage(outcome.messageKey, ex.args, LocaleContextHolder.getLocale())
+        log.warn("Ad operation failed: $message")
         return handleExceptionInternal(
             ex,
-            StatusResponseDto.fromOutcome(outcome, "$message ${ex.message}"),
+            StatusResponseDto.fromOutcome(outcome, message),
             HttpHeaders(),
             HttpStatus.valueOf(outcome.httpCode),
             req
@@ -56,6 +56,19 @@ class WebExceptionHandler(private val messageSource: MessageSource) : ResponseEn
     fun handleAdCurrencyRoleException(ex: AdService.AdCurrencyRoleException, req: WebRequest): ResponseEntity<Any>? {
         log.warn("Ad currency role validation failed: ${ex.outcome}")
         return handleOutcome(ex.outcome, req)
+    }
+
+    @ExceptionHandler(AdService.AdNotFoundException::class)
+    fun handleAdNotFoundException(ex: AdService.AdNotFoundException, req: WebRequest): ResponseEntity<Any>? {
+        log.warn("Ad not found: ${ex.message}")
+        return handleOutcome(AdOutcome.AD_NOT_FOUND, req)
+    }
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgumentException(ex: IllegalArgumentException, req: WebRequest): ResponseEntity<Any>? {
+        log.warn("Illegal argument: ${ex.message}")
+        // Often caused by invalid ObjectId format in this context
+        return handleOutcome(AdOutcome.INVALID_AD_ID, req)
     }
 
     private fun handleOutcome(outcome: Outcome, req: WebRequest): ResponseEntity<Any>? {

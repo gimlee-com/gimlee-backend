@@ -244,7 +244,7 @@ class AdsPopulator(
                 adService.activateAd(updatedAd.id, userId)
 
             } catch (e: AdService.AdOperationException) {
-                log.warn("Skipping ad creation for user ${user.username} due to operation exception: ${e.message}")
+                log.warn("Skipping ad creation for user ${user.username} due to operation exception: ${e.outcome}")
             } catch (e: AdService.AdNotFoundException) {
                 log.error("Error during ad creation sequence for user ${user.username}: Ad not found unexpectedly.", e)
             } catch (e: Exception) {

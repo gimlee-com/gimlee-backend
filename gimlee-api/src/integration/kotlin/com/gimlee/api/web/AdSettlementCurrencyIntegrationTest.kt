@@ -52,8 +52,8 @@ class AdSettlementCurrencyIntegrationTest(
             val content = result.response.contentAsString
             val response = objectMapper.readValue(content, StatusResponseDto::class.java)
 
-            Then("it should return a bad request status with AD_INVALID_OPERATION") {
-                response.status shouldBe "AD_INVALID_OPERATION"
+            Then("it should return a bad request status with AD_CURRENCY_NOT_ALLOWED") {
+                response.status shouldBe "AD_CURRENCY_NOT_ALLOWED"
                 response.message?.contains("Currency USD is not allowed for settlement.") shouldBe true
             }
         }

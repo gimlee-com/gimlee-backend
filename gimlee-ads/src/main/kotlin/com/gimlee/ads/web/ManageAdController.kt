@@ -48,11 +48,6 @@ class ManageAdController(
         private const val PAGE_SIZE = 60
     }
 
-    private fun handleOutcome(outcome: Outcome, data: Any? = null): ResponseEntity<Any> {
-        val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
-        return ResponseEntity.status(outcome.httpCode).body(StatusResponseDto.fromOutcome(outcome, message, data))
-    }
-
     @Operation(
         summary = "Fetch My Ads",
         description = "Fetches ads belonging to the authenticated user. Supports filtering and pagination."
@@ -117,7 +112,7 @@ class ManageAdController(
         val ad = adService.getAd(adId)
 
         if (ad == null || ad.userId != principal.userId) {
-            return handleOutcome(AdOutcome.AD_NOT_FOUND)
+            throw AdService.AdNotFoundException(adId)
         }
 
         return ResponseEntity.ok(AdDto.fromDomain(ad))
@@ -140,15 +135,10 @@ class ManageAdController(
     @PostMapping
     @Privileged(role = "USER")
     fun createAd(@Valid @RequestBody request: CreateAdRequestDto): ResponseEntity<Any> {
-        val principal = HttpServletRequestAuthUtil.Companion.getPrincipal()
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
         log.info("User {} attempting to create ad with title '{}'", principal.userId, request.title)
-        return try {
-            val createdAdDomain = adService.createAd(principal.userId, request.title, request.categoryId)
-            ResponseEntity.status(HttpStatus.CREATED).body(AdDto.Companion.fromDomain(createdAdDomain))
-        } catch (e: Exception) {
-            log.error("Error creating ad for user {}: {}", principal.userId, e.message, e)
-            handleOutcome(CommonOutcome.INTERNAL_ERROR)
-        }
+        val createdAdDomain = adService.createAd(principal.userId, request.title, request.categoryId)
+        return ResponseEntity.status(HttpStatus.CREATED).body(AdDto.fromDomain(createdAdDomain))
     }
 
     @Operation(
@@ -187,34 +177,15 @@ class ManageAdController(
         @PathVariable adId: String,
         @Valid @RequestBody request: UpdateAdRequestDto
     ): ResponseEntity<Any> {
-        val principal = HttpServletRequestAuthUtil.Companion.getPrincipal()
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
         log.info("User {} attempting to update ad {}", principal.userId, adId)
 
-        return try {
-            val updatedAdDomain = adService.updateAd(
-                adId = adId,
-                userId = principal.userId,
-                updateData = request.toDomain()
-            )
-            ResponseEntity.ok(AdDto.Companion.fromDomain(updatedAdDomain))
-        } catch (e: AdService.AdNotFoundException) {
-            log.warn("Update failed: Ad {} not found (requested by user {})", adId, principal.userId)
-            handleOutcome(AdOutcome.AD_NOT_FOUND)
-        } catch (e: AdService.AdCurrencyRoleException) {
-            log.warn("Update failed: Role required for currency (requested by user {})", principal.userId)
-            handleOutcome(e.outcome)
-        } catch (e: AdService.AdOperationException) {
-            log.warn("Update failed for ad {}: {} (requested by user {})", adId, e.message, principal.userId)
-            val outcome = AdOutcome.INVALID_OPERATION
-            val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
-            return ResponseEntity.status(outcome.httpCode).body(StatusResponseDto.fromOutcome(outcome, "$message ${e.message}"))
-        } catch (e: IllegalArgumentException) { // Catch invalid ObjectId format or other validation issues from toDomain()
-            log.warn("Update failed: {} for ad {} by user {}", e.message, adId, principal.userId)
-            handleOutcome(AdOutcome.INVALID_AD_ID)
-        } catch (e: Exception) {
-            log.error("Error updating ad {} for user {}: {}", adId, principal.userId, e.message, e)
-            handleOutcome(CommonOutcome.INTERNAL_ERROR)
-        }
+        val updatedAdDomain = adService.updateAd(
+            adId = adId,
+            userId = principal.userId,
+            updateData = request.toDomain()
+        )
+        return ResponseEntity.ok(AdDto.fromDomain(updatedAdDomain))
     }
 
     @Operation(
@@ -247,29 +218,10 @@ class ManageAdController(
         @Parameter(description = "Unique ID of the ad to activate")
         @PathVariable adId: String
     ): ResponseEntity<Any> {
-        val principal = HttpServletRequestAuthUtil.Companion.getPrincipal()
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
         log.info("User {} attempting to activate ad {}", principal.userId, adId)
-        return try {
-            val activatedAdDomain = adService.activateAd(adId, principal.userId)
-            ResponseEntity.ok(AdDto.fromDomain(activatedAdDomain))
-        } catch (e: AdService.AdNotFoundException) {
-            log.warn("Activation failed: Ad {} not found (requested by user {})", adId, principal.userId)
-            handleOutcome(AdOutcome.AD_NOT_FOUND)
-        } catch (e: AdService.AdCurrencyRoleException) {
-            log.warn("Activation failed: Role required for currency (requested by user {})", principal.userId)
-            handleOutcome(e.outcome)
-        } catch (e: AdService.AdOperationException) {
-            log.warn("Activation failed for ad {}: {} (requested by user {})", adId, e.message, principal.userId)
-            val outcome = AdOutcome.INVALID_OPERATION
-            val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
-            return ResponseEntity.status(outcome.httpCode).body(StatusResponseDto.fromOutcome(outcome, "$message ${e.message}"))
-        } catch (e: IllegalArgumentException) { // Catch invalid ObjectId format for adId
-            log.warn("Activation failed: Invalid ID format {} for ad {} by user {}", e.message, adId, principal.userId)
-            handleOutcome(AdOutcome.INVALID_AD_ID)
-        } catch (e: Exception) {
-            log.error("Error activating ad {} for user {}: {}", adId, principal.userId, e.message, e)
-            handleOutcome(CommonOutcome.INTERNAL_ERROR)
-        }
+        val activatedAdDomain = adService.activateAd(adId, principal.userId)
+        return ResponseEntity.ok(AdDto.fromDomain(activatedAdDomain))
     }
 
     @Operation(
@@ -302,23 +254,9 @@ class ManageAdController(
         @Parameter(description = "Unique ID of the ad to deactivate")
         @PathVariable adId: String
     ): ResponseEntity<Any> {
-        val principal = HttpServletRequestAuthUtil.Companion.getPrincipal()
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
         log.info("User {} attempting to deactivate ad {}", principal.userId, adId)
-        return try {
-            val deactivatedAdDomain = adService.deactivateAd(adId, principal.userId)
-            ResponseEntity.ok(AdDto.fromDomain(deactivatedAdDomain))
-        } catch (e: AdService.AdNotFoundException) {
-            log.warn("Deactivation failed: Ad {} not found (requested by user {})", adId, principal.userId)
-            handleOutcome(AdOutcome.AD_NOT_FOUND)
-        } catch (e: AdService.AdOperationException) {
-            log.warn("Deactivation failed for ad {}: {} (requested by user {})", adId, e.message, principal.userId)
-            handleOutcome(AdOutcome.INVALID_AD_STATUS)
-        } catch (e: IllegalArgumentException) { // Catch invalid ObjectId format for adId
-            log.warn("Deactivation failed: Invalid ID format {} for ad {} by user {}", e.message, adId, principal.userId)
-            handleOutcome(AdOutcome.INVALID_AD_ID)
-        } catch (e: Exception) {
-            log.error("Error deactivating ad {} for user {}: {}", adId, principal.userId, e.message, e)
-            handleOutcome(CommonOutcome.INTERNAL_ERROR)
-        }
+        val deactivatedAdDomain = adService.deactivateAd(adId, principal.userId)
+        return ResponseEntity.ok(AdDto.fromDomain(deactivatedAdDomain))
     }
 }

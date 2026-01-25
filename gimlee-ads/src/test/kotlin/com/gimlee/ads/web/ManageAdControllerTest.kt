@@ -52,12 +52,11 @@ class ManageAdControllerTest : StringSpec({
             stock = 1
         )
 
-        val response = controller.updateAd("ad1", request)
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdCurrencyRoleException> {
+            controller.updateAd("ad1", request)
+        }
 
-        response.statusCode shouldBe HttpStatus.FORBIDDEN
-        val body = response.body as StatusResponseDto
-        body.status shouldBe "AD_PIRATE_ROLE_REQUIRED"
-        body.success shouldBe false
+        exception.outcome shouldBe com.gimlee.ads.domain.AdOutcome.PIRATE_ROLE_REQUIRED
     }
 
     "updateAd should proceed when using ARRR with PIRATE role" {

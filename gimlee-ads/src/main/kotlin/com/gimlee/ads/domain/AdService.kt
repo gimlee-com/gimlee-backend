@@ -34,7 +34,7 @@ class AdService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     /** Thrown when an ad operation cannot be performed due to business rules. */
-    class AdOperationException(message: String) : RuntimeException(message)
+    class AdOperationException(val outcome: AdOutcome, vararg val args: Any) : RuntimeException()
 
     /** Thrown when a user lacks the required role for a currency. */
     class AdCurrencyRoleException(val outcome: AdOutcome) : RuntimeException()
@@ -68,7 +68,7 @@ class AdService(
         val savedDocument = try {
             adRepository.save(adDocument)
         } catch (e: IllegalStateException) {
-            throw AdOperationException(e.message ?: "Failed to create ad.")
+            throw AdOperationException(AdOutcome.CREATION_FAILED)
         }
         return savedDocument.toDomain()
     }
@@ -88,18 +88,18 @@ class AdService(
 
         if (existingAdDoc.userId != userObjectId) {
             log.warn("User {} attempted to update ad {} owned by {}", userId, adId, existingAdDoc.userId)
-            throw AdOperationException("User does not have permission to update this ad.")
+            throw AdOperationException(AdOutcome.NOT_AD_OWNER)
         }
 
         if (existingAdDoc.status != AdStatus.INACTIVE) {
             log.warn("Attempted to update ad {} which is not in INACTIVE state (current: {})", adId, existingAdDoc.status)
-            throw AdOperationException("Ad can only be updated when in INACTIVE state.")
+            throw AdOperationException(AdOutcome.INVALID_AD_STATUS)
         }
 
         val newTitle = updateData.title ?: existingAdDoc.title // Use existing if null provided
         if (newTitle.isBlank()) {
             log.warn("Attempted to update ad {} with blank title", adId)
-            throw AdOperationException("Title is mandatory and cannot be empty.")
+            throw AdOperationException(AdOutcome.TITLE_MANDATORY)
         }
 
         val newCityId = updateData.location?.cityId
@@ -120,7 +120,7 @@ class AdService(
 
         if (newMainPhotoPath != null && (newMediaPaths == null || !newMediaPaths.contains(newMainPhotoPath))) {
             log.warn("Update failed for ad {}: mainPhotoPath '{}' is not in mediaPaths list.", adId, newMainPhotoPath)
-            throw AdOperationException("Main photo path must be one of the media paths.")
+            throw AdOperationException(AdOutcome.INVALID_MAIN_PHOTO)
         }
         if ((newMediaPaths == null || newMediaPaths.isEmpty()) && newMainPhotoPath != null) {
             log.warn("Update failed for ad {}: mainPhotoPath is set but mediaPaths is empty. Clearing mainPhotoPath.", adId)
@@ -136,11 +136,7 @@ class AdService(
         }
 
         val newStock = updateData.stock ?: existingAdDoc.stock
-        try {
-            adStockService.validateStockLevel(adObjectId, newStock)
-        } catch (e: IllegalStateException) {
-            throw AdOperationException(e.message ?: "Invalid stock level.")
-        }
+        adStockService.validateStockLevel(adObjectId, newStock)
 
         val updatedAdDoc = existingAdDoc.copy(
             title = newTitle,
@@ -160,7 +156,7 @@ class AdService(
         val savedDocument = try {
             adRepository.save(updatedAdDoc)
         } catch (e: IllegalStateException) {
-            throw AdOperationException(e.message ?: "Failed to update ad.")
+            throw AdOperationException(AdOutcome.UPDATE_FAILED)
         }
         return savedDocument.toDomain()
     }
@@ -262,12 +258,12 @@ class AdService(
 
         if (existingAdDoc.userId != userObjectId) {
             log.warn("User {} attempted to activate ad {} owned by {}", userId, adId, existingAdDoc.userId)
-            throw AdOperationException("User does not have permission to activate this ad.")
+            throw AdOperationException(AdOutcome.NOT_AD_OWNER)
         }
 
         if (existingAdDoc.status != AdStatus.INACTIVE) {
             log.warn("Attempted to activate ad {} which is not in INACTIVE state (current: {})", adId, existingAdDoc.status)
-            throw AdOperationException("Ad can only be activated when in INACTIVE state.")
+            throw AdOperationException(AdOutcome.INVALID_AD_STATUS)
         }
 
         existingAdDoc.currency?.let {
@@ -286,7 +282,7 @@ class AdService(
         val savedDocument = try {
             adRepository.save(activatedAdDoc)
         } catch (e: IllegalStateException) {
-            throw AdOperationException(e.message ?: "Failed to activate ad.")
+            throw AdOperationException(AdOutcome.ACTIVATION_FAILED)
         }
         return savedDocument.toDomain()
     }
@@ -302,12 +298,12 @@ class AdService(
 
         if (existingAdDoc.userId != userObjectId) {
             log.warn("User {} attempted to deactivate ad {} owned by {}", userId, adId, existingAdDoc.userId)
-            throw AdOperationException("User does not have permission to deactivate this ad.")
+            throw AdOperationException(AdOutcome.NOT_AD_OWNER)
         }
 
         if (existingAdDoc.status != AdStatus.ACTIVE) {
             log.warn("Attempted to deactivate ad {} which is not in ACTIVE state (current: {})", adId, existingAdDoc.status)
-            throw AdOperationException("Ad can only be deactivated when in ACTIVE state.")
+            throw AdOperationException(AdOutcome.INVALID_AD_STATUS)
         }
 
         val deactivatedAdDoc = existingAdDoc.copy(
@@ -343,7 +339,7 @@ class AdService(
                 existingAd.location != null,
                 existingAd.stock
             )
-            throw AdOperationException("Ad cannot be activated until title, description, price (in a supported settlement currency), location and stock are all set. Stock must be greater than 0.")
+            throw AdOperationException(AdOutcome.INCOMPLETE_AD_DATA)
         }
     }
 
@@ -351,7 +347,7 @@ class AdService(
         if (categoryId == null) return null
         
         if (!categoryService.isLeaf(categoryId)) {
-            throw AdOperationException("Category must be a leaf node.")
+            throw AdOperationException(AdOutcome.CATEGORY_NOT_LEAF)
         }
         return categoryService.resolveCategoryPathIds(categoryId)
     }

@@ -194,7 +194,8 @@ class AdServiceTest : StringSpec({
             adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
         }
 
-        exception.message shouldBe "Currency USD is not allowed for settlement."
+        exception.outcome shouldBe AdOutcome.CURRENCY_NOT_ALLOWED
+        exception.args shouldBe arrayOf("USD")
     }
 
     "createAd should set stock" {
@@ -287,7 +288,7 @@ class AdServiceTest : StringSpec({
             adService.activateAd(adId.toHexString(), userId.toHexString())
         }
 
-        exception.message shouldBe "Ad cannot be activated until title, description, price (in a supported settlement currency), location and stock are all set. Stock must be greater than 0."
+        exception.outcome shouldBe AdOutcome.INCOMPLETE_AD_DATA
     }
 
     "activateAd should fail if currency is not a settlement one" {
@@ -318,10 +319,11 @@ class AdServiceTest : StringSpec({
             adService.activateAd(adId.toHexString(), userId.toHexString())
         }
 
-        exception.message shouldBe "Currency USD is not allowed for settlement."
+        exception.outcome shouldBe AdOutcome.CURRENCY_NOT_ALLOWED
+        exception.args shouldBe arrayOf("USD")
     }
 
-    "updateAd should fail if repository throws IllegalStateException (stock constraint)" {
+    "updateAd should fail if stock level is lower than locked stock" {
         val adId = ObjectId()
         val userId = ObjectId()
         val existingDoc = AdDocument(
@@ -344,7 +346,7 @@ class AdServiceTest : StringSpec({
         )
 
         every { adRepository.findById(adId) } returns existingDoc
-        every { adRepository.save(any()) } throws IllegalStateException("Stock (4) cannot be lower than locked stock (5).")
+        every { adStockService.validateStockLevel(adId, 4) } throws AdService.AdOperationException(AdOutcome.STOCK_LOWER_THAN_LOCKED, 4, 5)
 
         val updateRequest = UpdateAdRequest(stock = 4)
 
@@ -352,7 +354,8 @@ class AdServiceTest : StringSpec({
             adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
         }
 
-        exception.message shouldBe "Stock (4) cannot be lower than locked stock (5)."
+        exception.outcome shouldBe AdOutcome.STOCK_LOWER_THAN_LOCKED
+        exception.args shouldBe arrayOf(4, 5)
     }
 
     "createAd should fail if category is not a leaf" {
@@ -366,7 +369,7 @@ class AdServiceTest : StringSpec({
             adService.createAd(userId, title, categoryId)
         }
 
-        exception.message shouldBe "Category must be a leaf node."
+        exception.outcome shouldBe AdOutcome.CATEGORY_NOT_LEAF
     }
 
     "updateAd should fail if category is not a leaf" {
@@ -400,6 +403,6 @@ class AdServiceTest : StringSpec({
             adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
         }
 
-        exception.message shouldBe "Category must be a leaf node."
+        exception.outcome shouldBe AdOutcome.CATEGORY_NOT_LEAF
     }
 })

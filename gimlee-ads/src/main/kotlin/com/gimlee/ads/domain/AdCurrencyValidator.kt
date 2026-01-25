@@ -25,7 +25,7 @@ class AdCurrencyValidator(private val adCurrencyService: AdCurrencyService) {
                 }
                 throw AdService.AdCurrencyRoleException(outcome)
             } else {
-                throw AdService.AdOperationException("Currency ${currency.name} is not allowed for settlement.")
+                throw AdService.AdOperationException(AdOutcome.CURRENCY_NOT_ALLOWED, currency.name)
             }
         }
     }

@@ -82,9 +82,10 @@ class AdStockServiceTest : StringSpec({
         )
         every { adRepository.findById(adId) } returns ad
 
-        val exception = shouldThrow<IllegalStateException> {
+        val exception = shouldThrow<AdService.AdOperationException> {
             service.validateStockLevel(adId, 4)
         }
-        exception.message shouldBe "Stock (4) cannot be lower than locked stock (5)."
+        exception.outcome shouldBe AdOutcome.STOCK_LOWER_THAN_LOCKED
+        exception.args shouldBe arrayOf(4, 5)
     }
 })
