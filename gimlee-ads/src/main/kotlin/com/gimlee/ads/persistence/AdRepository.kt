@@ -7,21 +7,16 @@ import com.gimlee.common.persistence.mongo.MongoExceptionUtils
 import com.mongodb.MongoException
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.ReplaceOptions
-import com.mongodb.client.model.Sorts
-import com.mongodb.client.model.Updates
+import com.mongodb.client.model.*
 import org.bson.Document
 import org.bson.conversions.Bson
 import org.bson.types.Decimal128
 import org.bson.types.ObjectId
-import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Repository
-import java.math.BigDecimal
 
 @Repository
 class AdRepository(mongoDatabase: MongoDatabase) {
@@ -69,13 +64,9 @@ class AdRepository(mongoDatabase: MongoDatabase) {
         try {
             val result = collection.replaceOne(atomicFilter, doc, ReplaceOptions().upsert(true))
             if (result.matchedCount == 0L && result.upsertedId == null) {
-                // If it didn't match and didn't upsert, it means the document exists but lstk > stock.
-                // However, with upsert=true, MongoDB might try to insert and fail with DuplicateKey.
-                // We handle that in the catch block.
                 handleConstraintViolation(ad)
             }
         } catch (e: MongoException) {
-            // Check if it's a duplicate key error (code 11000)
             if (MongoExceptionUtils.isDuplicateKeyException(e)) {
                 handleConstraintViolation(ad)
             }
@@ -210,8 +201,9 @@ class AdRepository(mongoDatabase: MongoDatabase) {
     /**
      * Decrements both stock and locked stock by the specified quantity (used when purchase is complete).
      * Atomically deactivates the ad (sets status to INACTIVE) if the resulting stock is 0 or less.
+     * Returns the AdDocument BEFORE the update.
      */
-    fun decrementStockAndLockedStock(adId: ObjectId, quantity: Int = 1) {
+    fun decrementStockAndLockedStock(adId: ObjectId, quantity: Int = 1): AdDocument? {
         val filter = Filters.eq(AdDocument.FIELD_ID, adId)
 
         // Using aggregation pipeline update for atomic conditional status change
@@ -226,10 +218,31 @@ class AdRepository(mongoDatabase: MongoDatabase) {
                 ))
             )
         )
-        collection.updateOne(filter, pipeline)
+        return collection.findOneAndUpdate(filter, pipeline, FindOneAndUpdateOptions().returnDocument(ReturnDocument.BEFORE))
+            ?.let { mapToAdDocument(it) }
     }
 
+    /**
+     * Calculates the total active ads per category (including all ancestors).
+     */
+    fun countAdsPerCategory(): Map<Int, Long> {
+        val pipeline = listOf(
+            Aggregates.match(Filters.eq(AdDocument.FIELD_STATUS, AdStatus.ACTIVE.name)),
+            Aggregates.unwind("\$${AdDocument.FIELD_CATEGORY_IDS}"),
+            Aggregates.group("\$${AdDocument.FIELD_CATEGORY_IDS}", Accumulators.sum("count", 1L))
+        )
+        return collection.aggregate(pipeline)
+            .map { 
+                val id = it.getInteger("_id")
+                val count = (it.get("count") as Number).toLong()
+                id to count 
+            }
+            .toList().toMap()
+    }
 
+    fun clear() {
+        collection.deleteMany(Document())
+    }
 
     // --- Manual Mapping Functions ---
 

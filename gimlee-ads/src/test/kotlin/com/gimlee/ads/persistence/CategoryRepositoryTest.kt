@@ -12,6 +12,10 @@ class CategoryRepositoryTest(
     @Autowired private val categoryRepository: CategoryRepository
 ) : BaseIntegrationTest({
 
+    beforeSpec {
+        categoryRepository.clear()
+    }
+
     Given("A CategoryRepository") {
         When("upserting a new GPT category") {
             val now = Instant.now().toMicros()

@@ -10,11 +10,13 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.bson.types.ObjectId
+import org.springframework.context.ApplicationEventPublisher
 
 class AdStockServiceTest : StringSpec({
 
     val adRepository = mockk<AdRepository>(relaxed = true)
-    val service = AdStockService(adRepository)
+    val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
+    val service = AdStockService(adRepository, eventPublisher)
 
     "should increment locked stock" {
         val adId = ObjectId.get()

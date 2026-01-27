@@ -1,19 +1,19 @@
 package com.gimlee.api.web
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.gimlee.ads.web.dto.response.CurrencyInfoDto
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.domain.model.Currency
-import com.gimlee.ads.web.dto.response.CurrencyInfoDto
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 
 @AutoConfigureMockMvc
 @org.springframework.test.context.TestPropertySource(properties = ["gimlee.auth.jwt.enabled=false"])
@@ -53,9 +53,9 @@ class AdAllowedCurrenciesIntegrationTest(
 
             val currencies: List<CurrencyInfoDto> = objectMapper.readValue(result.response.contentAsString)
 
-            Then("it should only contain ARRR with localized name") {
+            Then("it should only contain ARRR with localized names") {
                 currencies shouldContainExactlyInAnyOrder listOf(
-                    CurrencyInfoDto(Currency.ARRR, "Pirate Chain")
+                    CurrencyInfoDto(Currency.ARRR, "Pirate Chain"),
                 )
             }
         }
@@ -69,7 +69,7 @@ class AdAllowedCurrenciesIntegrationTest(
 
             val currencies: List<CurrencyInfoDto> = objectMapper.readValue(result.response.contentAsString)
 
-            Then("it should only contain YEC with localized name") {
+            Then("it should only contain YEC with localized names") {
                 currencies shouldContainExactlyInAnyOrder listOf(
                     CurrencyInfoDto(Currency.YEC, "YCash")
                 )
@@ -85,7 +85,7 @@ class AdAllowedCurrenciesIntegrationTest(
 
             val currencies: List<CurrencyInfoDto> = objectMapper.readValue(result.response.contentAsString)
 
-            Then("it should contain both ARRR and YEC with localized names") {
+            Then("it should contain ARRR and YEC with localized names") {
                 currencies shouldContainExactlyInAnyOrder listOf(
                     CurrencyInfoDto(Currency.ARRR, "Pirate Chain"),
                     CurrencyInfoDto(Currency.YEC, "YCash")

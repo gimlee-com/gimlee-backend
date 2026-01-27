@@ -14,6 +14,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.bson.types.ObjectId
+import org.springframework.context.ApplicationEventPublisher
 import java.math.BigDecimal
 
 class AdServiceTest : StringSpec({
@@ -23,9 +24,10 @@ class AdServiceTest : StringSpec({
     val categoryService = mockk<CategoryService>(relaxed = true)
     val currencyConverterService = mockk<CurrencyConverterService>(relaxed = true)
     val userRoleRepository = mockk<UserRoleRepository>(relaxed = true)
+    val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
     val adCurrencyService = AdCurrencyService()
     val adCurrencyValidator = AdCurrencyValidator(adCurrencyService)
-    val adService = AdService(adRepository, adStockService, categoryService, currencyConverterService, adCurrencyValidator, adCurrencyService, userRoleRepository)
+    val adService = AdService(adRepository, adStockService, categoryService, currencyConverterService, adCurrencyValidator, adCurrencyService, userRoleRepository, eventPublisher)
 
     "updateAd should fail if using ARRR without PIRATE role" {
         val adId = ObjectId()

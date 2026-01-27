@@ -1,17 +1,14 @@
 package com.gimlee.ads.web
 
 import com.gimlee.ads.domain.CategoryService
+import com.gimlee.ads.web.dto.response.CategorySuggestionDto
 import com.gimlee.ads.web.dto.response.CategoryTreeDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.i18n.LocaleContextHolder
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @Tag(name = "Categories", description = "Endpoints for category traversal and lookup")
 @RestController
@@ -44,5 +41,18 @@ class CategoryController(private val categoryService: CategoryService) {
         @RequestParam(defaultValue = "1") depth: Int
     ): List<CategoryTreeDto> {
         return categoryService.getChildren(categoryId, depth, LocaleContextHolder.getLocale().toLanguageTag())
+    }
+
+    @Operation(
+        summary = "Get Category Suggestions",
+        description = "Returns a list of category leaf nodes matching the query, including full breadcrumb paths."
+    )
+    @ApiResponse(responseCode = "200", description = "List of category suggestions")
+    @GetMapping("/suggestions")
+    fun getSuggestions(
+        @Parameter(description = "Search phrase (e.g., 'electr')")
+        @RequestParam("p") query: String
+    ): List<CategorySuggestionDto> {
+        return categoryService.getSuggestions(query, LocaleContextHolder.getLocale().toLanguageTag())
     }
 }

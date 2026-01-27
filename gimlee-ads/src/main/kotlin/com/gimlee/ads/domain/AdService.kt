@@ -7,10 +7,12 @@ import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.model.Range
 import com.gimlee.common.toMicros
+import com.gimlee.events.AdStatusChangedEvent
 import com.gimlee.location.cities.data.cityDataById
 import com.gimlee.payments.domain.service.CurrencyConverterService
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -28,7 +30,8 @@ class AdService(
     private val currencyConverterService: CurrencyConverterService,
     private val adCurrencyValidator: AdCurrencyValidator,
     private val adCurrencyService: AdCurrencyService,
-    private val userRoleRepository: UserRoleRepository
+    private val userRoleRepository: UserRoleRepository,
+    private val eventPublisher: ApplicationEventPublisher
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -284,6 +287,14 @@ class AdService(
         } catch (e: IllegalStateException) {
             throw AdOperationException(AdOutcome.ACTIVATION_FAILED)
         }
+
+        eventPublisher.publishEvent(AdStatusChangedEvent(
+            adId = adId,
+            oldStatus = existingAdDoc.status.name,
+            newStatus = activatedAdDoc.status.name,
+            categoryIds = activatedAdDoc.categoryIds ?: emptyList()
+        ))
+
         return savedDocument.toDomain()
     }
 
@@ -313,6 +324,14 @@ class AdService(
 
         log.info("Deactivating ad {} for user {}", adId, userId)
         val savedDocument = adRepository.save(deactivatedAdDoc)
+
+        eventPublisher.publishEvent(AdStatusChangedEvent(
+            adId = adId,
+            oldStatus = existingAdDoc.status.name,
+            newStatus = deactivatedAdDoc.status.name,
+            categoryIds = deactivatedAdDoc.categoryIds ?: emptyList()
+        ))
+
         return savedDocument.toDomain()
     }
 

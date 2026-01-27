@@ -72,6 +72,10 @@ gimlee:
         lock:
           at-most: PT1H
           at-least: PT5M
+      grounding:
+        cron: "0 0 0 * * MON"
+        lock:
+          at-least: PT5M
     gpt:
       url-template: https://www.google.com/basepages/producttype/taxonomy-with-ids.%s.txt
       languages: en-US,pl-PL

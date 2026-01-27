@@ -21,6 +21,7 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
         const val FIELD_PARENT = "p"
         const val FIELD_FLAGS = "f"
         const val FIELD_NAME = "n"
+        const val FIELD_POPULARITY = "pop"
         const val FIELD_CREATED_AT = "crt"
         const val FIELD_UPDATED_AT = "upd"
         const val FIELD_DEPRECATED_FLAG = "dep" // Inside flags
@@ -106,6 +107,19 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
         return doc?.getInteger(FIELD_ID) ?: 0
     }
 
+    fun resetAllPopularity() {
+        collection.updateMany(Document(), Updates.set(FIELD_POPULARITY, 0L))
+    }
+
+    fun updatePopularity(categoryId: Int, count: Long) {
+        collection.updateOne(Filters.eq(FIELD_ID, categoryId), Updates.set(FIELD_POPULARITY, count))
+    }
+
+    fun incrementPopularity(categoryIds: List<Int>, delta: Long) {
+        if (categoryIds.isEmpty()) return
+        collection.updateMany(Filters.`in`(FIELD_ID, categoryIds), Updates.inc(FIELD_POPULARITY, delta))
+    }
+
     fun clear() {
         collection.deleteMany(Document())
     }
@@ -131,6 +145,7 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
             parent = doc.getInteger(FIELD_PARENT),
             flags = flagsMap,
             name = nameMap,
+            popularity = (doc.get(FIELD_POPULARITY) as? Number)?.toLong() ?: 0L,
             createdAt = doc.getLong(FIELD_CREATED_AT),
             updatedAt = doc.getLong(FIELD_UPDATED_AT)
         )

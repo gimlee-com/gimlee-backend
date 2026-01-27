@@ -23,6 +23,9 @@ dependencies {
     implementation(libs.springdoc.openapi.starter.webmvc.api)
     implementation(libs.shedlock.spring)
     implementation(libs.shedlock.provider.mongo)
+    implementation(libs.lucene.core)
+    implementation(libs.lucene.queryparser)
+    implementation(libs.lucene.analysis.common)
     
     testFixturesApi(libs.spring.boot.starter)
     testFixturesApi(libs.spring.boot.starter.test)

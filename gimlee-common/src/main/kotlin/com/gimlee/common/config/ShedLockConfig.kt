@@ -1,4 +1,4 @@
-package com.gimlee.ads.config
+package com.gimlee.common.config
 
 import com.mongodb.client.MongoDatabase
 import net.javacrumbs.shedlock.core.LockProvider
@@ -9,11 +9,10 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 @EnableSchedulerLock(defaultLockAtMostFor = "PT10M")
-class AdsSchedulingConfig {
+class ShedLockConfig {
 
     @Bean
-    fun adsLockProvider(mongoDatabase: MongoDatabase): LockProvider {
-        return MongoLockProvider(mongoDatabase.getCollection("gimlee-ads-shedlock"))
+    fun lockProvider(mongoDatabase: MongoDatabase): LockProvider {
+        return MongoLockProvider(mongoDatabase.getCollection("gimlee-shedlock"))
     }
 }
-

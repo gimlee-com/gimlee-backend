@@ -7,6 +7,8 @@ dependencies {
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.mongodb)
     implementation(libs.jakarta.validation)
+    implementation(libs.shedlock.spring)
+    implementation(libs.shedlock.provider.mongo)
     
     testFixturesApi(libs.spring.boot.starter.test)
     testFixturesApi(platform(libs.kotest.bom))

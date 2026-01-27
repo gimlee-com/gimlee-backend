@@ -6,6 +6,7 @@ data class Category(
     val parent: Int? = null,
     val flags: Map<String, Boolean> = emptyMap(),
     val name: Map<String, CategoryName> = emptyMap(),
+    val popularity: Long = 0,
     val createdAt: Long,
     val updatedAt: Long,
     val children: List<Category> = emptyList()

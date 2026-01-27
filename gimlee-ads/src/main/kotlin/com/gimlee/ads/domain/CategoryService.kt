@@ -3,13 +3,17 @@ package com.gimlee.ads.domain
 import com.gimlee.ads.domain.model.Category
 import com.gimlee.ads.persistence.CategoryRepository
 import com.gimlee.ads.web.dto.response.CategoryPathElementDto
+import com.gimlee.ads.web.dto.response.CategorySuggestionDto
 import com.gimlee.ads.web.dto.response.CategoryTreeDto
 import com.github.benmanes.caffeine.cache.Caffeine
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 
 @Service
-class CategoryService(private val categoryRepository: CategoryRepository) {
+class CategoryService(
+    private val categoryRepository: CategoryRepository,
+    private val categorySuggester: CategorySuggester
+) {
 
     private val categoriesCache = Caffeine.newBuilder()
         .expireAfterWrite(1, TimeUnit.HOURS)
@@ -18,7 +22,9 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
     private fun getAllCategories(): List<Category> {
         return categoriesCache.get("all") {
             val flatCategories = categoryRepository.findAllCategoriesBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
-            buildCategoryTree(flatCategories)
+            val tree = buildCategoryTree(flatCategories)
+            categorySuggester.reindex(flatCategories)
+            tree
         } ?: emptyList()
     }
 
@@ -118,6 +124,57 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
 
         val parentIds = categories.mapNotNull { it.parent }.toSet()
         return !parentIds.contains(categoryId)
+    }
+
+    /**
+     * Returns category suggestions based on the search query and language.
+     * Includes leaf descendants of matched parent categories.
+     */
+    fun getSuggestions(query: String, language: String, limit: Int = 10): List<CategorySuggestionDto> {
+        val allCategories = getAllCategories()
+        val matches = categorySuggester.search(query, language, limit * 2)
+        val categoryMap = allCategories.associateBy { it.id }
+
+        val suggestions = mutableListOf<CategorySuggestionDto>()
+        val seenIds = mutableSetOf<Int>()
+
+        matches.forEach { match ->
+            val category = categoryMap[match.id] ?: return@forEach
+
+            if (category.children.isEmpty()) {
+                if (seenIds.add(category.id)) {
+                    val path = getPath(category.id, categoryMap, language)
+                    if (path != null) {
+                        suggestions.add(CategorySuggestionDto(
+                            id = category.id,
+                            path = path,
+                            displayPath = path.joinToString(" > ") { it.name }
+                        ))
+                    }
+                }
+            } else {
+                val leaves = findLeafDescendants(category)
+                leaves.sortedByDescending { it.popularity }.take(5).forEach { leaf ->
+                    if (seenIds.add(leaf.id)) {
+                        val path = getPath(leaf.id, categoryMap, language)
+                        if (path != null) {
+                            suggestions.add(CategorySuggestionDto(
+                                id = leaf.id,
+                                path = path,
+                                displayPath = path.joinToString(" > ") { it.name }
+                            ))
+                        }
+                    }
+                }
+            }
+        }
+
+        return suggestions.take(limit)
+    }
+
+    private fun findLeafDescendants(category: Category): List<Category> {
+        if (category.children.isEmpty()) return listOf(category)
+        return category.children.flatMap { findLeafDescendants(it) }
     }
 
     /**

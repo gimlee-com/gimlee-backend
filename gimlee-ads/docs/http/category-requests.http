@@ -20,3 +20,8 @@ Accept-Language: en-US
 # Fetches the subcategories and their own subcategories.
 GET {{host}}/api/ads/categories/1/children?depth=2
 Accept-Language: en-US
+
+### Get Category Suggestions
+# Returns a list of category leaf nodes matching the query, including full breadcrumb paths.
+GET {{host}}/api/ads/categories/suggestions?p=electr
+Accept-Language: en-US
