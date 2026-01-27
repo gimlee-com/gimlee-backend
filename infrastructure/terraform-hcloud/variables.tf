@@ -9,11 +9,11 @@ variable "network_zone" {
 }
 
 variable "app_node_count" {
-  default = 2
+  default = 1
 }
 
 variable "app_server_type" {
-  default = "cpx11" # 2 vCPU, 2GB RAM
+  default = "cx23" # 2 vCPU, 2GB RAM
 }
 
 variable "db_server_type" {
