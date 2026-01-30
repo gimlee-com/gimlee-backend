@@ -50,7 +50,7 @@ class MediaController(
 
     @Operation(
         summary = "Upload Media",
-        description = "Uploads an image to the media store. The system generates medium and small thumbnails automatically."
+        description = "Uploads images to the media store. The system generates medium and small thumbnails automatically."
     )
     @ApiResponse(
         responseCode = "200",
@@ -59,9 +59,13 @@ class MediaController(
     )
     @PostMapping("/media/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun upload(
-        @Parameter(description = "The file to upload")
-        @RequestParam("files[]") file: Array<MultipartFile>
-    ) = MediaUploadResponseDto.fromMediaItem(pictureUploadService.uploadAndCreateThumbs(file.first().inputStream))
+        @Parameter(description = "The files to upload")
+        @RequestParam("files[]") files: Array<MultipartFile>
+    ): List<MediaUploadResponseDto> {
+        return files.map { file ->
+            MediaUploadResponseDto.fromMediaItem(pictureUploadService.uploadAndCreateThumbs(file.inputStream))
+        }
+    }
 
     @Operation(
         summary = "Get Media File",
