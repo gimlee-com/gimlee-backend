@@ -21,6 +21,7 @@ import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.web.dto.StatusResponseDto
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
+import java.io.InputStream
 import java.io.FileNotFoundException
 import jakarta.activation.MimetypesFileTypeMap
 import jakarta.servlet.http.HttpServletResponse
@@ -65,6 +66,31 @@ class MediaController(
         return files.map { file ->
             MediaUploadResponseDto.fromMediaItem(pictureUploadService.uploadAndCreateThumbs(file.inputStream))
         }
+    }
+
+    @Operation(
+        summary = "Upload Single Media File",
+        description = "Uploads a single image to the media store as raw request body."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Media uploaded successfully",
+        content = [Content(schema = Schema(implementation = MediaUploadResponseDto::class))]
+    )
+    @PostMapping(
+        "/media/upload/single",
+        consumes = [
+            MediaType.IMAGE_JPEG_VALUE,
+            "image/jpg",
+            "image/pjpeg",
+            MediaType.IMAGE_PNG_VALUE,
+            MediaType.APPLICATION_OCTET_STREAM_VALUE
+        ]
+    )
+    fun uploadSingle(
+        inputStream: InputStream
+    ): MediaUploadResponseDto {
+        return MediaUploadResponseDto.fromMediaItem(pictureUploadService.uploadAndCreateThumbs(inputStream))
     }
 
     @Operation(

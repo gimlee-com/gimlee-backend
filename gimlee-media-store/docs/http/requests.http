@@ -16,11 +16,18 @@ Content-Disposition: form-data; name="files[]"; filename="image.jpg"
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
 #
-# {
-#   "full": "/api/media?p=/path/to/image.jpg",
-#   "medium": "/api/media?p=/path/to/image_m.jpg",
-#   "small": "/api/media?p=/path/to/image_s.jpg"
-# }
+# [
+#   {
+#     "id": "697d1a636b00a21a27f1b1b4",
+#     "filename": "uuid",
+#     "extension": "jpg",
+#     "dateTime": "2026-01-30T20:53:55Z",
+#     "path": "/uuid.jpg",
+#     "xsThumbPath": "/thumbs-xs/uuid.jpg",
+#     "smThumbPath": "/thumbs-sm/uuid.jpg",
+#     "mdThumbPath": "/thumbs-md/uuid.jpg"
+#   }
+# ]
 
 
 ### Upload Media (PNG Example)
@@ -39,6 +46,45 @@ Content-Disposition: form-data; name="files[]"; filename="photo.png"
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
+#
+# [
+#   {
+#     "id": "697d1a636b00a21a27f1b1b4",
+#     "filename": "uuid",
+#     "extension": "jpg",
+#     "dateTime": "2026-01-30T20:53:55Z",
+#     "path": "/uuid.jpg",
+#     "xsThumbPath": "/thumbs-xs/uuid.jpg",
+#     "smThumbPath": "/thumbs-sm/uuid.jpg",
+#     "mdThumbPath": "/thumbs-md/uuid.jpg"
+#   }
+# ]
+#
+
+
+### Upload Single Media File (Raw Body)
+# Uploads a single image to the media store as raw request body.
+# Supported Content-Types: image/jpeg, image/jpg, image/png, application/octet-stream
+# @name uploadSingleMedia
+POST {{host}}/api/media/upload/single
+Content-Type: image/jpeg
+Authorization: Bearer {{auth_token}}
+
+< /path/to/your/image.jpg
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "id": "697d1a636b00a21a27f1b1b4",
+#   "filename": "uuid",
+#   "extension": "jpg",
+#   "dateTime": "2026-01-30T20:53:55Z",
+#   "path": "/uuid.jpg",
+#   "xsThumbPath": "/thumbs-xs/uuid.jpg",
+#   "smThumbPath": "/thumbs-sm/uuid.jpg",
+#   "mdThumbPath": "/thumbs-md/uuid.jpg"
+# }
 
 
 ### Get Media File
