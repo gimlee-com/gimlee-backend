@@ -107,6 +107,15 @@ Accept-Language: en-US
 #   "title": "Ad Title",
 #   "price": { "amount": 100, "currency": "ARRR" },
 #   "preferredPrice": { "amount": 25.50, "currency": "USD" },
+#   "user": {
+#     "userId": "60f8f9b3a9d9e8f8a8b8c8d8",
+#     "username": "pirate",
+#     "avatarUrl": "http://avatar.url",
+#     "presence": {
+#       "status": "ONLINE",
+#       "lastSeenAt": 1627468800000000
+#     }
+#   },
 #   ...
 # }
 

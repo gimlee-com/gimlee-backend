@@ -23,6 +23,8 @@ import com.gimlee.payments.domain.service.CurrencyConverterService
 import com.gimlee.user.domain.ProfileService
 import com.gimlee.user.domain.UserOutcome
 import com.gimlee.user.domain.UserPreferencesService
+import com.gimlee.user.domain.UserPresenceService
+import com.gimlee.user.web.dto.response.UserPresenceDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -47,6 +49,7 @@ class UserSpaceController(
     private val adService: AdService,
     private val categoryService: CategoryService,
     private val userPreferencesService: UserPreferencesService,
+    private val userPresenceService: UserPresenceService,
     private val currencyConverterService: CurrencyConverterService,
     private val messageSource: MessageSource
 ) {
@@ -106,9 +109,13 @@ class UserSpaceController(
             AdDiscoveryPreviewDto.fromAdPreview(previewDto, preferredPrice)
         }
 
+        val presence = userPresenceService.getUserPresence(userId)
+
         val userDetails = UserSpaceDetailsDto(
+            userId = userId,
             username = user.username!!,
-            avatarUrl = profile?.avatarUrl
+            avatarUrl = profile?.avatarUrl,
+            presence = UserPresenceDto.fromDomain(presence)
         )
 
         return ResponseEntity.ok(UserSpaceDto(user = userDetails, ads = adsDto))

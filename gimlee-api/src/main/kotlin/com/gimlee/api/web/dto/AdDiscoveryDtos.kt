@@ -46,9 +46,14 @@ data class AdDiscoveryDetailsDto(
     val categoryPath: List<CategoryPathElementDto>?,
     val mediaPaths: List<String>?,
     val mainPhotoPath: String?,
+    val user: UserSpaceDetailsDto? = null
 ) {
     companion object {
-        fun fromAdDetails(details: AdDetailsDto, preferredPrice: CurrencyAmountDto?): AdDiscoveryDetailsDto {
+        fun fromAdDetails(
+            details: AdDetailsDto,
+            preferredPrice: CurrencyAmountDto?,
+            user: UserSpaceDetailsDto? = null
+        ): AdDiscoveryDetailsDto {
             return AdDiscoveryDetailsDto(
                 id = details.id,
                 title = details.title,
@@ -59,7 +64,8 @@ data class AdDiscoveryDetailsDto(
                 categoryId = details.categoryId,
                 categoryPath = details.categoryPath,
                 mediaPaths = details.mediaPaths,
-                mainPhotoPath = details.mainPhotoPath
+                mainPhotoPath = details.mainPhotoPath,
+                user = user
             )
         }
     }

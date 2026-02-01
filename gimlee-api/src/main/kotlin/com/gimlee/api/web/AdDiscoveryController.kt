@@ -13,13 +13,18 @@ import com.gimlee.ads.web.dto.response.AdPreviewDto
 import com.gimlee.ads.web.dto.response.CurrencyAmountDto
 import com.gimlee.api.web.dto.AdDiscoveryDetailsDto
 import com.gimlee.api.web.dto.AdDiscoveryPreviewDto
+import com.gimlee.api.web.dto.UserSpaceDetailsDto
 import com.gimlee.auth.model.isEmptyOrNull
+import com.gimlee.auth.service.UserService
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.web.dto.StatusResponseDto
 import com.gimlee.payments.domain.service.CurrencyConverterService
+import com.gimlee.user.domain.ProfileService
 import com.gimlee.user.domain.UserPreferencesService
+import com.gimlee.user.domain.UserPresenceService
+import com.gimlee.user.web.dto.response.UserPresenceDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -44,7 +49,10 @@ import org.slf4j.LoggerFactory
 class AdDiscoveryController(
     private val adService: AdService,
     private val categoryService: CategoryService,
+    private val userService: UserService,
+    private val profileService: ProfileService,
     private val userPreferencesService: UserPreferencesService,
+    private val userPresenceService: UserPresenceService,
     private val currencyConverterService: CurrencyConverterService,
     private val messageSource: MessageSource
 ) {
@@ -147,7 +155,21 @@ class AdDiscoveryController(
         val detailsDto = AdDetailsDto.fromAd(ad, categoryPath)
         val preferredPrice = convertPrice(ad.price, preferredCurrency)
         
-        return ResponseEntity.ok(AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice))
+        val adUserId = ad.userId
+        val user = userService.findById(adUserId)
+        val profile = profileService.getProfile(adUserId)
+        val presence = userPresenceService.getUserPresence(adUserId)
+
+        val userDetails = user?.let {
+            UserSpaceDetailsDto(
+                userId = adUserId,
+                username = it.username!!,
+                avatarUrl = profile?.avatarUrl,
+                presence = UserPresenceDto.fromDomain(presence)
+            )
+        }
+
+        return ResponseEntity.ok(AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails))
     }
 
     private fun getPreferredCurrency(): Currency {
