@@ -2,6 +2,7 @@ dependencies {
     // Module dependencies
     implementation(project(":gimlee-common"))
     implementation(project(":gimlee-notifications"))
+    implementation(project(":gimlee-events"))
 
     // Common Kotlin dependencies
     implementation(libs.kotlin.stdlib)

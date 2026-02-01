@@ -4,5 +4,5 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-@EnableConfigurationProperties(UserPreferencesProperties::class)
+@EnableConfigurationProperties(UserPreferencesProperties::class, UserPresenceProperties::class)
 class UserPreferencesConfig

@@ -59,6 +59,9 @@ gimlee:
 
   # gimlee-user properties
   user:
+    presence:
+      flush-interval-ms: 60000
+      online-threshold-minutes: 5
     preferences:
       default-currency: USD
       currency-mappings:
