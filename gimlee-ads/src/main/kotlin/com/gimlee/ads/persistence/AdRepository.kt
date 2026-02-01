@@ -95,6 +95,9 @@ class AdRepository(mongoDatabase: MongoDatabase) {
         filters.createdBy?.let {
             queryFilters.add(Filters.eq(AdDocument.FIELD_USER_ID, ObjectId(it)))
         }
+        filters.excludeId?.let {
+            queryFilters.add(Filters.ne(AdDocument.FIELD_ID, ObjectId(it)))
+        }
         filters.categoryId?.let { intId ->
             queryFilters.add(Filters.eq(AdDocument.FIELD_CATEGORY_IDS, intId))
         }

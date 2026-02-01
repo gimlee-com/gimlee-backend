@@ -3,14 +3,19 @@ package com.gimlee.api.web
 import com.gimlee.ads.domain.AdOutcome
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.CategoryService
+import com.gimlee.ads.domain.model.AdFilters
+import com.gimlee.ads.domain.model.AdSorting
 import com.gimlee.ads.domain.model.AdStatus
+import com.gimlee.ads.domain.model.By
 import com.gimlee.ads.domain.model.CurrencyAmount
+import com.gimlee.ads.domain.model.Direction
 import com.gimlee.ads.web.dto.request.AdFiltersDto.Companion.toAdFilters
 import com.gimlee.ads.web.dto.request.AdSortingDto.Companion.toAdSorting
 import com.gimlee.ads.web.dto.request.FetchAdsRequestDto
 import com.gimlee.ads.web.dto.response.AdDetailsDto
 import com.gimlee.ads.web.dto.response.AdPreviewDto
 import com.gimlee.ads.web.dto.response.CurrencyAmountDto
+import com.gimlee.api.config.AdDiscoveryProperties
 import com.gimlee.api.web.dto.AdDiscoveryDetailsDto
 import com.gimlee.api.web.dto.AdDiscoveryPreviewDto
 import com.gimlee.api.web.dto.UserSpaceDetailsDto
@@ -56,6 +61,7 @@ class AdDiscoveryController(
     private val userPreferencesService: UserPreferencesService,
     private val userPresenceService: UserPresenceService,
     private val currencyConverterService: CurrencyConverterService,
+    private val adDiscoveryProperties: AdDiscoveryProperties,
     private val messageSource: MessageSource
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -172,7 +178,26 @@ class AdDiscoveryController(
             )
         }
 
-        return ResponseEntity.ok(AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails))
+        val otherAds = adService.getAds(
+            filters = AdFilters(
+                createdBy = adUserId,
+                excludeId = adId,
+                statuses = listOf(AdStatus.ACTIVE)
+            ),
+            sorting = AdSorting(By.CREATED_DATE, Direction.DESC),
+            pageRequest = PageRequest.of(0, adDiscoveryProperties.otherAdsCount)
+        )
+
+        val otherAdsCategoryIds = otherAds.content.mapNotNull { it.categoryId }.toSet()
+        val otherAdsCategoryPaths = categoryService.getFullCategoryPaths(otherAdsCategoryIds, LocaleContextHolder.getLocale().toLanguageTag())
+
+        val otherAdsDtos = otherAds.content.map { otherAd ->
+            val previewDto = AdPreviewDto.fromAd(otherAd, otherAd.categoryId?.let { id -> otherAdsCategoryPaths[id] })
+            val otherAdPreferredPrice = convertPrice(otherAd.price, preferredCurrency)
+            AdDiscoveryPreviewDto.fromAdPreview(previewDto, otherAdPreferredPrice)
+        }
+
+        return ResponseEntity.ok(AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails, otherAdsDtos))
     }
 
     private fun getPreferredCurrency(): Currency {

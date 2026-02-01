@@ -42,6 +42,8 @@ gimlee:
 
   # gimlee-ads properties
   ads:
+    discovery:
+      other-ads-count: 5
     category:
       sync:
         enabled: true

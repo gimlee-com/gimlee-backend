@@ -46,13 +46,16 @@ data class AdDiscoveryDetailsDto(
     val categoryPath: List<CategoryPathElementDto>?,
     val mediaPaths: List<String>?,
     val mainPhotoPath: String?,
-    val user: UserSpaceDetailsDto? = null
+    val user: UserSpaceDetailsDto? = null,
+    @Schema(description = "List of most recent other ads from the same user")
+    val otherAds: List<AdDiscoveryPreviewDto>? = null
 ) {
     companion object {
         fun fromAdDetails(
             details: AdDetailsDto,
             preferredPrice: CurrencyAmountDto?,
-            user: UserSpaceDetailsDto? = null
+            user: UserSpaceDetailsDto? = null,
+            otherAds: List<AdDiscoveryPreviewDto>? = null
         ): AdDiscoveryDetailsDto {
             return AdDiscoveryDetailsDto(
                 id = details.id,
@@ -65,7 +68,8 @@ data class AdDiscoveryDetailsDto(
                 categoryPath = details.categoryPath,
                 mediaPaths = details.mediaPaths,
                 mainPhotoPath = details.mainPhotoPath,
-                user = user
+                user = user,
+                otherAds = otherAds
             )
         }
     }

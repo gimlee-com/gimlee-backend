@@ -94,6 +94,7 @@ GET {{host}}/api/ads/featured/
 ### Fetch Single Ad Details
 # Fetches details for a specific ad by its ID.
 # Includes price in preferred currency.
+# Includes most recent other ads from the same user.
 # Replace {adId} with an actual Ad ID.
 # @name GetAdById
 GET {{host}}/api/ads/some-ad-id-12345
@@ -117,7 +118,18 @@ Accept-Language: en-US
 #     },
 #     "memberSince": 1627468800000000
 #   },
-#   ...
+#   "otherAds": [
+#     {
+#       "id": "another-ad-id-67890",
+#       "title": "Another Ad Title",
+#       "price": { "amount": 200, "currency": "ARRR" },
+#       "preferredPrice": { "amount": 51.00, "currency": "USD" },
+#       "mainPhotoPath": "path/to/photo.jpg",
+#       "categoryId": 123,
+#       "categoryPath": [...],
+#       "location": {...}
+#     }
+#   ]
 # }
 
 
