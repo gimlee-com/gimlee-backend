@@ -19,8 +19,10 @@ import com.gimlee.auth.service.UserService
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.domain.model.Outcome
+import com.gimlee.common.toMicros
 import com.gimlee.common.web.dto.StatusResponseDto
 import com.gimlee.payments.domain.service.CurrencyConverterService
+import java.time.Instant
 import com.gimlee.user.domain.ProfileService
 import com.gimlee.user.domain.UserPreferencesService
 import com.gimlee.user.domain.UserPresenceService
@@ -165,7 +167,8 @@ class AdDiscoveryController(
                 userId = adUserId,
                 username = it.username!!,
                 avatarUrl = profile?.avatarUrl,
-                presence = UserPresenceDto.fromDomain(presence)
+                presence = UserPresenceDto.fromDomain(presence),
+                memberSince = Instant.ofEpochSecond(it.id!!.timestamp.toLong()).toMicros()
             )
         }
 

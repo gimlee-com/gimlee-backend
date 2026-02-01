@@ -114,7 +114,8 @@ Accept-Language: en-US
 #     "presence": {
 #       "status": "ONLINE",
 #       "lastSeenAt": 1627468800000000
-#     }
+#     },
+#     "memberSince": 1627468800000000
 #   },
 #   ...
 # }

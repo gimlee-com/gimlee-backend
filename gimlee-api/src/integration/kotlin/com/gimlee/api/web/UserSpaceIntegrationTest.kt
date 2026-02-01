@@ -55,6 +55,7 @@ class UserSpaceIntegrationTest(
             Then("it should return user details and ads") {
                 content.contains("\"username\":\"$username\"") shouldBe true
                 content.contains("\"avatarUrl\":\"http://avatar.url\"") shouldBe true
+                content.contains("\"memberSince\":") shouldBe true
                 content.contains("\"title\":\"Pirate Treasure\"") shouldBe true
             }
         }

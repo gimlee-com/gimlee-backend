@@ -3,8 +3,10 @@ package com.gimlee.api.web
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
+import com.gimlee.auth.domain.User
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
+import com.gimlee.auth.persistence.UserRepository
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.domain.model.Currency
@@ -24,6 +26,7 @@ import java.time.Instant
 class AdDiscoveryIntegrationTest(
     private val mockMvc: MockMvc,
     private val adService: AdService,
+    private val userRepository: UserRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
     private val userPreferencesService: UserPreferencesService,
     private val userRoleRepository: UserRoleRepository
@@ -31,6 +34,7 @@ class AdDiscoveryIntegrationTest(
 
     Given("an ad and exchange rates") {
         val sellerId = ObjectId.get()
+        userRepository.save(User(id = sellerId, username = "seller"))
         userRoleRepository.add(sellerId, Role.USER)
         userRoleRepository.add(sellerId, Role.PIRATE)
         val sellerIdStr = sellerId.toHexString()
@@ -65,6 +69,7 @@ class AdDiscoveryIntegrationTest(
                 content.contains("\"price\":{\"amount\":100,\"currency\":\"ARRR\"}") shouldBe true
                 // USD has 2 decimal places. 100 * 0.5 = 50.00
                 content.contains("\"preferredPrice\":{\"amount\":50.00,\"currency\":\"USD\"}") shouldBe true
+                content.contains("\"memberSince\":") shouldBe true
             }
         }
 

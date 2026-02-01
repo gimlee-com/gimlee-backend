@@ -15,5 +15,6 @@ data class UserSpaceDetailsDto(
     val userId: String,
     val username: String,
     val avatarUrl: String?,
-    val presence: UserPresenceDto? = null
+    val presence: UserPresenceDto? = null,
+    val memberSince: Long
 )
