@@ -16,6 +16,10 @@ class UserService(private val userRepository: UserRepository) {
         }
     }
 
+    fun findByUsername(username: String): User? {
+        return userRepository.findOneByField(User.FIELD_USERNAME, username)
+    }
+
     fun findByIds(ids: List<String>): List<User> {
         val objectIds = ids.mapNotNull {
             try {

@@ -48,6 +48,7 @@ gimlee:
         /v3/api-docs/**,
         /ads/,
         /ads/**,
+        /spaces/**,
         /auth/register,
         /auth/register/**,
         /auth/login,

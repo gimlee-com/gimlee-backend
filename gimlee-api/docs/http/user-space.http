@@ -1,0 +1,27 @@
+### Fetch User Space
+GET {{host}}/api/spaces/user/{{test_username}}
+Accept: application/json
+
+> {%
+ client.test("Request executed successfully", function() {
+ client.assert(response.status === 200, "Response status is not 200");
+ });
+ client.test("Response contains user and ads", function() {
+ client.assert(response.body.hasOwnProperty("user"), "Response does not contain user");
+ client.assert(response.body.hasOwnProperty("ads"), "Response does not contain ads");
+ client.assert(response.body.user.username === "pirate", "Username is not pirate");
+ });
+%}
+
+### Fetch User Space - Not Found
+GET {{host}}/api/spaces/user/non-existent-user
+Accept: application/json
+
+> {%
+ client.test("Request executed successfully", function() {
+ client.assert(response.status === 404, "Response status is not 404");
+ });
+ client.test("Response status is USER_USER_NOT_FOUND", function() {
+ client.assert(response.body.status === "USER_USER_NOT_FOUND", "Outcome status is not USER_USER_NOT_FOUND");
+ });
+%}

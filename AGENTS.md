@@ -1,7 +1,12 @@
 # Gimlee Project Context for AI Agents
 
-## Project Overview
-Gimlee is a decentralized, peer-to-peer cryptocurrency marketplace. It facilitates the exchange of goods and services using cryptocurrency payments (currently PirateChain/ARRR) without financial intermediaries. The system employs a non-custodial payment verification mechanism via viewing keys.
+### Project Overview: Gimlee
+**Gimlee** is a decentralized, peer-to-peer (P2P) cryptocurrency marketplace.
+- **Goal**: Connect buyers and sellers directly for exchanging goods and services using crypto.
+- **Core Innovation**: Trustless, non-custodial payment verification. Sellers provide a **viewing key** (read-only), allowing the platform to verify payments on the blockchain without ever taking custody of funds.
+- **Current Focus**: Integration with **PirateChain (ARRR)**, with plans for Monero (XMR) and Firo (FIRO).
+- **Vision**: A community-driven, secure, and transparent economy that eliminates financial intermediaries.
+- **Ambition**: Gimlee is not a small-scale project; it is built to compete with global tech giants by providing a superior, privacy-centric, and decentralized alternative.
 
 ## Tech Stack & Architecture
 *   **Language:** Kotlin (primary), Java 21
