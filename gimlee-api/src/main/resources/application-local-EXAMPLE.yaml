@@ -42,18 +42,6 @@ gimlee:
 
   # gimlee-ads properties
   ads:
-    discovery:
-      other-ads-count: 5
-    category:
-      sync:
-        enabled: true
-        cron: "0 0 0 1 * ?"
-        lock:
-          at-most: PT1H
-          at-least: PT5M
-    gpt:
-      url-template: https://www.google.com/basepages/producttype/taxonomy-with-ids.%s.txt
-      languages: en-US,pl-PL
 
   # gimlee-media-store properties
   media:
