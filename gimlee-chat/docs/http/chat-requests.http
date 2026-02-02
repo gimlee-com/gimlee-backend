@@ -1,0 +1,21 @@
+### Send a message
+POST {{host}}/chat/{{chatId}}/messages
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "message": "Hello from Gimlee Chat!"
+}
+
+### Get chat history
+GET {{host}}/chat/{{chatId}}/messages?limit=20
+Authorization: Bearer {{token}}
+
+### Indicate typing
+POST {{host}}/chat/{{chatId}}/typing
+Authorization: Bearer {{token}}
+
+### Subscribe to chat events (SSE)
+GET {{host}}/chat/{{chatId}}/events
+Authorization: Bearer {{token}}
+Accept: text/event-stream

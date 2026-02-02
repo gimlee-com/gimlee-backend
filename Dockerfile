@@ -21,6 +21,7 @@ COPY gimlee-payments gimlee-payments
 COPY gimlee-ads gimlee-ads
 COPY gimlee-purchases gimlee-purchases
 COPY gimlee-user gimlee-user
+COPY gimlee-chat gimlee-chat
 COPY gimlee-api gimlee-api
 
 # Build the application

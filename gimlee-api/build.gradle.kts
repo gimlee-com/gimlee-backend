@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":gimlee-location"))
     implementation(project(":gimlee-purchases"))
     implementation(project(":gimlee-user"))
+    implementation(project(":gimlee-chat"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)

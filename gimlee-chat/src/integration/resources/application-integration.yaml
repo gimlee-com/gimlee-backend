@@ -1,0 +1,14 @@
+spring:
+  messages:
+    basename: i18n/messages,i18n/common/messages,i18n/chat/messages
+    encoding: UTF-8
+
+gimlee:
+  auth:
+    jwt:
+      enabled: true
+    rest:
+      unsecured-paths: /auth/login,/auth/register
+      jwt:
+        issuer: gimlee
+        key: testkey

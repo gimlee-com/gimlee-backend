@@ -27,7 +27,7 @@ spring:
       max-file-size: 15MB
       max-request-size: 51MB
   messages:
-    basename: i18n/messages,i18n/common/messages,i18n/auth/messages,i18n/purchases/messages,i18n/ads/messages,i18n/user/messages,i18n/payments/messages,i18n/location/messages,i18n/media/messages
+    basename: i18n/messages,i18n/common/messages,i18n/auth/messages,i18n/purchases/messages,i18n/ads/messages,i18n/user/messages,i18n/payments/messages,i18n/location/messages,i18n/media/messages,i18n/chat/messages
     encoding: UTF-8
 
 gimlee:
@@ -85,6 +85,17 @@ gimlee:
     gpt:
       url-template: https://www.google.com/basepages/producttype/taxonomy-with-ids.%s.txt
       languages: en-US,pl-PL
+
+  # gimlee-chat properties
+  chat:
+    history:
+      default-limit: 20
+    sse:
+      buffer-ms: 200
+      heartbeat-ms: 30000
+    persistence:
+      # batch-ms: 1000
+      # batch-size: 100
 
   # gimlee-payments properties
   payments:
