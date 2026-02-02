@@ -16,6 +16,7 @@ import org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerial
 	"com.gimlee.purchases",
 	"com.gimlee.user",
 	"com.gimlee.common",
+	"com.gimlee.chat",
 	"com.gimlee.api",
 ])
 class GimleeApiApplication

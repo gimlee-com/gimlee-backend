@@ -25,6 +25,7 @@
 *   `gimlee-location`: Location-based services.
 *   `gimlee-purchases`: Purchase management.
 *   `gimlee-user`: User preferences and user profile settings.
+*   `gimlee-chat`: Real-time messaging and chat history.
 *   `gimlee-events`: Internal event definitions.
 *   `gimlee-common`: Shared utilities and extensions.
 
@@ -49,6 +50,7 @@
 *   **Shared Test Fixtures:** Use the Gradle `java-test-fixtures` plugin (primarily in `gimlee-common`) to share common test utilities, base classes, and mocks across the project modules.
 *   **Authentication Mocking:** When testing controllers that depend on `HttpServletRequestAuthUtil.getPrincipal()`, use `mockMvc` with `requestAttr("principal", principal)` to simulate an authenticated user.
 *   **Unit Tests:** Use sparingly, only for quirky internal logic. Keep them simple with minimal context/mocking.
+*   **Performance Testing:** Use **Gatling** (Scala-based simulations) for load and performance testing of high-concurrency features, with scenarios and feeders located in the module's `src/gatling` directory.
 
 ### 3. Performance (`docs/development/performance-guidelines.md`)
 *   **UUIDs:** Always use **UUIDv7** (via `com.gimlee.common.UUIDv7`) unless technically impossible due to specific index constraints.
@@ -71,6 +73,7 @@
 *   **Facade Controllers:** Use `gimlee-api` for facade controllers that coordinate multiple module services. This minimizes front-end requests.
 *   **Decorator Pattern:** For complex initialization responses (e.g., `SessionInitController`), use a decorator pattern. Clients should be able to request specific data subsets via query parameters to optimize response payload and backend processing.
 *   **Component Precedence:** When multiple implementations of an interface are used (e.g., multiple price providers), use Spring's `@Order` annotation to define their precedence (lowest value = highest priority). Ensure the consuming service implements a robust fallback mechanism if a high-priority provider fails.
+*   **Sticky Chat:** For modules involving real-time state (like `gimlee-chat`), horizontal scaling requires "Sticky Chat" load balancing (consistent hashing based on `chatId`) to ensure event consistency across participants when using in-memory buffering.
 
 ### 5. Configuration (`docs/development/configuration-guidelines.md`)
 *   **Externalize Everything:** Timeouts, prefixes, retention periods, and monitoring delays must be configurable via `application.yaml`.

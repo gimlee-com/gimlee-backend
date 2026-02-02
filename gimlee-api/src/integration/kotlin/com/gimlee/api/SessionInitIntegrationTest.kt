@@ -71,6 +71,20 @@ class SessionInitIntegrationTest(
                 content.contains("\"userId\":\"$userId\"") shouldBe true
             }
         }
+
+        When("calling session init with publicChatId decorator") {
+            val result = mockMvc.get("/session/init") {
+                param("decorators", "publicChatId")
+                requestAttr("principal", principal)
+            }.andExpect {
+                status { isOk() }
+            }.andReturn()
+
+            Then("it should return the hardcoded public chat ID") {
+                val content = result.response.contentAsString
+                content.contains("\"publicChatId\":\"019c2016-1e0a-781d-bc00-c002ac9f350f\"") shouldBe true
+            }
+        }
     }
     
     Given("an unauthenticated user") {

@@ -12,5 +12,8 @@ data class SessionInitResponseDocumentationDto(
     val userProfile: UserProfileDto? = null,
 
     @Schema(description = "The user's preferred currency (included if 'preferredCurrency' decorator is requested)", example = "USD")
-    val preferredCurrency: String? = null
+    val preferredCurrency: String? = null,
+
+    @Schema(description = "The public chat ID (included if 'publicChatId' decorator is requested)", example = "019c2016-1e0a-781d-bc00-c002ac9f350f")
+    val publicChatId: String? = null
 )

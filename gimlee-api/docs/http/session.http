@@ -1,7 +1,11 @@
 ### Initialize Session with all decorators
-GET {{host}}/api/session/init?decorators=accessToken,userProfile,preferredCurrency
+GET {{host}}/api/session/init?decorators=accessToken,userProfile,preferredCurrency,publicChatId
 Accept: application/json
 Accept-Language: pl-PL
+
+### Initialize Session with only publicChatId
+GET {{host}}/api/session/init?decorators=publicChatId
+Accept: application/json
 
 ### Initialize Session with only preferredCurrency
 GET {{host}}/api/session/init?decorators=preferredCurrency
