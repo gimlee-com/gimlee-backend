@@ -1,21 +1,29 @@
 package com.gimlee.payments.domain.service
 
 import com.gimlee.common.domain.model.Currency
+import com.gimlee.payments.config.PaymentProperties
 import com.gimlee.payments.domain.model.ConversionException
 import com.gimlee.payments.domain.model.ConversionResult
 import com.gimlee.payments.domain.model.ConversionStep
 import com.gimlee.payments.domain.model.ExchangeRate
 import com.gimlee.payments.persistence.ExchangeRateRepository
+import com.github.benmanes.caffeine.cache.Caffeine
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
 import java.util.LinkedList
+import java.util.concurrent.TimeUnit
 
 @Service
 class CurrencyConverterService(
-    private val exchangeRateRepository: ExchangeRateRepository
+    private val exchangeRateRepository: ExchangeRateRepository,
+    private val paymentProperties: PaymentProperties
 ) {
+
+    private val ratesCache = Caffeine.newBuilder()
+        .expireAfterWrite(paymentProperties.exchange.cache.expireAfterWriteSeconds, TimeUnit.SECONDS)
+        .build<String, List<ExchangeRate>>()
 
     fun convert(amount: BigDecimal, from: Currency, to: Currency): ConversionResult {
         if (from == to) {
@@ -29,7 +37,9 @@ class CurrencyConverterService(
             )
         }
 
-        val allRates = exchangeRateRepository.findAllLatest()
+        val allRates = ratesCache.get("all") {
+            exchangeRateRepository.findAllLatest()
+        } ?: throw ConversionException("Could not retrieve exchange rates")
         val path = findShortestPath(from, to, allRates)
             ?: throw ConversionException("No conversion path found from $from to $to")
 

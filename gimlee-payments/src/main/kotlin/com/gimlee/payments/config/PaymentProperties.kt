@@ -38,7 +38,13 @@ data class ExchangeProperties(
     val bitmart: BitmartProperties = BitmartProperties(),
     val openExchangeRates: OpenExchangeRatesProperties = OpenExchangeRatesProperties(),
     @DefaultValue("60000")
-    val updateIntervalMs: Long = 60000
+    val updateIntervalMs: Long = 60000,
+    val cache: CacheProperties = CacheProperties()
+)
+
+data class CacheProperties(
+    @DefaultValue("60")
+    val expireAfterWriteSeconds: Long = 60
 )
 
 data class BitmartProperties(

@@ -3,6 +3,7 @@ package com.gimlee.payments.domain.service
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.payments.domain.model.ExchangeRate
 import com.gimlee.payments.persistence.ExchangeRateRepository
+import com.gimlee.payments.config.PaymentProperties
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -14,7 +15,8 @@ import java.time.Instant
 class CurrencyConverterServiceTest : StringSpec({
 
     val repository = mockk<ExchangeRateRepository>()
-    val service = CurrencyConverterService(repository)
+    val properties = PaymentProperties(timeoutHours = 1)
+    val service = CurrencyConverterService(repository, properties)
 
     "should convert directly if from and to are the same" {
         val amount = BigDecimal("100")

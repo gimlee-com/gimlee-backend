@@ -19,6 +19,10 @@ class CategoryService(
         .expireAfterWrite(1, TimeUnit.HOURS)
         .build<String, List<Category>>()
 
+    private val categoryMapCache = Caffeine.newBuilder()
+        .expireAfterWrite(1, TimeUnit.HOURS)
+        .build<String, Map<Int, Category>>()
+
     private fun getAllCategories(): List<Category> {
         return categoriesCache.get("all") {
             val flatCategories = categoryRepository.findAllCategoriesBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
@@ -26,6 +30,12 @@ class CategoryService(
             categorySuggester.reindex(flatCategories)
             tree
         } ?: emptyList()
+    }
+
+    private fun getCategoryMap(): Map<Int, Category> {
+        return categoryMapCache.get("all") {
+            getAllCategories().associateBy { it.id }
+        } ?: emptyMap()
     }
 
     private fun buildCategoryTree(flatCategories: List<Category>): List<Category> {
@@ -89,7 +99,7 @@ class CategoryService(
      * Falls back to en-US if the requested language is not available.
      */
     fun getFullCategoryPath(categoryId: Int, language: String): List<CategoryPathElementDto>? {
-        val categoryMap = getAllCategories().associateBy { it.id }
+        val categoryMap = getCategoryMap()
         return getPath(categoryId, categoryMap, language)
     }
 
@@ -98,7 +108,7 @@ class CategoryService(
      * Returns the list of integers in order from root to leaf.
      */
     fun resolveCategoryPathIds(leafId: Int): List<Int> {
-        val categoryMap = getAllCategories().associateBy { it.id }
+        val categoryMap = getCategoryMap()
         return getPathIds(leafId, categoryMap)
     }
 
@@ -108,7 +118,7 @@ class CategoryService(
     fun getFullCategoryPaths(categoryIds: Set<Int>, language: String): Map<Int, List<CategoryPathElementDto>> {
         if (categoryIds.isEmpty()) return emptyMap()
 
-        val categoryMap = getAllCategories().associateBy { it.id }
+        val categoryMap = getCategoryMap()
         return categoryIds.associateWith { id ->
             getPath(id, categoryMap, language)
         }.mapNotNull { (id, path) -> if (path != null) id to path else null }.toMap()
