@@ -1,10 +1,12 @@
 package com.gimlee.user.web
 
 import com.gimlee.auth.annotation.Privileged
+import com.gimlee.auth.service.UserService
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.common.domain.model.CommonOutcome
 import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.web.dto.StatusResponseDto
+import com.gimlee.user.domain.UserOutcome
 import com.gimlee.user.domain.UserPresenceService
 import com.gimlee.user.web.dto.request.UpdateUserPresenceRequestDto
 import com.gimlee.user.web.dto.response.UserPresenceDto
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/user")
 class UserPresenceController(
+    private val userService: UserService,
     private val userPresenceService: UserPresenceService,
     private val messageSource: MessageSource
 ) {
@@ -94,10 +97,16 @@ class UserPresenceController(
         description = "Presence retrieved successfully",
         content = [Content(schema = Schema(implementation = UserPresenceDto::class))]
     )
-    @GetMapping("/{userId}/presence")
+    @ApiResponse(
+        responseCode = "404",
+        description = "User not found. Possible status codes: USER_USER_NOT_FOUND",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @GetMapping("/{userName}/presence")
     @Privileged(role = "USER")
-    fun getUserPresence(@PathVariable userId: String): ResponseEntity<Any> {
-        val presence = userPresenceService.getUserPresence(userId)
+    fun getUserPresence(@PathVariable userName: String): ResponseEntity<Any> {
+        val user = userService.findByUsername(userName) ?: return handleOutcome(UserOutcome.USER_NOT_FOUND)
+        val presence = userPresenceService.getUserPresence(user.id!!.toHexString())
         return ResponseEntity.ok(UserPresenceDto.fromDomain(presence))
     }
 }
