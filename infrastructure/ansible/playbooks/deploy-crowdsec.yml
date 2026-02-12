@@ -1,0 +1,30 @@
+---
+- name: Deploy CrowdSec
+  hosts: app
+  become: true
+  vars:
+    crowdsec_collections:
+      - crowdsecurity/base-http-scenarios
+  tasks:
+    - name: Add CrowdSec repository
+      shell: curl -s https://install.crowdsec.net/install.sh | sh
+      args:
+        creates: /etc/apt/sources.list.d/crowdsec.list
+
+    - name: Install CrowdSec
+      apt:
+        name: crowdsec
+        state: present
+        update_cache: true
+
+    - name: Configure CrowdSec collections
+      command: "cscli collections install {{ item }}"
+      loop: "{{ crowdsec_collections }}"
+      register: cscli_output
+      changed_when: "'already installed' not in cscli_output.stdout"
+
+    - name: Restart CrowdSec
+      systemd:
+        name: crowdsec
+        state: restarted
+        enabled: true

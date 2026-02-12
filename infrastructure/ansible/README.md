@@ -30,7 +30,8 @@ wallet1 ansible_host=1.2.3.7
 - **`deploy-services.yml`**: Deploys MongoDB (on `db` nodes) and the PirateChain Full Node (on `wallet` nodes).
 - **`deploy-exporters.yml`**: Deploys system and database metrics collectors (Node Exporter & MongoDB Exporter).
 - **`deploy-monitoring.yml`**: Deploys the monitoring stack (Prometheus & Grafana) on the wallet node.
-- **`deploy-traefik.yml`**: Deploys the Traefik reverse proxy on `app` nodes to handle SSL (via Let's Encrypt) and load balancing.
+- **`deploy-crowdsec.yml`**: Deploys CrowdSec Security Engine for bot detection and analytics.
+- **`deploy-traefik.yml`**: Deploys the Traefik reverse proxy on `app` nodes to handle SSL (via Let's Encrypt), load balancing, and analytics integration.
 - **`deploy-app.yml`**: Deploys the Gimlee API application on `app` nodes.
 
 ## 3. Deployment Steps
@@ -68,13 +69,17 @@ ansible-playbook -i ../inventory.ini deploy-monitoring.yml \
   --extra-vars "grafana_password=YOUR_SECURE_PASSWORD"
 ```
 
-**4. Deploy Traefik Reverse Proxy**  
-   This deploys the Traefik reverse proxy to handle SSL and route traffic. It requires your domain and an email for Let's Encrypt SSL certificate registration.
+**4. Deploy CrowdSec & Traefik Reverse Proxy**  
+   CrowdSec provides bot detection, while Traefik handles SSL, routes traffic, and generates client fingerprints.
 ```bash
-   export DOMAIN="test-api.yourdomain.com"
-   export ACME_EMAIL="your-email@example.com"
+   # 1. Deploy CrowdSec
+   ansible-playbook -i ../inventory.ini deploy-crowdsec.yml
+
+   # 2. Deploy Traefik
    ansible-playbook -i ../inventory.ini deploy-traefik.yml \
-    --extra-vars "domain=test-api.gimlee.com"
+    --extra-vars "domain=test-api.gimlee.com" \
+    --extra-vars "email=your-email@example.com" \
+    --extra-vars "crowdsec_lapi_key=YOUR_GENERATED_LAPI_KEY"
 ```
 
 **5. Deploy the Gimlee API Application**  

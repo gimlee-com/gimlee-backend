@@ -31,15 +31,17 @@
           - "--providers.docker=true"
           - "--providers.docker.exposedbydefault=false"
           - "--entrypoints.web.address=:80"
-          # ADD these lines for a global, ACME-aware redirect
           - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
           - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-          #
           - "--entrypoints.websecure.address=:443"
           - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
           - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
           - "--certificatesresolvers.myresolver.acme.email={{ email }}"
           - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+          - "--experimental.plugins.bouncer.modulename=github.com/fargio/traefik-bouncer"
+          - "--experimental.plugins.bouncer.version=v0.4.0"
+          - "--experimental.plugins.fingerprint.modulename=github.com/traefik-plugins/client-fingerprint"
+          - "--experimental.plugins.fingerprint.version=v0.1.0"
         ports:
           - "80:80"
           - "443:443"
@@ -48,6 +50,16 @@
           - "/opt/traefik/acme.json:/letsencrypt/acme.json"
         labels:
           traefik.enable: "true"
+
+          # Middleware: CrowdSec Bouncer
+          traefik.http.middlewares.crowdsec-bouncer.plugin.bouncer.enabled: "true"
+          traefik.http.middlewares.crowdsec-bouncer.plugin.bouncer.crowdsecLapiScheme: "http"
+          traefik.http.middlewares.crowdsec-bouncer.plugin.bouncer.crowdsecLapiHost: "crowdsec:8080"
+          traefik.http.middlewares.crowdsec-bouncer.plugin.bouncer.crowdsecLapiKey: "{{ crowdsec_lapi_key }}"
+          traefik.http.middlewares.crowdsec-bouncer.plugin.bouncer.forwardedHeadersCustomName: "X-Crowdsec-Bot-Score"
+
+          # Middleware: Client Fingerprint
+          traefik.http.middlewares.client-fingerprint.plugin.fingerprint.headerName: "X-Client-Id"
 
           # Router for Traefik Health Check
           traefik.http.routers.health.rule: "Path(`/health`)"
