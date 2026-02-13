@@ -6,6 +6,7 @@ import com.gimlee.common.domain.model.Currency
 import com.gimlee.payments.config.PaymentProperties
 import com.gimlee.payments.config.ExchangeProperties
 import com.gimlee.payments.config.OpenExchangeRatesProperties
+import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -18,6 +19,8 @@ import java.math.BigDecimal
 import java.time.Instant
 
 class OpenExchangeRatesPriceProviderTest : StringSpec({
+    isolationMode = IsolationMode.InstancePerTest
+
     val httpClient = mockk<HttpClient>()
     val objectMapper = ObjectMapper().registerKotlinModule()
     val properties = PaymentProperties(

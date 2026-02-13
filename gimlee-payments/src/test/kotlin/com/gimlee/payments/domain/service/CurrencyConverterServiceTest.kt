@@ -5,6 +5,7 @@ import com.gimlee.payments.domain.model.ExchangeRate
 import com.gimlee.payments.persistence.ExchangeRateRepository
 import com.gimlee.payments.config.PaymentProperties
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -13,6 +14,8 @@ import java.math.BigDecimal
 import java.time.Instant
 
 class CurrencyConverterServiceTest : StringSpec({
+
+    isolationMode = IsolationMode.InstancePerTest
 
     val repository = mockk<ExchangeRateRepository>()
     val properties = PaymentProperties(timeoutHours = 1)
