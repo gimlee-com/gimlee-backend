@@ -1,0 +1,3 @@
+### Get ad visit statistics
+# Note: Visits are recorded implicitly when fetching ad details (GET /api/ads/{adId})
+GET {{host}}/api/ads/697521136dc8bc5048a7766e/stats

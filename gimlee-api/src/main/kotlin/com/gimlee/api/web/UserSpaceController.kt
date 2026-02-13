@@ -16,6 +16,7 @@ import com.gimlee.api.web.dto.UserSpaceDto
 import com.gimlee.auth.model.isEmptyOrNull
 import com.gimlee.auth.service.UserService
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
+import com.gimlee.common.annotation.Analytics
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.toMicros
@@ -80,6 +81,7 @@ class UserSpaceController(
         description = "User not found. Possible status codes: USER_USER_NOT_FOUND",
         content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
     )
+    @Analytics(type = "USER_SPACE_VIEW", targetId = "#userName")
     @GetMapping(path = ["/spaces/user/{userName}"])
     fun fetchUserSpace(
         @Parameter(description = "Username of the user")

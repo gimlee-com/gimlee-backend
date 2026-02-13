@@ -20,6 +20,7 @@ shedlock = "5.13.0"
 wiremock = "3.2.0"
 lucene = "9.11.1"
 gatling = "3.13.1"
+openhft-zero-allocation-hashing = "0.16"
 
 # --- Testing ---
 kotest = "5.9.1"
@@ -74,6 +75,7 @@ shedlock-provider-mongo = { module = "net.javacrumbs.shedlock:shedlock-provider-
 lucene-core = { module = "org.apache.lucene:lucene-core", version.ref = "lucene" }
 lucene-queryparser = { module = "org.apache.lucene:lucene-queryparser", version.ref = "lucene" }
 lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", version.ref = "lucene" }
+xxhash = { module = "net.openhft:zero-allocation-hashing", version.ref = "openhft-zero-allocation-hashing" }
 
 # --- Testing Libraries ---
 kotest-bom = { group = "io.kotest", name = "kotest-bom", version.ref = "kotest"}

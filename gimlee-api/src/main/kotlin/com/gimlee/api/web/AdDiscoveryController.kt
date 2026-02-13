@@ -2,6 +2,7 @@ package com.gimlee.api.web
 
 import com.gimlee.ads.domain.AdOutcome
 import com.gimlee.ads.domain.AdService
+import com.gimlee.ads.domain.AdVisitService
 import com.gimlee.ads.domain.CategoryService
 import com.gimlee.ads.domain.model.AdFilters
 import com.gimlee.ads.domain.model.AdSorting
@@ -18,16 +19,20 @@ import com.gimlee.ads.web.dto.response.CurrencyAmountDto
 import com.gimlee.api.config.AdDiscoveryProperties
 import com.gimlee.api.web.dto.AdDiscoveryDetailsDto
 import com.gimlee.api.web.dto.AdDiscoveryPreviewDto
+import com.gimlee.api.web.dto.AdVisitStatsDto
 import com.gimlee.api.web.dto.UserSpaceDetailsDto
 import com.gimlee.auth.model.isEmptyOrNull
 import com.gimlee.auth.service.UserService
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
+import com.gimlee.common.annotation.Analytics
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.toMicros
 import com.gimlee.common.web.dto.StatusResponseDto
 import com.gimlee.payments.domain.service.CurrencyConverterService
 import java.time.Instant
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import com.gimlee.user.domain.ProfileService
 import com.gimlee.user.domain.UserPreferencesService
 import com.gimlee.user.domain.UserPresenceService
@@ -55,6 +60,7 @@ import org.slf4j.LoggerFactory
 @RestController
 class AdDiscoveryController(
     private val adService: AdService,
+    private val adVisitService: AdVisitService,
     private val categoryService: CategoryService,
     private val userService: UserService,
     private val profileService: ProfileService,
@@ -81,6 +87,7 @@ class AdDiscoveryController(
     )
     @ApiResponse(responseCode = "200", description = "Paged list of ads")
     @Validated
+    @Analytics(type = "AD_LIST_VIEW")
     @GetMapping(path = ["/ads/"])
     fun fetchAds(@Valid @ParameterObject fetchAdsRequestDto: FetchAdsRequestDto): Page<AdDiscoveryPreviewDto> {
         val preferredCurrency = getPreferredCurrency()
@@ -109,6 +116,7 @@ class AdDiscoveryController(
         description = "Fetches featured ads. Includes prices in preferred currency."
     )
     @ApiResponse(responseCode = "200", description = "Paged list of featured ads")
+    @Analytics(type = "FEATURED_ADS_VIEW")
     @GetMapping(path = ["/ads/featured/"])
     fun fetchFeaturedAds(): Page<AdDiscoveryPreviewDto> {
         val pageOfFeaturedAds = adService.getFeaturedAds()
@@ -137,6 +145,7 @@ class AdDiscoveryController(
         description = "Ad not found. Possible status codes: AD_AD_NOT_FOUND",
         content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
     )
+    @Analytics(type = "AD_VIEW", targetId = "#adId")
     @GetMapping(path = ["/ads/{adId}"])
     fun fetchAd(
         @Parameter(description = "Unique ID of the ad")
@@ -224,5 +233,35 @@ class AdDiscoveryController(
             log.error("Failed to convert price from {} to {}: {}", price.currency, to, e.message)
             null
         }
+    }
+
+    @Operation(summary = "Get visit statistics for an ad")
+    @ApiResponse(responseCode = "200", description = "Visit statistics")
+    @GetMapping("/ads/{adId}/stats")
+    fun getStats(
+        @Parameter(description = "Unique ID of the ad")
+        @PathVariable(name = "adId", required = true) adId: String
+    ): ResponseEntity<AdVisitStatsDto> {
+        val now = LocalDate.now()
+        val thirtyDaysAgo = now.minusDays(30)
+        val startOfMonth = now.withDayOfMonth(1)
+        val startOfYear = now.withDayOfYear(1)
+        val beginningOfTime = LocalDate.of(2025, 1, 1)
+
+        val dailyVisits = adVisitService.getDailyVisits(adId, thirtyDaysAgo, now)
+        val formattedDaily = dailyVisits.mapKeys { it.key.format(DateTimeFormatter.ISO_LOCAL_DATE) }
+
+        val monthly = adVisitService.getVisitCount(adId, startOfMonth, now)
+        val yearly = adVisitService.getVisitCount(adId, startOfYear, now)
+        val total = adVisitService.getVisitCount(adId, beginningOfTime, now)
+
+        return ResponseEntity.ok(
+            AdVisitStatsDto(
+                daily = formattedDaily,
+                monthly = monthly,
+                yearly = yearly,
+                total = total
+            )
+        )
     }
 }

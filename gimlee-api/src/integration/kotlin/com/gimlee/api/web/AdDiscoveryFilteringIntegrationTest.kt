@@ -1,16 +1,19 @@
 package com.gimlee.api.web
 
 import com.gimlee.ads.domain.AdService
+import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
+import com.gimlee.auth.persistence.UserRepository
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.payments.domain.model.ExchangeRate
 import com.gimlee.payments.persistence.ExchangeRateRepository
 import com.gimlee.user.domain.UserPreferencesService
+import com.mongodb.client.MongoDatabase
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -24,10 +27,20 @@ import java.time.Instant
 class AdDiscoveryFilteringIntegrationTest(
     private val mockMvc: MockMvc,
     private val adService: AdService,
+    private val adRepository: AdRepository,
+    private val userRepository: UserRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
     private val userPreferencesService: UserPreferencesService,
-    private val userRoleRepository: UserRoleRepository
+    private val userRoleRepository: UserRoleRepository,
+    private val mongoDatabase: MongoDatabase
 ) : BaseIntegrationTest({
+
+    beforeSpec {
+        adRepository.clear()
+        exchangeRateRepository.clear()
+        mongoDatabase.getCollection(UserRepository.USERS_COLLECTION_NAME).deleteMany(org.bson.Document())
+        mongoDatabase.getCollection(UserRoleRepository.USER_ROLES_COLLECTION_NAME).deleteMany(org.bson.Document())
+    }
 
     Given("ads in different settlement currencies and exchange rates") {
         val sellerId = ObjectId.get()

@@ -1,14 +1,19 @@
+plugins {
+    `java-library`
+}
+
 dependencies {
     // Common Kotlin dependencies
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
-
+    
     // Dependencies
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.mongodb)
     implementation(libs.jakarta.validation)
     implementation(libs.shedlock.spring)
     implementation(libs.shedlock.provider.mongo)
+    api(libs.xxhash)
     
     testFixturesApi(libs.spring.boot.starter.test)
     testFixturesApi(platform(libs.kotest.bom))

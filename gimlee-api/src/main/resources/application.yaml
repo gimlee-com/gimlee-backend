@@ -48,6 +48,7 @@ gimlee:
         /v3/api-docs/**,
         /ads/,
         /ads/**,
+        /ads/*/stats,
         /spaces/**,
         /auth/register,
         /auth/register/**,
@@ -66,6 +67,13 @@ gimlee:
       default-currency: USD
       currency-mappings:
         pl-PL: PLN
+
+  # gimlee-analytics properties
+  analytics:
+    enabled: true
+    bot-score-threshold: 0.7
+    client-id-header: X-Client-Id
+    bot-score-header: X-Crowdsec-Bot-Score
 
   # gimlee-ads properties
   ads:
