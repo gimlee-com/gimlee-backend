@@ -81,5 +81,5 @@ data class AdDiscoveryDetailsDto(
 @Schema(description = "Ad statistics")
 data class AdDiscoveryStatsDto(
     @Schema(description = "Total number of views")
-    val views: Long
+    val viewsCount: Long
 )

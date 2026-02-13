@@ -210,7 +210,7 @@ class AdDiscoveryController(
         val beginningOfTime = LocalDate.of(2025, 1, 1)
         val now = LocalDate.now()
         val totalViews = adVisitService.getVisitCount(adId, beginningOfTime, now)
-        val stats = AdDiscoveryStatsDto(views = totalViews)
+        val stats = AdDiscoveryStatsDto(viewsCount = totalViews)
 
         return ResponseEntity.ok(AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails, otherAdsDtos, stats))
     }
