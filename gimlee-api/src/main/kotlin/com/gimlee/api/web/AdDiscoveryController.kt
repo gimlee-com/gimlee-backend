@@ -19,6 +19,7 @@ import com.gimlee.ads.web.dto.response.CurrencyAmountDto
 import com.gimlee.api.config.AdDiscoveryProperties
 import com.gimlee.api.web.dto.AdDiscoveryDetailsDto
 import com.gimlee.api.web.dto.AdDiscoveryPreviewDto
+import com.gimlee.api.web.dto.AdDiscoveryStatsDto
 import com.gimlee.api.web.dto.AdVisitStatsDto
 import com.gimlee.api.web.dto.UserSpaceDetailsDto
 import com.gimlee.auth.model.isEmptyOrNull
@@ -206,7 +207,12 @@ class AdDiscoveryController(
             AdDiscoveryPreviewDto.fromAdPreview(previewDto, otherAdPreferredPrice)
         }
 
-        return ResponseEntity.ok(AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails, otherAdsDtos))
+        val beginningOfTime = LocalDate.of(2025, 1, 1)
+        val now = LocalDate.now()
+        val totalViews = adVisitService.getVisitCount(adId, beginningOfTime, now)
+        val stats = AdDiscoveryStatsDto(views = totalViews)
+
+        return ResponseEntity.ok(AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails, otherAdsDtos, stats))
     }
 
     private fun getPreferredCurrency(): Currency {

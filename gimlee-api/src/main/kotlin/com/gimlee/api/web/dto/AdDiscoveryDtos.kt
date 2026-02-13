@@ -48,14 +48,16 @@ data class AdDiscoveryDetailsDto(
     val mainPhotoPath: String?,
     val user: UserSpaceDetailsDto? = null,
     @Schema(description = "List of most recent other ads from the same user")
-    val otherAds: List<AdDiscoveryPreviewDto>? = null
+    val otherAds: List<AdDiscoveryPreviewDto>? = null,
+    val stats: AdDiscoveryStatsDto? = null
 ) {
     companion object {
         fun fromAdDetails(
             details: AdDetailsDto,
             preferredPrice: CurrencyAmountDto?,
             user: UserSpaceDetailsDto? = null,
-            otherAds: List<AdDiscoveryPreviewDto>? = null
+            otherAds: List<AdDiscoveryPreviewDto>? = null,
+            stats: AdDiscoveryStatsDto? = null
         ): AdDiscoveryDetailsDto {
             return AdDiscoveryDetailsDto(
                 id = details.id,
@@ -69,8 +71,15 @@ data class AdDiscoveryDetailsDto(
                 mediaPaths = details.mediaPaths,
                 mainPhotoPath = details.mainPhotoPath,
                 user = user,
-                otherAds = otherAds
+                otherAds = otherAds,
+                stats = stats
             )
         }
     }
 }
+
+@Schema(description = "Ad statistics")
+data class AdDiscoveryStatsDto(
+    @Schema(description = "Total number of views")
+    val views: Long
+)
