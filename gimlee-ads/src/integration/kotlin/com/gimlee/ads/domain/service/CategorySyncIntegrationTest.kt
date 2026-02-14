@@ -8,8 +8,6 @@ import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.matchers.maps.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.context.TestPropertySource
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -93,14 +91,4 @@ class CategorySyncIntegrationTest(
             }
         }
     }
-}) {
-    companion object {
-        @JvmStatic
-        @DynamicPropertySource
-        fun configureProperties(registry: DynamicPropertyRegistry) {
-            registry.add("gimlee.ads.gpt.url-template") {
-                "http://localhost:${BaseIntegrationTest.wireMockServer.port()}/basepages/producttype/taxonomy-with-ids.%s.txt"
-            }
-        }
-    }
-}
+})

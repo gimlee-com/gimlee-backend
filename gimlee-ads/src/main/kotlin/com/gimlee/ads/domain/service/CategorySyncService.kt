@@ -23,7 +23,7 @@ class CategorySyncService(
     private val categoryRepository: CategoryRepository,
     private val taxonomyDownloader: TaxonomyDownloader,
     private val messageSource: MessageSource,
-    @Value("\${gimlee.ads.gpt.url-template:https://www.google.com/basepages/producttype/taxonomy-with-ids.%s.txt}")
+    @Value("\${gimlee.ads.gpt.url-template}")
     private val gptUrlTemplate: String,
     @Value("\${gimlee.ads.gpt.languages:en-US,pl-PL}")
     private val languages: List<String>,
