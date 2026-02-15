@@ -126,6 +126,7 @@ resource "digitalocean_firewall" "db" {
     protocol         = "tcp"
     port_range       = "27017"
     source_tags      = ["gimlee"]
+    source_addresses = [for ip in var.management_ips : "${ip}/32"]
   }
 
   # --- Allow Monitoring from Wallet Node ---

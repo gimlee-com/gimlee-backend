@@ -72,6 +72,22 @@ Navigate to this directory and run:
 
 ---
 
+## External Database Access (e.g., Studio 3T)
+
+By default, the MongoDB port (`27017`) is only accessible from the application nodes. If you need to access the database from your local machine, you can pass your public IP to the `management_ips` variable.
+
+### Option A: Command Line
+```bash
+terraform apply -var="ssh_key_name=..." -var='management_ips=["1.2.3.4"]'
+```
+
+### Option B: `terraform.tfvars`
+```hcl
+management_ips = ["1.2.3.4", "5.6.7.8"]
+```
+
+---
+
 ## 4. Outputs
 
 Once finished, Terraform will output the IP addresses:

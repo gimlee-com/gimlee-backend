@@ -167,7 +167,10 @@ resource "hcloud_firewall" "db" {
     direction = "in"
     protocol  = "tcp"
     port      = "27017"
-    source_ips = [for s in hcloud_server.app : "${s.ipv4_address}/32"]
+    source_ips = concat(
+      [for s in hcloud_server.app : "${s.ipv4_address}/32"],
+      [for ip in var.management_ips : "${ip}/32"]
+    )
   }
   # --- Allow Monitoring from Wallet Node ---
   rule {

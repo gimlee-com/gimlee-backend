@@ -27,3 +27,9 @@ variable "wallet_server_type" {
 variable "ssh_key_name" {
   description = "Name of the SSH key already uploaded to Hetzner Cloud"
 }
+
+variable "management_ips" {
+  type        = list(string)
+  default     = []
+  description = "List of external IP addresses allowed to access management ports (e.g. MongoDB, SSH if restricted)"
+}

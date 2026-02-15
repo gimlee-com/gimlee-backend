@@ -21,3 +21,9 @@ variable "wallet_size" {
 variable "ssh_key_name" {
   description = "Name of the SSH key in DigitalOcean"
 }
+
+variable "management_ips" {
+  type        = list(string)
+  default     = []
+  description = "List of external IP addresses allowed to access management ports"
+}
