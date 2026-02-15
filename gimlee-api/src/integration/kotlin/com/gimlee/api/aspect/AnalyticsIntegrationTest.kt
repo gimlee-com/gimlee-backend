@@ -57,6 +57,9 @@ class AnalyticsIntegrationTest(
                 await().atMost(5, TimeUnit.SECONDS).untilAsserted {
                     // Check ad visit repository (gimlee-ads side)
                     adVisitRepository.getVisitCount(ad.id, 20200101, 20991231) shouldBe 1
+                    
+                    // Check analytics event repository (gimlee-analytics side)
+                    analyticsEventRepository.count() shouldBe 1
                 }
             }
         }

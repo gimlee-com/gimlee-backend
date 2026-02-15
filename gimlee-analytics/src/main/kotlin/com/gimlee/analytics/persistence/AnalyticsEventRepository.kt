@@ -42,4 +42,8 @@ class AnalyticsEventRepository(mongoDatabase: MongoDatabase) {
     fun clear() {
         collection.deleteMany(Document())
     }
+
+    fun count(): Long {
+        return collection.countDocuments()
+    }
 }
