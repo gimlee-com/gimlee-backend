@@ -29,13 +29,11 @@ class AdDiscoveryFilteringIntegrationTest(
     private val mongoDatabase: MongoDatabase
 ) : BaseIntegrationTest({
 
-    beforeSpec {
-        adRepository.clear()
-        exchangeRateRepository.clear()
-        mongoDatabase.getCollection(UserRepository.USERS_COLLECTION_NAME).deleteMany(org.bson.Document())
-        mongoDatabase.getCollection(UserRoleRepository.USER_ROLES_COLLECTION_NAME).deleteMany(org.bson.Document())
-        mongoDatabase.getCollection("gimlee-user-preferences").deleteMany(org.bson.Document())
-    }
+    adRepository.clear()
+    exchangeRateRepository.clear()
+    mongoDatabase.getCollection(UserRepository.USERS_COLLECTION_NAME).deleteMany(org.bson.Document())
+    mongoDatabase.getCollection(UserRoleRepository.USER_ROLES_COLLECTION_NAME).deleteMany(org.bson.Document())
+    mongoDatabase.getCollection("gimlee-user-preferences").deleteMany(org.bson.Document())
 
     Given("ads in different settlement currencies and exchange rates") {
         val sellerId = ObjectId.get()
@@ -93,9 +91,8 @@ class AdDiscoveryFilteringIntegrationTest(
         ))
 
         When("filtering by price range 40-60 USD (as a guest, default currency USD)") {
-            val response = restClient.get("/ads/?minp=40&maxp=60")
-
             Then("it should find both the 100 ARRR ad and the 100 YEC ad") {
+                val response = restClient.get("/ads/?minp=40&maxp=60")
                 response.statusCode shouldBe 200
                 val content = response.body ?: ""
                 content.contains("ARRR Ad") shouldBe true
@@ -105,29 +102,28 @@ class AdDiscoveryFilteringIntegrationTest(
         }
         
         When("filtering by price range 90-110 ARRR (user prefers ARRR)") {
-            val userId = ObjectId.get().toHexString()
-            userPreferencesService.updateUserPreferences(userId, "en-US", "ARRR")
-            val token = restClient.createAuthHeader(
-                subject = userId,
-                username = "arrruser",
-                roles = listOf("USER")
-            )
-
-            // 100 ARRR is in range 90-110 ARRR
-            // 100 YEC = 50 USD = 100 ARRR (via USD)
-            
-            // Add ARRR to YEC rate for direct conversion or through USD
-            exchangeRateRepository.save(ExchangeRate(
-                baseCurrency = Currency.YEC,
-                quoteCurrency = Currency.ARRR,
-                rate = BigDecimal("1.0"),
-                updatedAt = Instant.now(),
-                source = "test"
-            ))
-
-            val response = restClient.get("/ads/?minp=90&maxp=110", token)
-
             Then("it should find both the 100 ARRR ad and the 100 YEC ad") {
+                val userId = ObjectId.get().toHexString()
+                userPreferencesService.updateUserPreferences(userId, "en-US", "ARRR")
+                val token = restClient.createAuthHeader(
+                    subject = userId,
+                    username = "arrruser",
+                    roles = listOf("USER")
+                )
+
+                // 100 ARRR is in range 90-110 ARRR
+                // 100 YEC = 50 USD = 100 ARRR (via USD)
+                
+                // Add ARRR to YEC rate for direct conversion or through USD
+                exchangeRateRepository.save(ExchangeRate(
+                    baseCurrency = Currency.YEC,
+                    quoteCurrency = Currency.ARRR,
+                    rate = BigDecimal("1.0"),
+                    updatedAt = Instant.now(),
+                    source = "test"
+                ))
+
+                val response = restClient.get("/ads/?minp=90&maxp=110", token)
                 response.statusCode shouldBe 200
                 val content = response.body ?: ""
                 content.contains("ARRR Ad") shouldBe true

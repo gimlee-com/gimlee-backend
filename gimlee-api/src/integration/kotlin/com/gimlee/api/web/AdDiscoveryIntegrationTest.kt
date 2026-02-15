@@ -28,13 +28,11 @@ class AdDiscoveryIntegrationTest(
     private val mongoDatabase: com.mongodb.client.MongoDatabase
 ) : BaseIntegrationTest({
 
-    beforeSpec {
-        adRepository.clear()
-        exchangeRateRepository.clear()
-        mongoDatabase.getCollection(UserRepository.USERS_COLLECTION_NAME).deleteMany(org.bson.Document())
-        mongoDatabase.getCollection(UserRoleRepository.USER_ROLES_COLLECTION_NAME).deleteMany(org.bson.Document())
-        mongoDatabase.getCollection("gimlee-user-preferences").deleteMany(org.bson.Document())
-    }
+    adRepository.clear()
+    exchangeRateRepository.clear()
+    mongoDatabase.getCollection(UserRepository.USERS_COLLECTION_NAME).deleteMany(org.bson.Document())
+    mongoDatabase.getCollection(UserRoleRepository.USER_ROLES_COLLECTION_NAME).deleteMany(org.bson.Document())
+    mongoDatabase.getCollection("gimlee-user-preferences").deleteMany(org.bson.Document())
 
     Given("an ad and exchange rates") {
         val sellerId = ObjectId.get()
@@ -62,12 +60,12 @@ class AdDiscoveryIntegrationTest(
         ))
 
         When("fetching the ad as a guest (default currency USD)") {
-            val response = restClient.get("/ads/${ad.id}")
-            response.statusCode shouldBe 200
-
-            val content = response.body ?: ""
-            
             Then("it should include the price in USD") {
+                val response = restClient.get("/ads/${ad.id}")
+                response.statusCode shouldBe 200
+
+                val content = response.body ?: ""
+
                 content.contains("\"price\":{\"amount\":100,\"currency\":\"ARRR\"}") shouldBe true
                 // USD has 2 decimal places. 100 * 0.5 = 50.00
                 content.contains("\"preferredPrice\":{\"amount\":50.00,\"currency\":\"USD\"}") shouldBe true
@@ -76,32 +74,31 @@ class AdDiscoveryIntegrationTest(
         }
 
         When("fetching the ad as a user with preferred currency ARRR") {
-            val userId = ObjectId.get().toHexString()
-            userPreferencesService.updateUserPreferences(userId, "en-US", "ARRR")
-            val token = restClient.createAuthHeader(
-                subject = userId,
-                username = "testuser",
-                roles = listOf("USER")
-            )
-
-            val response = restClient.get("/ads/${ad.id}", token)
-            response.statusCode shouldBe 200
-
-            val content = response.body ?: ""
-
             Then("it should include the price in ARRR") {
+                val userId = ObjectId.get().toHexString()
+                userPreferencesService.updateUserPreferences(userId, "en-US", "ARRR")
+                val token = restClient.createAuthHeader(
+                    subject = userId,
+                    username = "testuser",
+                    roles = listOf("USER")
+                )
+
+                val response = restClient.get("/ads/${ad.id}", token)
+                response.statusCode shouldBe 200
+
+                val content = response.body ?: ""
+                
                 // ARRR has 8 decimal places.
                 content.contains("\"preferredPrice\":{\"amount\":100.00000000,\"currency\":\"ARRR\"}") shouldBe true
             }
         }
         
         When("fetching multiple ads") {
-             val response = restClient.get("/ads/")
-             response.statusCode shouldBe 200
-
-            val content = response.body ?: ""
-            
             Then("they should also include preferredPrice") {
+                val response = restClient.get("/ads/")
+                response.statusCode shouldBe 200
+
+                val content = response.body ?: ""
                 content.contains("\"preferredPrice\":{\"amount\":50.00,\"currency\":\"USD\"}") shouldBe true
             }
         }

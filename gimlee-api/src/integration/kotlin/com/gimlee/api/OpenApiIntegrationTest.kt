@@ -1,17 +1,14 @@
 package com.gimlee.api
 
 import com.gimlee.common.BaseIntegrationTest
-import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import io.kotest.extensions.spring.SpringExtension
-import org.springframework.test.context.ActiveProfiles
 
-@SpringBootTest(properties = ["gimlee.auth.jwt.enabled=false"])
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = ["gimlee.auth.jwt.enabled=false"])
 @AutoConfigureMockMvc
 class OpenApiIntegrationTest(
     private val mockMvc: MockMvc

@@ -1,7 +1,6 @@
 package com.gimlee.chat
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.service.JwtTokenService
 import com.gimlee.chat.domain.ChatService
@@ -16,7 +15,6 @@ import org.bson.types.ObjectId
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 
 @AutoConfigureMockMvc
@@ -29,14 +27,12 @@ class ChatIntegrationTest(
     private val chatRepository: ChatRepository,
     private val chatService: ChatService,
     private val jwtTokenService: JwtTokenService,
-    @org.springframework.beans.factory.annotation.Value("\${local.server.port}") private val port: Int
 ) : BaseIntegrationTest({
 
     Given("a chat session") {
         val chatId = "test-chat-1"
-        val userId = org.bson.types.ObjectId.get().toHexString()
+        val userId = ObjectId.get().toHexString()
         val username = "testuser"
-        val principal = Principal(userId = userId, username = username, roles = listOf(Role.USER))
         val token = jwtTokenService.generateToken(userId, username, listOf(Role.USER), false)
 
         chatRepository.clear()

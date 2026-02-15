@@ -37,9 +37,8 @@ class AdVisibilityIntegrationTest(
         val inactiveAd = adService.createAd(sellerIdStr, "Inactive Ad", null, 10)
 
         When("fetching all ads via /ads/") {
-            val response = restClient.get("/ads/")
-
             Then("only the active ad should be returned") {
+                val response = restClient.get("/ads/")
                 response.statusCode shouldBe 200
                 val content = response.body ?: ""
                 content.contains("Active Ad") shouldBe true
@@ -48,9 +47,8 @@ class AdVisibilityIntegrationTest(
         }
 
         When("fetching featured ads via /ads/featured/") {
-            val response = restClient.get("/ads/featured/")
-
             Then("only the active ad should be returned") {
+                val response = restClient.get("/ads/featured/")
                 response.statusCode shouldBe 200
                 val content = response.body ?: ""
                 content.contains("Active Ad") shouldBe true
@@ -59,14 +57,13 @@ class AdVisibilityIntegrationTest(
         }
 
         When("fetching my ads via /sales/ads/") {
-            val token = restClient.createAuthHeader(
-                subject = sellerIdStr,
-                username = "seller",
-                roles = listOf("USER")
-            )
-            val response = restClient.get("/sales/ads/", token)
-
             Then("both active and inactive ads should be returned") {
+                val token = restClient.createAuthHeader(
+                    subject = sellerIdStr,
+                    username = "seller",
+                    roles = listOf("USER")
+                )
+                val response = restClient.get("/sales/ads/", token)
                 response.statusCode shouldBe 200
                 val content = response.body ?: ""
                 content.contains("Active Ad") shouldBe true
@@ -75,17 +72,15 @@ class AdVisibilityIntegrationTest(
         }
 
         When("fetching a single inactive ad via /ads/{adId}") {
-            val response = restClient.get("/ads/${inactiveAd.id}")
-
             Then("it should return 404 Not Found") {
+                val response = restClient.get("/ads/${inactiveAd.id}")
                 response.statusCode shouldBe 404
             }
         }
 
         When("fetching a single active ad via /ads/{adId}") {
-            val response = restClient.get("/ads/${activeAd.id}")
-
             Then("it should return 200 OK") {
+                val response = restClient.get("/ads/${activeAd.id}")
                 response.statusCode shouldBe 200
             }
         }
