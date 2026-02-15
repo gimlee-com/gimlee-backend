@@ -17,7 +17,7 @@ class AnalyticsEventService(
             targetId = event.targetId,
             timestampMicros = event.timestampMicros,
             sampleRate = event.sampleRate,
-            userId = event.userId?.let { ObjectId(it) },
+            userId = event.userId?.takeIf { it.isNotBlank() }?.let { ObjectId(it) },
             clientId = event.clientId,
             botScore = event.botScore,
             userAgent = event.userAgent,

@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    `java-test-fixtures`
 }
 
 dependencies {
@@ -11,6 +12,7 @@ dependencies {
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.mongodb)
     implementation(libs.jakarta.validation)
+    implementation(libs.jackson.module.kotlin)
     implementation(libs.shedlock.spring)
     implementation(libs.shedlock.provider.mongo)
     api(libs.xxhash)
@@ -25,6 +27,9 @@ dependencies {
     testFixturesApi(platform(libs.testcontainers.bom))
     testFixturesApi(libs.testcontainers.mongodb)
     testFixturesApi(libs.wiremock.standalone)
+    testFixturesApi(libs.httpclient5)
+    testFixturesApi(libs.jackson.module.kotlin)
+    testFixturesApi(libs.auth0.java.jwt)
 }
 
 sourceSets {

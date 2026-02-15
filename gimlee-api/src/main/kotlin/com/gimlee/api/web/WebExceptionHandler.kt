@@ -1,6 +1,16 @@
 package com.gimlee.api.web
 
+import com.gimlee.ads.domain.AdOutcome
+import com.gimlee.ads.domain.AdService
+import com.gimlee.auth.domain.AuthOutcome
+import com.gimlee.auth.exception.AuthenticationException
+import com.gimlee.auth.exception.AuthorizationException
+import com.gimlee.common.domain.model.CommonOutcome
+import com.gimlee.common.domain.model.Outcome
+import com.gimlee.common.web.dto.StatusResponseDto
 import org.apache.logging.log4j.LogManager
+import org.springframework.context.MessageSource
+import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -8,16 +18,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
-import com.gimlee.auth.exception.AuthenticationException
-import com.gimlee.auth.exception.AuthorizationException
-import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.AdOutcome
-import com.gimlee.common.domain.model.Outcome
-import com.gimlee.common.domain.model.CommonOutcome
-import com.gimlee.auth.domain.AuthOutcome
-import com.gimlee.common.web.dto.StatusResponseDto
-import org.springframework.context.MessageSource
-import org.springframework.context.i18n.LocaleContextHolder
 
 @ControllerAdvice(basePackages = ["com.gimlee"])
 class WebExceptionHandler(private val messageSource: MessageSource) : ResponseEntityExceptionHandler() {
@@ -67,8 +67,13 @@ class WebExceptionHandler(private val messageSource: MessageSource) : ResponseEn
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgumentException(ex: IllegalArgumentException, req: WebRequest): ResponseEntity<Any>? {
         log.warn("Illegal argument: ${ex.message}")
-        // Often caused by invalid ObjectId format in this context
-        return handleOutcome(AdOutcome.INVALID_AD_ID, req)
+        // Return specific outcome for ObjectId format issues, otherwise generic bad request
+        val outcome = if (ex.message?.contains("invalid hexadecimal representation", ignoreCase = true) == true) {
+            AdOutcome.INVALID_AD_ID
+        } else {
+            CommonOutcome.BAD_REQUEST
+        }
+        return handleOutcome(outcome, req)
     }
 
     private fun handleOutcome(outcome: Outcome, req: WebRequest): ResponseEntity<Any>? {

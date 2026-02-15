@@ -4,7 +4,6 @@ import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.persistence.AdRepository
-import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRepository
 import com.gimlee.auth.persistence.UserRoleRepository
@@ -16,16 +15,11 @@ import com.gimlee.user.domain.UserPreferencesService
 import com.mongodb.client.MongoDatabase
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.get
 import java.math.BigDecimal
 import java.time.Instant
 
-@AutoConfigureMockMvc
-@org.springframework.test.context.TestPropertySource(properties = ["gimlee.auth.jwt.enabled=false"])
+@org.springframework.test.context.TestPropertySource(properties = ["gimlee.auth.jwt.enabled=true"])
 class AdDiscoveryFilteringIntegrationTest(
-    private val mockMvc: MockMvc,
     private val adService: AdService,
     private val adRepository: AdRepository,
     private val userRepository: UserRepository,
@@ -99,16 +93,11 @@ class AdDiscoveryFilteringIntegrationTest(
         ))
 
         When("filtering by price range 40-60 USD (as a guest, default currency USD)") {
-            val result = mockMvc.get("/ads/") {
-                param("minp", "40")
-                param("maxp", "60")
-            }.andExpect {
-                status { isOk() }
-            }.andReturn()
+            val response = restClient.get("/ads/?minp=40&maxp=60")
 
-            val content = result.response.contentAsString
-            
             Then("it should find both the 100 ARRR ad and the 100 YEC ad") {
+                response.statusCode shouldBe 200
+                val content = response.body ?: ""
                 content.contains("ARRR Ad") shouldBe true
                 content.contains("YEC Ad") shouldBe true
                 content.contains("Expensive Ad") shouldBe false
@@ -118,7 +107,11 @@ class AdDiscoveryFilteringIntegrationTest(
         When("filtering by price range 90-110 ARRR (user prefers ARRR)") {
             val userId = ObjectId.get().toHexString()
             userPreferencesService.updateUserPreferences(userId, "en-US", "ARRR")
-            val principal = Principal(userId = userId, username = "arrruser", roles = listOf(Role.USER))
+            val token = restClient.createAuthHeader(
+                subject = userId,
+                username = "arrruser",
+                roles = listOf("USER")
+            )
 
             // 100 ARRR is in range 90-110 ARRR
             // 100 YEC = 50 USD = 100 ARRR (via USD)
@@ -132,17 +125,11 @@ class AdDiscoveryFilteringIntegrationTest(
                 source = "test"
             ))
 
-            val result = mockMvc.get("/ads/") {
-                requestAttr("principal", principal)
-                param("minp", "90")
-                param("maxp", "110")
-            }.andExpect {
-                status { isOk() }
-            }.andReturn()
-
-            val content = result.response.contentAsString
+            val response = restClient.get("/ads/?minp=90&maxp=110", token)
 
             Then("it should find both the 100 ARRR ad and the 100 YEC ad") {
+                response.statusCode shouldBe 200
+                val content = response.body ?: ""
                 content.contains("ARRR Ad") shouldBe true
                 content.contains("YEC Ad") shouldBe true
                 content.contains("Expensive Ad") shouldBe false

@@ -3,22 +3,16 @@ package com.gimlee.api
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
-import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.domain.model.Currency
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.get
 import java.math.BigDecimal
 
-@AutoConfigureMockMvc
-@org.springframework.test.context.TestPropertySource(properties = ["gimlee.auth.jwt.enabled=false"])
+@org.springframework.test.context.TestPropertySource(properties = ["gimlee.auth.jwt.enabled=true"])
 class AdVisibilityIntegrationTest(
-    private val mockMvc: MockMvc,
     private val adService: AdService,
     private val userRoleRepository: UserRoleRepository
 ) : BaseIntegrationTest({
@@ -41,72 +35,58 @@ class AdVisibilityIntegrationTest(
 
         // 2. Create an INACTIVE ad
         val inactiveAd = adService.createAd(sellerIdStr, "Inactive Ad", null, 10)
-        // Remains INACTIVE by default
-
-        // 3. Create another ad and DEACTIVATE it (though it's basically INACTIVE status)
-        // Wait, how do I delete an ad? Let's check AdService
-        // There is no delete method in AdService. Let's check AdStatus.
-        // AdStatus has DELETED. Maybe it's set manually in DB or via some hidden method?
-        // Let's check ManageAdController.
 
         When("fetching all ads via /ads/") {
-            val result = mockMvc.get("/ads/") {
-            }.andExpect {
-                status { isOk() }
-            }.andReturn()
+            val response = restClient.get("/ads/")
 
-            val content = result.response.contentAsString
-            
             Then("only the active ad should be returned") {
-                // We can use a simple check in content string or parse it
+                response.statusCode shouldBe 200
+                val content = response.body ?: ""
                 content.contains("Active Ad") shouldBe true
                 content.contains("Inactive Ad") shouldBe false
             }
         }
 
         When("fetching featured ads via /ads/featured/") {
-            val result = mockMvc.get("/ads/featured/") {
-            }.andExpect {
-                status { isOk() }
-            }.andReturn()
-
-            val content = result.response.contentAsString
+            val response = restClient.get("/ads/featured/")
 
             Then("only the active ad should be returned") {
+                response.statusCode shouldBe 200
+                val content = response.body ?: ""
                 content.contains("Active Ad") shouldBe true
                 content.contains("Inactive Ad") shouldBe false
             }
         }
 
         When("fetching my ads via /sales/ads/") {
-            val principal = Principal(userId = sellerIdStr, username = "seller", roles = listOf(Role.USER))
-            val result = mockMvc.get("/sales/ads/") {
-                requestAttr("principal", principal)
-            }.andExpect {
-                status { isOk() }
-            }.andReturn()
-
-            val content = result.response.contentAsString
+            val token = restClient.createAuthHeader(
+                subject = sellerIdStr,
+                username = "seller",
+                roles = listOf("USER")
+            )
+            val response = restClient.get("/sales/ads/", token)
 
             Then("both active and inactive ads should be returned") {
+                response.statusCode shouldBe 200
+                val content = response.body ?: ""
                 content.contains("Active Ad") shouldBe true
                 content.contains("Inactive Ad") shouldBe true
             }
         }
 
         When("fetching a single inactive ad via /ads/{adId}") {
-            mockMvc.get("/ads/${inactiveAd.id}") {
-            }.andExpect {
-                // Currently it returns 200 because I haven't implemented filtering for single ad yet.
-                // If I want to fix it, it should be 404.
-                status { isNotFound() }
+            val response = restClient.get("/ads/${inactiveAd.id}")
+
+            Then("it should return 404 Not Found") {
+                response.statusCode shouldBe 404
             }
         }
 
         When("fetching a single active ad via /ads/{adId}") {
-            mockMvc.get("/ads/${activeAd.id}") {
-            }.andExpect {
-                status { isOk() }
+            val response = restClient.get("/ads/${activeAd.id}")
+
+            Then("it should return 200 OK") {
+                response.statusCode shouldBe 200
             }
         }
     }

@@ -22,7 +22,6 @@ import com.gimlee.api.web.dto.AdDiscoveryPreviewDto
 import com.gimlee.api.web.dto.AdDiscoveryStatsDto
 import com.gimlee.api.web.dto.AdVisitStatsDto
 import com.gimlee.api.web.dto.UserSpaceDetailsDto
-import com.gimlee.auth.model.isEmptyOrNull
 import com.gimlee.auth.service.UserService
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.common.annotation.Analytics
@@ -31,9 +30,6 @@ import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.toMicros
 import com.gimlee.common.web.dto.StatusResponseDto
 import com.gimlee.payments.domain.service.CurrencyConverterService
-import java.time.Instant
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import com.gimlee.user.domain.ProfileService
 import com.gimlee.user.domain.UserPreferencesService
 import com.gimlee.user.domain.UserPresenceService
@@ -45,6 +41,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.slf4j.LoggerFactory
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
@@ -55,7 +52,9 @@ import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
-import org.slf4j.LoggerFactory
+import java.time.Instant
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Tag(name = "Ad Discovery", description = "Endpoints for searching and viewing ads")
 @RestController
@@ -217,8 +216,8 @@ class AdDiscoveryController(
 
     private fun getPreferredCurrency(): Currency {
         val principal = HttpServletRequestAuthUtil.getPrincipalOrNull()
-        val currencyCode = if (!principal.isEmptyOrNull()) {
-            userPreferencesService.getUserPreferences(principal!!.userId).preferredCurrency
+        val currencyCode = if (principal != null && principal.userId.isNotBlank()) {
+            userPreferencesService.getUserPreferences(principal.userId).preferredCurrency
         } else {
             userPreferencesService.getDefaultCurrency()
         }

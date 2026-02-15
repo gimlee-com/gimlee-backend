@@ -48,7 +48,8 @@
 *   **External API Mocking:** Use **WireMock** (available via `wireMockServer` in `BaseIntegrationTest`) to stub responses for all external service calls (e.g., exchange APIs, blockchain nodes) during integration tests.
 *   **Test-Specific Configurations:** If an interface design offers flexibility that is not currently required in production code, do not implement unnecessary features in the production codebase just to satisfy integration tests. Instead, use `@TestConfiguration` within the test class to provide mock or stub beans to achieve a complete test context.
 *   **Shared Test Fixtures:** Use the Gradle `java-test-fixtures` plugin (primarily in `gimlee-common`) to share common test utilities, base classes, and mocks across the project modules.
-*   **Authentication Mocking:** When testing controllers that depend on `HttpServletRequestAuthUtil.getPrincipal()`, use `mockMvc` with `requestAttr("principal", principal)` to simulate an authenticated user.
+*   **Integration Tests:** It is strictly **FORBIDDEN** to use `MockMvc` for integration testing. All controllers must be tested via actual HTTP calls to ensure the full request/response cycle, including serialization and validation, is correctly exercised.
+*   **Authentication Mocking:** When testing controllers that depend on `HttpServletRequestAuthUtil.getPrincipal()`, use the established HTTP-based authentication mechanisms or provide the necessary security context that reflects a real-world scenario. Do NOT use `mockMvc` with `requestAttr("principal", principal)`.
 *   **Unit Tests:** Use sparingly, only for quirky internal logic. Keep them simple with minimal context/mocking.
 *   **Performance Testing:** Use **Gatling** (Scala-based simulations) for load and performance testing of high-concurrency features, with scenarios and feeders located in the module's `src/gatling` directory.
 

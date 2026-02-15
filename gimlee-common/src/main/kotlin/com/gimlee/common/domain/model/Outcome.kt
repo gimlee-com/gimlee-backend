@@ -12,7 +12,8 @@ enum class CommonOutcome(
 ) : Outcome {
     SUCCESS(200, "status.common.success"),
     INTERNAL_ERROR(500, "status.common.internal-error"),
-    UNAUTHORIZED(403, "status.common.unauthorized");
+    UNAUTHORIZED(403, "status.common.unauthorized"),
+    BAD_REQUEST(400, "status.common.bad-request");
 
     override val code: String get() = name
 }

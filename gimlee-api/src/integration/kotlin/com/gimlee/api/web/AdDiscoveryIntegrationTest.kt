@@ -4,7 +4,6 @@ import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.domain.User
-import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRepository
 import com.gimlee.auth.persistence.UserRoleRepository
@@ -15,16 +14,11 @@ import com.gimlee.payments.persistence.ExchangeRateRepository
 import com.gimlee.user.domain.UserPreferencesService
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.get
 import java.math.BigDecimal
 import java.time.Instant
 
-@AutoConfigureMockMvc
-@org.springframework.test.context.TestPropertySource(properties = ["gimlee.auth.jwt.enabled=false"])
+@org.springframework.test.context.TestPropertySource(properties = ["gimlee.auth.jwt.enabled=true"])
 class AdDiscoveryIntegrationTest(
-    private val mockMvc: MockMvc,
     private val adService: AdService,
     private val adRepository: com.gimlee.ads.persistence.AdRepository,
     private val userRepository: UserRepository,
@@ -68,12 +62,10 @@ class AdDiscoveryIntegrationTest(
         ))
 
         When("fetching the ad as a guest (default currency USD)") {
-            val result = mockMvc.get("/ads/${ad.id}") {
-            }.andExpect {
-                status { isOk() }
-            }.andReturn()
+            val response = restClient.get("/ads/${ad.id}")
+            response.statusCode shouldBe 200
 
-            val content = result.response.contentAsString
+            val content = response.body ?: ""
             
             Then("it should include the price in USD") {
                 content.contains("\"price\":{\"amount\":100,\"currency\":\"ARRR\"}") shouldBe true
@@ -86,15 +78,16 @@ class AdDiscoveryIntegrationTest(
         When("fetching the ad as a user with preferred currency ARRR") {
             val userId = ObjectId.get().toHexString()
             userPreferencesService.updateUserPreferences(userId, "en-US", "ARRR")
-            val principal = Principal(userId = userId, username = "testuser", roles = listOf(Role.USER))
+            val token = restClient.createAuthHeader(
+                subject = userId,
+                username = "testuser",
+                roles = listOf("USER")
+            )
 
-            val result = mockMvc.get("/ads/${ad.id}") {
-                requestAttr("principal", principal)
-            }.andExpect {
-                status { isOk() }
-            }.andReturn()
+            val response = restClient.get("/ads/${ad.id}", token)
+            response.statusCode shouldBe 200
 
-            val content = result.response.contentAsString
+            val content = response.body ?: ""
 
             Then("it should include the price in ARRR") {
                 // ARRR has 8 decimal places.
@@ -103,12 +96,10 @@ class AdDiscoveryIntegrationTest(
         }
         
         When("fetching multiple ads") {
-             val result = mockMvc.get("/ads/") {
-            }.andExpect {
-                status { isOk() }
-            }.andReturn()
+             val response = restClient.get("/ads/")
+             response.statusCode shouldBe 200
 
-            val content = result.response.contentAsString
+            val content = response.body ?: ""
             
             Then("they should also include preferredPrice") {
                 content.contains("\"preferredPrice\":{\"amount\":50.00,\"currency\":\"USD\"}") shouldBe true
