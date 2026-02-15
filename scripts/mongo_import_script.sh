@@ -4,16 +4,20 @@
 DEFAULT_HOST="localhost"
 DEFAULT_PORT="27017"
 DEFAULT_DB="gimlee"
+DEFAULT_AUTH_DB="admin"
 
 # Initialize variables with default values
 HOST=$DEFAULT_HOST
 PORT=$DEFAULT_PORT
 DB=$DEFAULT_DB
+AUTH_DB=$DEFAULT_AUTH_DB
 COLLECTION=""
 JSON_FILE=""
+USER=""
+PASS=""
 
 usage() {
-  echo "Usage: $0 -f <json_file_path> [-h <host>] [-p <port>] [-d <database>] [-c <collection>]"
+  echo "Usage: $0 -f <json_file_path> [-h <host>] [-p <port>] [-d <database>] [-c <collection>] [-u <user>] [-P <password>] [-A <auth_db>]"
   echo ""
   echo "Options:"
   echo "  -f <json_file_path>   Path to the JSON file to import (required)."
@@ -21,12 +25,15 @@ usage() {
   echo "  -p <port>             MongoDB port (default: $DEFAULT_PORT)."
   echo "  -d <database>         MongoDB database name (default: $DEFAULT_DB)."
   echo "  -c <collection>       MongoDB collection name (required)."
+  echo "  -u <user>             MongoDB username (optional)."
+  echo "  -P <password>         MongoDB password (optional)."
+  echo "  -A <auth_db>          MongoDB authentication database (default: $DEFAULT_AUTH_DB)."
   echo ""
-  echo "Example: $0 -f ./mydata.json -d mydatabase -c mycollection"
+  echo "Example: $0 -f ./mydata.json -d mydatabase -c mycollection -u admin -P password"
   exit 1
 }
 
-while getopts ":h:p:d:c:f:" opt; do
+while getopts ":h:p:d:c:f:u:P:A:" opt; do
   case ${opt} in
     h )
       HOST=$OPTARG
@@ -42,6 +49,15 @@ while getopts ":h:p:d:c:f:" opt; do
       ;;
     f )
       JSON_FILE=$OPTARG
+      ;;
+    u )
+      USER=$OPTARG
+      ;;
+    P )
+      PASS=$OPTARG
+      ;;
+    A )
+      AUTH_DB=$OPTARG
       ;;
     \? )
       echo "Invalid option: $OPTARG" 1>&2
@@ -66,6 +82,10 @@ if [ ! -f "$JSON_FILE" ]; then
 fi
 
 MONGOIMPORT_CMD="mongoimport --host ${HOST} --port ${PORT} --db ${DB} --collection ${COLLECTION} --file ${JSON_FILE} --jsonArray"
+
+if [ -n "$USER" ]; then
+  MONGOIMPORT_CMD="${MONGOIMPORT_CMD} --username ${USER} --password ${PASS} --authenticationDatabase ${AUTH_DB}"
+fi
 
 echo "Importing '$JSON_FILE' into MongoDB:"
 echo "  Host:       $HOST"

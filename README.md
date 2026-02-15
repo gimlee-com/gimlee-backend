@@ -68,7 +68,7 @@ This section guides developers looking to contribute or run a local instance for
 
 *   **Java Development Kit (JDK):** Version 21 or later.
 *   **MongoDB:** Version 8.0 or later. The provided Docker configuration simplifies local setup:
-    `docker-compose -f docker/mongo/docker-compose.yml up`.
+    `docker-compose -f docker/mongo/docker-compose.yml up`. Authentication is enabled by default with `admin` as the username and `password` as the password.
 *   **Flyway CLI:** For database migrations, ensure the Flyway CLI is installed and available in your PATH.
 *   **PirateChain Full Node:** A running [PirateChain](https://piratechain.com) full node wallet is required for 
     transaction verification during development. (*Note: By default, this node will connect to the PirateChain mainnet.*)
@@ -130,7 +130,7 @@ You can find a helper [Flyway CLI installation shell script](scripts/install_fly
 
 Once the flyway CLI is set up, run the following commands:
 ```
-flyway migrate -configFiles=gimlee-ads/flyway.conf -baselineOnMigrate=true -url=jdbc:mongodb://localhost:27017/gimlee-ads
+flyway migrate -configFiles=gimlee-ads/flyway.conf -baselineOnMigrate=true -url="jdbc:mongodb://admin:password@localhost:27017/gimlee?authSource=admin"
 ```
 
 ## Infrastructure & Deployment

@@ -12,16 +12,44 @@
       community.docker.docker_container:
         name: mongodb
         image: mongo:8.0
+        command: mongod --auth
         restart_policy: always
+        env:
+          MONGO_INITDB_ROOT_USERNAME: "{{ mongodb_user }}"
+          MONGO_INITDB_ROOT_PASSWORD: "{{ mongodb_password }}"
         ports:
           - "27017:27017"
         volumes:
           - /opt/mongodb/data:/data/db
 
-    - name: Wait for MongoDB to be ready
-      wait_for:
-        port: 27017
-        timeout: 30
+    - name: Wait for MongoDB to be fully ready
+      shell: |
+        docker exec mongodb mongosh --eval "db.adminCommand('ping')" --quiet
+      register: mongo_ready
+      until: mongo_ready.rc == 0
+      retries: 20
+      delay: 3
+
+    - name: Ensure MongoDB root user exists (handles transition for existing data)
+      shell: |
+        # Try to authenticate with the provided credentials.
+        # If this succeeds, the user already exists with the correct password.
+        if docker exec mongodb mongosh admin -u "{{ mongodb_user }}" -p "{{ mongodb_password }}" --eval "db.adminCommand('ping')" --quiet > /dev/null 2>&1; then
+          echo "ALREADY_AUTHENTICATED"
+        else
+          # If authentication fails, try to create the user using the localhost exception.
+          # This works if no users have been created yet.
+          if docker exec mongodb mongosh admin --eval "db.createUser({ user: '{{ mongodb_user }}', pwd: '{{ mongodb_password }}', roles: [ { role: 'root', db: 'admin' } ] })" --quiet; then
+            echo "USER_CREATED"
+          else
+            # If creation fails, it might be because the user already exists but with a different password.
+            # In a production transition, we want to know if we are stuck.
+            echo "FAILED_TO_AUTHENTICATE_OR_CREATE"
+            exit 1
+          fi
+        fi
+      register: mongodb_init_status
+      changed_when: "'USER_CREATED' in mongodb_init_status.stdout"
 
     - name: Create Flyway migrations directory
       file:
@@ -52,7 +80,7 @@
         flyway migrate
         -configFiles=/opt/flyway/{{ item }}/flyway.conf
         -locations=filesystem:/opt/flyway/{{ item }}/migrations
-        -url=jdbc:mongodb://localhost:27017/gimlee
+        -url="jdbc:mongodb://{{ mongodb_user }}:{{ mongodb_password | urlencode }}@localhost:27017/gimlee?authSource=admin"
         -baselineOnMigrate=true
       loop:
         - gimlee-ads

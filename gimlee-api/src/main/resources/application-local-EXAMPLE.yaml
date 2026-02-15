@@ -2,7 +2,7 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://localhost:27017/gimlee?maxPoolSize=10
+      uri: mongodb://admin:password@localhost:27017/gimlee?authSource=admin&maxPoolSize=10
       repositories:
         type: auto
   # email config

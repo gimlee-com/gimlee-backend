@@ -6,7 +6,7 @@
     image_tag: "master"
     # Target environment profile (e.g., test, prod)
     spring_profile: "test"
-    mongodb_uri: "mongodb://{{ hostvars['db1']['ansible_host'] }}:27017/gimlee"
+    mongodb_uri: "mongodb://{{ mongodb_user }}:{{ mongodb_password | urlencode }}@{{ hostvars['db1']['ansible_host'] }}:27017/gimlee?authSource=admin"
     piratechain_rpc: "http://{{ hostvars['wallet1']['ansible_host'] }}:45453"
     ycash_rpc: "http://{{ hostvars['wallet1']['ansible_host'] }}:{{ ycash_rpc_port | default(19232) }}"
   tasks:

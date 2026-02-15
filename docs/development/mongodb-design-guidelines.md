@@ -9,4 +9,11 @@
 6. **Index Optimization:**
     *   **Hit-only indexing:** Only create indexes for fields or combinations of fields that are actually hit by repository query methods.
     *   **Partial Indexes:** For fields with low cardinality (like `status`), do NOT create a full index. Use **partial indexes** with a `partialFilterExpression` for specific values that are frequently queried (e.g., `status: "ACTIVE"` or `status: "AWAITING_PAYMENT"`).
-    *   **Compound Prefix Rule:** When creating compound indexes, ensure they are designed such that they can also serve queries for their prefix fields, avoiding redundant single-field indexes.
+        *   **Compound Prefix Rule:** When creating compound indexes, ensure they are designed such that they can also serve queries for their prefix fields, avoiding redundant single-field indexes.
+    
+    ## Security and Authentication
+    1. **Authentication:** All MongoDB instances must have authentication enabled using Role-Based Access Control (RBAC). 
+    2. **Access Control:** Do NOT use the root user for application access. Create a dedicated application user with restricted permissions (e.g., `readWrite` on the `gimlee` database).
+    3. **Environment Variables:** Credentials must never be hardcoded in the codebase. Use environment variables (e.g., `SPRING_DATA_MONGODB_URI`) to provide credentials to the application.
+    4. **Local Development:** For local development, use the default `admin:password` credentials as configured in the project's `docker-compose.yml`.
+    

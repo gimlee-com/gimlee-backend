@@ -11,7 +11,7 @@ set -e
 # --- Configuration ---
 # Default database name is 'gimlee'. You can override this if needed.
 DB_NAME="gimlee"
-DB_URL="jdbc:mongodb://localhost:27017/${DB_NAME}"
+DB_URL="jdbc:mongodb://admin:password@localhost:27017/${DB_NAME}?authSource=admin"
 BASELINE_ON_MIGRATE=true
 BASELINE_VERSION=0
 
