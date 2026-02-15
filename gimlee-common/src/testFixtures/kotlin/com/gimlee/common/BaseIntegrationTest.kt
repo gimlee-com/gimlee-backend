@@ -40,6 +40,7 @@ abstract class BaseIntegrationTest(body: BehaviorSpec.() -> Unit) : BehaviorSpec
         fun setProperties(registry: DynamicPropertyRegistry) {
             registry.add("spring.data.mongodb.uri") { mongodb.replicaSetUrl }
             registry.add("wiremock.server.port") { wireMockServer.port() }
+            registry.add("gimlee.payments.exchange.cache.expire-after-write-seconds") { "0" }
         }
     }
 }

@@ -26,11 +26,21 @@ import java.time.Instant
 class AdDiscoveryIntegrationTest(
     private val mockMvc: MockMvc,
     private val adService: AdService,
+    private val adRepository: com.gimlee.ads.persistence.AdRepository,
     private val userRepository: UserRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
     private val userPreferencesService: UserPreferencesService,
-    private val userRoleRepository: UserRoleRepository
+    private val userRoleRepository: UserRoleRepository,
+    private val mongoDatabase: com.mongodb.client.MongoDatabase
 ) : BaseIntegrationTest({
+
+    beforeSpec {
+        adRepository.clear()
+        exchangeRateRepository.clear()
+        mongoDatabase.getCollection(UserRepository.USERS_COLLECTION_NAME).deleteMany(org.bson.Document())
+        mongoDatabase.getCollection(UserRoleRepository.USER_ROLES_COLLECTION_NAME).deleteMany(org.bson.Document())
+        mongoDatabase.getCollection("gimlee-user-preferences").deleteMany(org.bson.Document())
+    }
 
     Given("an ad and exchange rates") {
         val sellerId = ObjectId.get()

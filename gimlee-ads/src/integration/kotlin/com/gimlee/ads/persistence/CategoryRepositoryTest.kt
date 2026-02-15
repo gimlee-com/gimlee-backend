@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant
 
 class CategoryRepositoryTest(
-    @Autowired private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository
 ) : BaseIntegrationTest({
 
     beforeSpec {

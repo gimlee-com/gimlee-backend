@@ -1,17 +1,17 @@
 package com.gimlee.auth.config
 
+import com.gimlee.auth.filter.JWTFilter
+import com.gimlee.auth.util.JwtTokenVerifier
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import com.gimlee.auth.filter.JWTFilter
-import com.gimlee.auth.util.JwtTokenVerifier
 
 @Configuration
 class FilterConfig(
-    @Value("\${gimlee.auth.rest.unsecured-paths}")
+    @Value("\${gimlee.auth.rest.unsecured-paths:}")
     private val unsecuredPathPatterns: Array<String>
 ) {
 

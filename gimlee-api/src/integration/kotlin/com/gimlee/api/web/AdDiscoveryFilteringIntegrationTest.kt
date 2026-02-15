@@ -1,13 +1,13 @@
 package com.gimlee.api.web
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
+import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
-import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.auth.persistence.UserRepository
+import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.payments.domain.model.ExchangeRate
@@ -40,6 +40,7 @@ class AdDiscoveryFilteringIntegrationTest(
         exchangeRateRepository.clear()
         mongoDatabase.getCollection(UserRepository.USERS_COLLECTION_NAME).deleteMany(org.bson.Document())
         mongoDatabase.getCollection(UserRoleRepository.USER_ROLES_COLLECTION_NAME).deleteMany(org.bson.Document())
+        mongoDatabase.getCollection("gimlee-user-preferences").deleteMany(org.bson.Document())
     }
 
     Given("ads in different settlement currencies and exchange rates") {

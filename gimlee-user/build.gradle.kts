@@ -28,6 +28,7 @@ dependencies {
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.mongodb)
     
+    testImplementation(project(":gimlee-notifications"))
     integrationImplementation(testFixtures(project(":gimlee-common")))
 }
 
