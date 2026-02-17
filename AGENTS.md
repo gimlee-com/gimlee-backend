@@ -75,6 +75,7 @@
 *   **Decorator Pattern:** For complex initialization responses (e.g., `SessionInitController`), use a decorator pattern. Clients should be able to request specific data subsets via query parameters to optimize response payload and backend processing.
 *   **Component Precedence:** When multiple implementations of an interface are used (e.g., multiple price providers), use Spring's `@Order` annotation to define their precedence (lowest value = highest priority). Ensure the consuming service implements a robust fallback mechanism if a high-priority provider fails.
 *   **Sticky Chat:** For modules involving real-time state (like `gimlee-chat`), horizontal scaling requires "Sticky Chat" load balancing (consistent hashing based on `chatId`) to ensure event consistency across participants when using in-memory buffering.
+*   **Configurable Enrichment Services:** When implementing services that transform raw domain objects into rich DTOs (e.g., `AdEnrichmentService`), design them to be configurable via a set of "Enrichment Type" enums (e.g., `AdEnrichmentType`). This allows consumers to request only the specific expensive operations they need (e.g., currency conversion, user details, recursive fetching) in a single method call, avoiding code duplication and over-fetching.
 
 ### 5. Configuration (`docs/development/configuration-guidelines.md`)
 *   **Externalize Everything:** Timeouts, prefixes, retention periods, and monitoring delays must be configurable via `application.yaml`.
@@ -104,6 +105,7 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **Basenames:** All module-specific bundles must be registered in the `spring.messages.basename` property in `application.yaml`.
 *   **Currency Precision:** Always respect the `decimalPlaces` property defined in the `Currency` enum. When performing calculations or returning results, use `setScale(currency.decimalPlaces, RoundingMode.HALF_UP)` to ensure consistent precision across the system.
 *   **Authoritative Timestamps:** When fetching data from external providers (e.g., exchange APIs), prioritize the authoritative timestamp provided by the source over the local fetch time to ensure data freshness is accurately represented in the system.
+*   **Check Existing Languages:** When adding new messages to `messages.properties`, check for other existing language bundles (e.g., `messages_pl.properties`) and add the corresponding translations to maintain consistency across supported languages.
 
 ### 9. Unified API Status responses and Outcome System
 *   **Outcome Interface:** Operations must return or report results using the `Outcome` interface from `gimlee-common`. Each module defines its own implementation (e.g., `AuthOutcome`, `AdOutcome`).

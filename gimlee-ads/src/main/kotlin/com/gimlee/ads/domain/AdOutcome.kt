@@ -19,7 +19,9 @@ enum class AdOutcome(override val httpCode: Int) : Outcome {
     STOCK_LOWER_THAN_LOCKED(400),
     CREATION_FAILED(400),
     UPDATE_FAILED(400),
-    ACTIVATION_FAILED(400);
+    ACTIVATION_FAILED(400),
+    ADDED_TO_WATCHLIST(200),
+    REMOVED_FROM_WATCHLIST(200);
 
     override val code: String get() = "AD_$name"
     override val messageKey: String get() = "status.ad.${name.replace("_", "-").lowercase()}"

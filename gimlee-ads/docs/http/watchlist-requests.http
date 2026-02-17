@@ -1,0 +1,24 @@
+### Authenticate as User (Get Token)
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@gimlee.com",
+  "password": "password"
+}
+
+> {%
+    client.global.set("auth_token", response.body.token);
+%}
+
+### Add to Watchlist
+POST {{host}}/api/v1/user/watchlist/60d5ec9af682fbd39a1d4b6e
+Authorization: Bearer {{auth_token}}
+
+### Get Watchlist
+GET {{host}}/api/v1/user/watchlist
+Authorization: Bearer {{auth_token}}
+
+### Remove from Watchlist
+DELETE {{host}}/api/v1/user/watchlist/60d5ec9af682fbd39a1d4b6e
+Authorization: Bearer {{auth_token}}
