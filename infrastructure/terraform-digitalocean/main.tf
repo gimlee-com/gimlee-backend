@@ -166,18 +166,28 @@ resource "digitalocean_firewall" "wallet" {
     protocol         = "tcp"
     port_range       = "45453"
     source_tags      = ["app"]
+    source_addresses = [for ip in var.management_ips : "${ip}/32"]
+  }
+
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "45454"
+    source_tags      = ["app"]
+    source_addresses = [for ip in var.management_ips : "${ip}/32"]
   }
 
   inbound_rule {
     protocol         = "tcp"
     port_range       = "19232" # Ycash RPC (Mainnet)
     source_tags      = ["app"]
+    source_addresses = [for ip in var.management_ips : "${ip}/32"]
   }
 
   inbound_rule {
     protocol         = "tcp"
     port_range       = "18232" # Ycash RPC (gimlee-internal-testnet)
     source_tags      = ["app"]
+    source_addresses = [for ip in var.management_ips : "${ip}/32"]
   }
 
 

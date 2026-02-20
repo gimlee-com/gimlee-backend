@@ -94,7 +94,7 @@
   tasks:
     - name: Create data directory
       file:
-        path: /opt/piratechain/data
+        path: /opt/piratechain/data-testnet
         state: directory
         mode: '0755'
 
@@ -111,16 +111,43 @@
           rpcallowip=0.0.0.0/0
         mode: '0600'
 
+    - name: Create PirateChain Testnet config file
+      copy:
+        dest: /opt/piratechain/PIRATETST.conf
+        content: |
+          server=1
+          txindex=1
+          rpcuser={{ piratechain_user }}
+          rpcpassword={{ piratechain_password }}
+          rpcport=45454
+          rpcbind=0.0.0.0
+          rpcallowip=0.0.0.0/0
+          addnode=64.23.167.130:59434
+        mode: '0600'
+
     - name: Copy Dockerfile for PirateChain
       copy:
         src: ../../../wallets/pirate-chain/Dockerfile
         dest: /opt/piratechain/Dockerfile
+
+    - name: Copy Dockerfile for PirateChain Testnet
+      copy:
+        src: ../../../wallets/pirate-chain/Dockerfile.testnet
+        dest: /opt/piratechain/Dockerfile.testnet
 
     - name: Build PirateChain image from Dockerfile
       community.docker.docker_image:
         name: piratechain:latest
         build:
           path: /opt/piratechain
+        source: build
+
+    - name: Build PirateChain Testnet image from Dockerfile
+      community.docker.docker_image:
+        name: piratechain-testnet:latest
+        build:
+          path: /opt/piratechain
+          dockerfile: Dockerfile.testnet
         source: build
 
     - name: Run PirateChain container from built image
@@ -134,6 +161,18 @@
         volumes:
           - /opt/piratechain/data:/root/.komodo/PIRATE
           - /opt/piratechain/PIRATE.conf:/root/.komodo/PIRATE/PIRATE.conf:ro
+
+    - name: Run PirateChain Testnet container
+      community.docker.docker_container:
+        name: piratechain-testnet
+        image: piratechain-testnet:latest
+        command: ./pirated -printtoconsole -ac_name=PIRATETST -ac_orchard=297
+        restart_policy: always
+        ports:
+          - "45454:45454"
+        volumes:
+          - /opt/piratechain/data-testnet:/root/.komodo/PIRATETST
+          - /opt/piratechain/PIRATETST.conf:/root/.komodo/PIRATETST/PIRATETST.conf:ro
 
 - name: Deploy Ycash Wallet
   hosts: wallet

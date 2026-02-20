@@ -1,0 +1,23 @@
+FROM ubuntu:22.04
+
+# Install utilities to download the wallet
+RUN apt-get update && apt-get install -y \
+    wget \
+    ca-certificates \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/local/bin
+
+# Download Pirate Chain Binaries (Check https://github.com/PirateNetwork/pirate/releases for latest version)
+ARG PIRATE_URL=https://github.com/PirateNetwork/pirate/releases/download/v6.0.0-beta2/pirate-cli-ubuntu2004-v6.0.0-beta2.zip
+
+RUN wget -O pirate.zip "$PIRATE_URL" \
+    && unzip -j pirate.zip \
+    && rm pirate.zip
+
+# Create directory for blockchain data
+RUN mkdir -p /root/.komodo/PIRATETST
+
+# Expose RPC Port (Default is usually 45453 for Mainnet)
+EXPOSE 45454
