@@ -13,8 +13,7 @@ class FixedPriceProvider : ExchangePriceProvider {
     override val name: String = "Fixed"
 
     private val rates = mapOf(
-        (Currency.USDT to Currency.USD) to BigDecimal.ONE,
-        (Currency.ARRR to Currency.USDT) to BigDecimal("0.2")
+        (Currency.USDT to Currency.USD) to BigDecimal.ONE
     )
 
     override fun supports(base: Currency, quote: Currency): Boolean {

@@ -36,6 +36,7 @@ data class YcashProperties(
 
 data class ExchangeProperties(
     val bitmart: BitmartProperties = BitmartProperties(),
+    val mexc: MexcProperties = MexcProperties(),
     val openExchangeRates: OpenExchangeRatesProperties = OpenExchangeRatesProperties(),
     @DefaultValue("60000")
     val updateIntervalMs: Long = 60000,
@@ -54,6 +55,11 @@ data class BitmartProperties(
     val volatilityThreshold: Double = 0.05,
     @DefaultValue("10")
     val volatilityKlinesLimit: Int = 10
+)
+
+data class MexcProperties(
+    @DefaultValue("https://api.mexc.com")
+    val baseUrl: String = "https://api.mexc.com"
 )
 
 data class OpenExchangeRatesProperties(

@@ -81,6 +81,8 @@ gimlee:
           at-least: PT5M
       bitmart:
         base-url: https://api-cloud.bitmart.com
+      mexc:
+        base-url: https://api.mexc.com
       open-exchange-rates:
         app-id: <fillme>
         update-interval-ms: 21600000
