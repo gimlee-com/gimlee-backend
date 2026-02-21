@@ -73,11 +73,11 @@ class AdPriceValidatorTest : StringSpec({
     }
 
     "should reject price above limit if currency changed" {
-        val newPrice = CurrencyAmount(BigDecimal("14000"), Currency.EUR) // Converted > 10000 USD
+        val newPrice = CurrencyAmount(BigDecimal("40000"), Currency.PLN) // Converted > 10000 USD (assuming ~4 PLN/USD)
         val oldPrice = CurrencyAmount(BigDecimal("14000"), Currency.USD)
         
-        every { currencyConverterService.convert(BigDecimal("14000"), Currency.EUR, Currency.USD) } returns 
-            ConversionResult(BigDecimal("15400"), Currency.EUR, Currency.USD, emptyList(), Instant.now(), false)
+        every { currencyConverterService.convert(BigDecimal("40000"), Currency.PLN, Currency.USD) } returns 
+            ConversionResult(BigDecimal("10001"), Currency.PLN, Currency.USD, emptyList(), Instant.now(), false)
 
         val exception = shouldThrow<AdOperationException> {
             validator.validatePrice(newPrice, oldPrice)
