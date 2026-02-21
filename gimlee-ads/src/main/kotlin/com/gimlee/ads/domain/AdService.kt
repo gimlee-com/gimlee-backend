@@ -30,6 +30,7 @@ class AdService(
     private val currencyConverterService: CurrencyConverterService,
     private val adCurrencyValidator: AdCurrencyValidator,
     private val adCurrencyService: AdCurrencyService,
+    private val adPriceValidator: AdPriceValidator,
     private val userRoleRepository: UserRoleRepository,
     private val eventPublisher: ApplicationEventPublisher
 ) {
@@ -132,6 +133,14 @@ class AdService(
 
         val newPrice = updateData.price?.amount ?: existingAdDoc.price
         val newCurrency = updateData.price?.currency ?: existingAdDoc.currency
+
+        if (newPrice != null && newCurrency != null) {
+            val oldPriceValue = existingAdDoc.price
+            val oldCurrencyValue = existingAdDoc.currency
+            val oldPrice = if (oldPriceValue != null && oldCurrencyValue != null) CurrencyAmount(oldPriceValue, oldCurrencyValue) else null
+            
+            adPriceValidator.validatePrice(CurrencyAmount(newPrice, newCurrency), oldPrice)
+        }
 
         if (newCurrency != null) {
             val roles = userRoleRepository.getAll(userObjectId)

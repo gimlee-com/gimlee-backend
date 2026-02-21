@@ -20,6 +20,7 @@ enum class AdOutcome(override val httpCode: Int) : Outcome {
     CREATION_FAILED(400),
     UPDATE_FAILED(400),
     ACTIVATION_FAILED(400),
+    PRICE_EXCEEDS_LIMIT(400),
     ADDED_TO_WATCHLIST(200),
     REMOVED_FROM_WATCHLIST(200);
 
