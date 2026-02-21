@@ -69,6 +69,7 @@ class AdDiscoveryIntegrationTest(
                 content.contains("\"price\":{\"amount\":100,\"currency\":\"ARRR\"}") shouldBe true
                 // USD has 2 decimal places. 100 * 0.5 = 50.00
                 content.contains("\"preferredPrice\":{\"amount\":50.00,\"currency\":\"USD\"}") shouldBe true
+                content.contains("\"availableStock\":10") shouldBe true
                 content.contains("\"memberSince\":") shouldBe true
             }
         }

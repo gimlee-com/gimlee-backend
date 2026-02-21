@@ -106,6 +106,7 @@ Accept-Language: en-US
 # {
 #   "id": "some-ad-id-12345",
 #   "title": "Ad Title",
+#   "availableStock": 10,
 #   "price": { "amount": 100, "currency": "ARRR" },
 #   "preferredPrice": { "amount": 25.50, "currency": "USD" },
 #   "user": {

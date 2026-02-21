@@ -12,6 +12,7 @@ data class AdDetailsDto(
     val categoryPath: List<CategoryPathElementDto>?,
     val mediaPaths: List<String>?,
     val mainPhotoPath: String?,
+    val availableStock: Int,
 ) {
     companion object {
         fun fromAd(ad: Ad, categoryPath: List<CategoryPathElementDto>? = null): AdDetailsDto {
@@ -25,6 +26,7 @@ data class AdDetailsDto(
                 categoryPath = categoryPath,
                 mediaPaths = ad.mediaPaths,
                 mainPhotoPath = ad.mainPhotoPath,
+                availableStock = ad.availableStock,
             )
         }
     }

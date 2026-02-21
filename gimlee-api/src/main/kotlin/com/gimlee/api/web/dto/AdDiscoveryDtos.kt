@@ -46,6 +46,7 @@ data class AdDiscoveryDetailsDto(
     val categoryPath: List<CategoryPathElementDto>?,
     val mediaPaths: List<String>?,
     val mainPhotoPath: String?,
+    val availableStock: Int,
     val user: UserSpaceDetailsDto? = null,
     @Schema(description = "List of most recent other ads from the same user")
     val otherAds: List<AdDiscoveryPreviewDto>? = null,
@@ -70,6 +71,7 @@ data class AdDiscoveryDetailsDto(
                 categoryPath = details.categoryPath,
                 mediaPaths = details.mediaPaths,
                 mainPhotoPath = details.mainPhotoPath,
+                availableStock = details.availableStock,
                 user = user,
                 otherAds = otherAds,
                 stats = stats
