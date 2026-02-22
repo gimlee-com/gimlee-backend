@@ -59,7 +59,13 @@ data class BitmartProperties(
 
 data class MexcProperties(
     @DefaultValue("https://api.mexc.com")
-    val baseUrl: String = "https://api.mexc.com"
+    val baseUrl: String = "https://api.mexc.com",
+    @DefaultValue("0.05")
+    val volatilityThreshold: Double = 0.05,
+    @DefaultValue("10")
+    val volatilityKlinesLimit: Int = 10,
+    @DefaultValue("60m")
+    val volatilityKlinesInterval: String = "60m"
 )
 
 data class OpenExchangeRatesProperties(

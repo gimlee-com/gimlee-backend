@@ -1,16 +1,21 @@
 package com.gimlee.api.web
 
-import com.gimlee.api.web.dto.*
+import com.gimlee.api.web.dto.PaymentDetailsDto
+import com.gimlee.api.web.dto.PurchaseHistoryDto
+import com.gimlee.api.web.dto.PurchaseResponseDto
+import com.gimlee.api.web.dto.PurchaseStatusResponseDto
+import com.gimlee.api.web.dto.SalesOrderItemDto
+import com.gimlee.api.web.dto.SellerInfoDto
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.service.UserService
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
-import com.gimlee.purchases.domain.PurchaseService
-import com.gimlee.purchases.domain.PurchaseOutcome
-import com.gimlee.purchases.web.dto.request.PurchaseRequestDto
-import com.gimlee.payments.domain.PaymentService
-import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.domain.model.CommonOutcome
+import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.web.dto.StatusResponseDto
+import com.gimlee.payments.domain.PaymentService
+import com.gimlee.purchases.domain.PurchaseOutcome
+import com.gimlee.purchases.domain.PurchaseService
+import com.gimlee.purchases.web.dto.request.PurchaseRequestDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -26,7 +31,13 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "Purchases", description = "Endpoints for placing and tracking purchases")
 @RestController
@@ -98,7 +109,7 @@ class PurchaseFacadeController(
                         paidAmount = it.paidAmount,
                         memo = it.memo,
                         deadline = it.deadline,
-                        qrCodeUri = it.receivingAddress
+                        qrCodeUri = it.qrCodeUri
                     )
                 }
             )
