@@ -10,6 +10,7 @@
     *   **Hit-only indexing:** Only create indexes for fields or combinations of fields that are actually hit by repository query methods.
     *   **Partial Indexes:** For fields with low cardinality (like `status`), do NOT create a full index. Use **partial indexes** with a `partialFilterExpression` for specific values that are frequently queried (e.g., `status: "ACTIVE"` or `status: "AWAITING_PAYMENT"`).
         *   **Compound Prefix Rule:** When creating compound indexes, ensure they are designed such that they can also serve queries for their prefix fields, avoiding redundant single-field indexes.
+    *   **Currency-Specific Partial Indexes:** For price filtering, do NOT create a compound index on `{ currency: 1, price: 1 }`. Instead, create separate **partial indexes** on `{ price: 1 }` for each supported currency (e.g., `partialFilterExpression: { currency: "USD" }`). This ensures index efficiency and smaller size. **Critical:** When adding a new `Currency` enum value, you **MUST** create a corresponding partial index migration.
     
     ## Security and Authentication
     1. **Authentication:** All MongoDB instances must have authentication enabled using Role-Based Access Control (RBAC). 

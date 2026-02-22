@@ -38,6 +38,7 @@
 *   **Timestamps:** All timestamps must be stored as **epoch microseconds** (Long). Use `Instant.toMicros` extension from `gimlee-common`.
 *   **Field Names:** Use abbreviations for all field names to minimize storage size.
 *   **Index Optimization:** Only index fields used in queries. Use partial indexes for low-cardinality statuses.
+*   **Currency Indexing:** Follow the strict guideline for currency-based price indexing using partial indexes as defined in `docs/development/mongodb-design-guidelines.md`.
 *   **Enums with Short Names:** For enums persisted in the database, use descriptive names (e.g., `GOOGLE_PRODUCT_TAXONOMY`) but provide a `shortName` property (e.g., `GPT`) for persistence. This keeps the code self-explanatory while maintaining a compact database representation. Implement a `fromShortName` lookup method in the enum's companion object for mapping back from the database.
 
 ### 2. Testing (`docs/development/testing-guidelines.md`)

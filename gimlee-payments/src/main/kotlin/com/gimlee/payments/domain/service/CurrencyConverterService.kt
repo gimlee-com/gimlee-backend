@@ -25,6 +25,10 @@ class CurrencyConverterService(
         .expireAfterWrite(paymentProperties.exchange.cache.expireAfterWriteSeconds, TimeUnit.SECONDS)
         .build<String, List<ExchangeRate>>()
 
+    private val graphCache = Caffeine.newBuilder()
+        .expireAfterWrite(paymentProperties.exchange.cache.expireAfterWriteSeconds, TimeUnit.SECONDS)
+        .build<String, Map<Currency, List<ConversionStep>>>()
+
     fun convert(amount: BigDecimal, from: Currency, to: Currency): ConversionResult {
         if (from == to) {
             return ConversionResult(
@@ -37,10 +41,11 @@ class CurrencyConverterService(
             )
         }
 
-        val allRates = ratesCache.get("all") {
-            exchangeRateRepository.findAllLatest()
-        } ?: throw ConversionException("Could not retrieve exchange rates")
-        val path = findShortestPath(from, to, allRates)
+        val adjacency = graphCache.get("graph") {
+            buildAdjacencyGraph()
+        } ?: throw ConversionException("Could not build conversion graph")
+
+        val path = findShortestPath(from, to, adjacency)
             ?: throw ConversionException("No conversion path found from $from to $to")
 
         var currentAmount = amount
@@ -69,7 +74,11 @@ class CurrencyConverterService(
         )
     }
 
-    private fun findShortestPath(from: Currency, to: Currency, allRates: List<ExchangeRate>): List<ConversionStep>? {
+    private fun buildAdjacencyGraph(): Map<Currency, List<ConversionStep>> {
+        val allRates = ratesCache.get("all") {
+            exchangeRateRepository.findAllLatest()
+        } ?: return emptyMap()
+
         val adjacency = mutableMapOf<Currency, MutableList<ConversionStep>>()
         for (rate in allRates) {
             // Forward
@@ -84,7 +93,14 @@ class CurrencyConverterService(
                 )
             }
         }
+        return adjacency
+    }
 
+    private fun findShortestPath(
+        from: Currency,
+        to: Currency,
+        adjacency: Map<Currency, List<ConversionStep>>
+    ): List<ConversionStep>? {
         val queue: LinkedList<Pair<Currency, List<ConversionStep>>> = LinkedList()
         queue.add(from to emptyList())
         val visited = mutableSetOf(from)

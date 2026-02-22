@@ -100,113 +100,14 @@ class AdService(
         val existingAdDoc = adRepository.findById(adObjectId)
             ?: throw AdNotFoundException(adId)
 
-        if (existingAdDoc.userId != userObjectId) {
-            log.warn("User {} attempted to update ad {} owned by {}", userId, adId, existingAdDoc.userId)
-            throw AdOperationException(AdOutcome.NOT_AD_OWNER)
-        }
+        validateAdOwnershipAndStatus(existingAdDoc, userObjectId)
+        validateUpdateData(updateData)
 
-        if (existingAdDoc.status != AdStatus.INACTIVE) {
-            log.warn("Attempted to update ad {} which is not in INACTIVE state (current: {})", adId, existingAdDoc.status)
-            throw AdOperationException(AdOutcome.INVALID_AD_STATUS)
-        }
+        val updatedFields = resolveUpdatedFields(existingAdDoc, updateData)
+        
+        validateBusinessRules(existingAdDoc, updatedFields, userObjectId)
 
-        val newTitle = updateData.title ?: existingAdDoc.title // Use existing if null provided
-        if (newTitle.isBlank()) {
-            log.warn("Attempted to update ad {} with blank title", adId)
-            throw AdOperationException(AdOutcome.TITLE_MANDATORY)
-        }
-
-        val newCityId = updateData.location?.cityId
-        val newGeoPoint = updateData.location?.let {
-            GeoJsonPoint(it.point[0], it.point[1])
-        }
-
-        val finalCityId = newCityId ?: existingAdDoc.cityId
-        var finalGeoPoint = newGeoPoint ?: existingAdDoc.location
-
-        if (finalCityId != null && finalGeoPoint == null) {
-            finalGeoPoint = cityDataById[finalCityId]?.let { GeoJsonPoint(it.lon, it.lat) }
-        }
-
-        // Media fields validation
-        val newMediaPaths = updateData.mediaPaths ?: existingAdDoc.mediaPaths
-        var newMainPhotoPath = updateData.mainPhotoPath ?: existingAdDoc.mainPhotoPath
-
-        if (newMainPhotoPath != null && (newMediaPaths == null || !newMediaPaths.contains(newMainPhotoPath))) {
-            log.warn("Update failed for ad {}: mainPhotoPath '{}' is not in mediaPaths list.", adId, newMainPhotoPath)
-            throw AdOperationException(AdOutcome.INVALID_MAIN_PHOTO)
-        }
-        if ((newMediaPaths == null || newMediaPaths.isEmpty()) && newMainPhotoPath != null) {
-            log.warn("Update failed for ad {}: mainPhotoPath is set but mediaPaths is empty. Clearing mainPhotoPath.", adId)
-            newMainPhotoPath = null // Or throw error: "Cannot set main photo if media paths are empty."
-        }
-
-        val newPrice = updateData.price?.amount ?: existingAdDoc.price
-        val newCurrency = updateData.price?.currency ?: existingAdDoc.currency
-        val newPricingMode = updateData.pricingMode ?: existingAdDoc.pricingMode
-        val newSettlementCurrencies = updateData.settlementCurrencies ?: existingAdDoc.settlementCurrencies
-        val newVolatilityProtection = updateData.volatilityProtection ?: existingAdDoc.volatilityProtection
-
-        // Validate: volatility protection only allowed in PEGGED mode
-        if (newVolatilityProtection && newPricingMode != PricingMode.PEGGED) {
-            throw AdOperationException(AdOutcome.VOLATILITY_PROTECTION_REQUIRES_PEGGED)
-        }
-
-        // Validate: FIXED_CRYPTO requires price currency to be a settlement currency in the set
-        if (newPricingMode == PricingMode.FIXED_CRYPTO && newCurrency != null) {
-            if (!newCurrency.isSettlement) {
-                throw AdOperationException(AdOutcome.FIXED_CRYPTO_REQUIRES_SETTLEMENT_CURRENCY)
-            }
-            if (newSettlementCurrencies.isNotEmpty() && newCurrency !in newSettlementCurrencies) {
-                throw AdOperationException(AdOutcome.FIXED_CRYPTO_PRICE_CURRENCY_NOT_IN_SETTLEMENT)
-            }
-        }
-
-        // Validate: settlement currencies must all be actual settlement currencies
-        newSettlementCurrencies.forEach { sc ->
-            if (!sc.isSettlement) {
-                throw AdOperationException(AdOutcome.CURRENCY_NOT_ALLOWED, sc.name)
-            }
-        }
-
-        if (newPrice != null && newCurrency != null) {
-            val oldPriceValue = existingAdDoc.price
-            val oldCurrencyValue = existingAdDoc.currency
-            val oldPrice = if (oldPriceValue != null && oldCurrencyValue != null) CurrencyAmount(oldPriceValue, oldCurrencyValue) else null
-            
-            adPriceValidator.validatePrice(CurrencyAmount(newPrice, newCurrency), oldPrice)
-        }
-
-        // Validate user roles for all settlement currencies
-        if (newSettlementCurrencies.isNotEmpty()) {
-            val roles = userRoleRepository.getAll(userObjectId)
-            newSettlementCurrencies.forEach { sc ->
-                adCurrencyValidator.validateUserCanListInCurrency(roles, sc)
-            }
-        } else if (newCurrency != null && newCurrency.isSettlement) {
-            val roles = userRoleRepository.getAll(userObjectId)
-            adCurrencyValidator.validateUserCanListInCurrency(roles, newCurrency)
-        }
-
-        val newStock = updateData.stock ?: existingAdDoc.stock
-        adStockService.validateStockLevel(adObjectId, newStock)
-
-        val updatedAdDoc = existingAdDoc.copy(
-            title = newTitle,
-            description = updateData.description ?: existingAdDoc.description,
-            pricingMode = newPricingMode,
-            price = newPrice,
-            currency = newCurrency,
-            settlementCurrencies = newSettlementCurrencies,
-            cityId = finalCityId,
-            categoryIds = if (updateData.categoryId != null) resolveCategoryPath(updateData.categoryId) else existingAdDoc.categoryIds,
-            location = finalGeoPoint,
-            mediaPaths = newMediaPaths,
-            mainPhotoPath = newMainPhotoPath,
-            stock = newStock,
-            volatilityProtection = newVolatilityProtection,
-            updatedAtMicros = Instant.now().toMicros()
-        )
+        val updatedAdDoc = applyUpdates(existingAdDoc, updatedFields)
 
         log.info("Updating ad {} for user {}", adId, userId)
         val savedDocument = try {
@@ -215,6 +116,148 @@ class AdService(
             throw AdOperationException(AdOutcome.UPDATE_FAILED)
         }
         return savedDocument.toDomain()
+    }
+
+    private fun validateAdOwnershipAndStatus(ad: AdDocument, userId: ObjectId) {
+        if (ad.userId != userId) {
+            log.warn("User {} attempted to update ad {} owned by {}", userId, ad.id, ad.userId)
+            throw AdOperationException(AdOutcome.NOT_AD_OWNER)
+        }
+
+        if (ad.status != AdStatus.INACTIVE) {
+            log.warn("Attempted to update ad {} which is not in INACTIVE state (current: {})", ad.id, ad.status)
+            throw AdOperationException(AdOutcome.INVALID_AD_STATUS)
+        }
+    }
+
+    private fun validateUpdateData(updateData: UpdateAdRequest) {
+        if (updateData.title != null && updateData.title.isBlank()) {
+            throw AdOperationException(AdOutcome.TITLE_MANDATORY)
+        }
+    }
+
+    private data class AdUpdateFields(
+        val title: String,
+        val description: String?,
+        val pricingMode: PricingMode,
+        val price: BigDecimal?,
+        val currency: Currency?,
+        val settlementCurrencies: Set<Currency>,
+        val cityId: String?,
+        val location: GeoJsonPoint?,
+        val mediaPaths: List<String>,
+        val mainPhotoPath: String?,
+        val stock: Int,
+        val volatilityProtection: Boolean,
+        val categoryIds: List<Int>?
+    )
+
+    private fun resolveUpdatedFields(existing: AdDocument, update: UpdateAdRequest): AdUpdateFields {
+        val newCityId = update.location?.cityId ?: existing.cityId
+        var newGeoPoint = update.location?.let { GeoJsonPoint(it.point[0], it.point[1]) } ?: existing.location
+
+        if (newCityId != null && newGeoPoint == null) {
+            newGeoPoint = cityDataById[newCityId]?.let { GeoJsonPoint(it.lon, it.lat) }
+        }
+
+        val newMediaPaths = update.mediaPaths ?: existing.mediaPaths ?: emptyList()
+        var newMainPhotoPath = update.mainPhotoPath ?: existing.mainPhotoPath
+
+        // Media validation logic
+        if (newMainPhotoPath != null && !newMediaPaths.contains(newMainPhotoPath)) {
+            log.warn("Update failed for ad {}: mainPhotoPath '{}' is not in mediaPaths list.", existing.id, newMainPhotoPath)
+            throw AdOperationException(AdOutcome.INVALID_MAIN_PHOTO)
+        }
+        if (newMediaPaths.isEmpty() && newMainPhotoPath != null) {
+            newMainPhotoPath = null
+        }
+
+        return AdUpdateFields(
+            title = update.title ?: existing.title,
+            description = update.description ?: existing.description,
+            pricingMode = update.pricingMode ?: existing.pricingMode,
+            price = update.price?.amount ?: existing.price,
+            currency = update.price?.currency ?: existing.currency,
+            settlementCurrencies = update.settlementCurrencies ?: existing.settlementCurrencies,
+            cityId = newCityId,
+            location = newGeoPoint,
+            mediaPaths = newMediaPaths,
+            mainPhotoPath = newMainPhotoPath,
+            stock = update.stock ?: existing.stock,
+            volatilityProtection = update.volatilityProtection ?: existing.volatilityProtection,
+            categoryIds = if (update.categoryId != null) resolveCategoryPath(update.categoryId) else existing.categoryIds
+        )
+    }
+
+    private fun validateBusinessRules(existing: AdDocument, fields: AdUpdateFields, userId: ObjectId) {
+        // Volatility protection validation
+        if (fields.volatilityProtection && fields.pricingMode != PricingMode.PEGGED) {
+            throw AdOperationException(AdOutcome.VOLATILITY_PROTECTION_REQUIRES_PEGGED)
+        }
+
+        // Fixed crypto validation
+        if (fields.pricingMode == PricingMode.FIXED_CRYPTO && fields.currency != null) {
+            if (!fields.currency.isSettlement) {
+                throw AdOperationException(AdOutcome.FIXED_CRYPTO_REQUIRES_SETTLEMENT_CURRENCY)
+            }
+            if (fields.settlementCurrencies.isNotEmpty() && fields.currency !in fields.settlementCurrencies) {
+                throw AdOperationException(AdOutcome.FIXED_CRYPTO_PRICE_CURRENCY_NOT_IN_SETTLEMENT)
+            }
+        }
+
+        // Settlement currency validation
+        fields.settlementCurrencies.forEach { sc ->
+            if (!sc.isSettlement) {
+                throw AdOperationException(AdOutcome.CURRENCY_NOT_ALLOWED, sc.name)
+            }
+        }
+
+        // Price change validation
+        if (fields.price != null && fields.currency != null) {
+            val oldPriceValue = existing.price
+            val oldCurrencyValue = existing.currency
+            val oldPrice = if (oldPriceValue != null && oldCurrencyValue != null) CurrencyAmount(oldPriceValue, oldCurrencyValue) else null
+            
+            adPriceValidator.validatePrice(CurrencyAmount(fields.price, fields.currency), oldPrice)
+        }
+
+        // User role validation
+        validateUserRoles(userId, fields.settlementCurrencies, fields.currency)
+
+        // Stock validation
+        adStockService.validateStockLevel(existing.id, fields.stock)
+    }
+
+    private fun validateUserRoles(userId: ObjectId, settlementCurrencies: Set<Currency>, priceCurrency: Currency?) {
+        val roles = userRoleRepository.getAll(userId)
+        
+        if (settlementCurrencies.isNotEmpty()) {
+            settlementCurrencies.forEach { sc ->
+                adCurrencyValidator.validateUserCanListInCurrency(roles, sc)
+            }
+        } else if (priceCurrency != null && priceCurrency.isSettlement) {
+            adCurrencyValidator.validateUserCanListInCurrency(roles, priceCurrency)
+        }
+    }
+
+    private fun applyUpdates(existing: AdDocument, fields: AdUpdateFields): AdDocument {
+        return existing.copy(
+            title = fields.title,
+            description = fields.description,
+            pricingMode = fields.pricingMode,
+            price = fields.price,
+            currency = fields.currency,
+            settlementCurrencies = fields.settlementCurrencies,
+            cityId = fields.cityId,
+            categoryIds = fields.categoryIds,
+            location = fields.location,
+            mediaPaths = fields.mediaPaths,
+            mainPhotoPath = fields.mainPhotoPath,
+            stock = fields.stock,
+            lockedStock = existing.lockedStock, // Locked stock is not updated via this method
+            volatilityProtection = fields.volatilityProtection,
+            updatedAtMicros = Instant.now().toMicros()
+        )
     }
 
     /**
