@@ -1,9 +1,10 @@
 package com.gimlee.payments.domain.service
 
 import com.gimlee.common.domain.model.Currency
+import com.gimlee.payments.config.PaymentProperties
+import com.gimlee.payments.config.VolatilityProperties
 import com.gimlee.payments.domain.model.ExchangeRate
 import com.gimlee.payments.persistence.ExchangeRateRepository
-import com.gimlee.payments.config.PaymentProperties
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.StringSpec
@@ -18,7 +19,14 @@ class CurrencyConverterServiceTest : StringSpec({
     isolationMode = IsolationMode.InstancePerTest
 
     val repository = mockk<ExchangeRateRepository>()
-    val properties = PaymentProperties(timeoutHours = 1)
+    val volatilityProperties = VolatilityProperties(
+        downsideThreshold = 0.05,
+        windowSeconds = 600,
+        cooldownSeconds = 1800,
+        stabilizationChecks = 3,
+        staleThresholdSeconds = 3600
+    )
+    val properties = PaymentProperties(timeoutHours = 1, volatility = volatilityProperties)
     val service = CurrencyConverterService(repository, properties)
 
     "should convert directly if from and to are the same" {

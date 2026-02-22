@@ -56,6 +56,7 @@ class AdManagementIntegrationTest(
         adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
             description = "Desc",
             price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             location = com.gimlee.ads.domain.model.Location("city1", doubleArrayOf(1.0, 2.0)),
             stock = 10
         ))
@@ -84,12 +85,15 @@ class AdManagementIntegrationTest(
                 title = null,
                 description = null,
                 price = null,
-                currency = null,
+                pricingMode = null,
+                priceCurrency = null,
+                settlementCurrencies = null,
                 categoryId = null,
                 location = null,
                 mediaPaths = null,
                 mainPhotoPath = null,
-                stock = 2 // Lower than locked stock 3
+                stock = 2, // Lower than locked stock 3
+                volatilityProtection = null
             )
 
             mockMvc.put("/sales/ads/${ad.id}") {
@@ -107,12 +111,15 @@ class AdManagementIntegrationTest(
                 title = null,
                 description = null,
                 price = null,
-                currency = null,
+                pricingMode = null,
+                priceCurrency = null,
+                settlementCurrencies = null,
                 categoryId = null,
                 location = null,
                 mediaPaths = null,
                 mainPhotoPath = null,
-                stock = 5 // >= locked stock 3
+                stock = 5, // >= locked stock 3
+                volatilityProtection = null
             )
 
             mockMvc.put("/sales/ads/${ad.id}") {

@@ -9,6 +9,7 @@ import com.gimlee.events.PaymentEvent
 import com.gimlee.payments.domain.PaymentService
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
+import com.gimlee.payments.domain.service.VolatilityStateService
 import com.gimlee.purchases.domain.model.Purchase
 import com.gimlee.purchases.domain.model.PurchaseItem
 import com.gimlee.purchases.domain.model.PurchaseStatus
@@ -29,7 +30,8 @@ class PurchaseService(
     private val purchaseRepository: PurchaseRepository,
     private val paymentService: PaymentService,
     private val adService: AdService,
-    private val eventPublisher: ApplicationEventPublisher
+    private val eventPublisher: ApplicationEventPublisher,
+    private val volatilityStateService: VolatilityStateService
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -42,6 +44,8 @@ class PurchaseService(
 
         validateAdsExist(items, ads)
         validateAdsAreActive(ads)
+        validateSettlementCurrency(ads, currency)
+        validateAdsVolatility(ads, currency)
         validatePrices(items, ads, currency)
 
         val purchasedItemDetails = collectPurchasedItemDetails(items, ads)
@@ -86,6 +90,27 @@ class PurchaseService(
         val inactiveAdIds = ads.values.filter { it.status != AdStatus.ACTIVE }.map { it.id }
         if (inactiveAdIds.isNotEmpty()) {
             throw IllegalStateException("One or more ads are not active: ${inactiveAdIds.joinToString()}")
+        }
+    }
+
+    private fun validateAdsVolatility(ads: Map<String, Ad>, currency: Currency) {
+        val frozenAds = ads.values.filter { ad ->
+            ad.volatilityProtection && volatilityStateService.isFrozen(currency)
+        }
+        
+        if (frozenAds.isNotEmpty()) {
+            val frozenAdIds = frozenAds.map { it.id }
+            log.warn("Purchase rejected due to volatility protection for ads: {} (currency: {})", frozenAdIds, currency)
+            throw IllegalStateException("Purchase temporarily suspended for items due to market volatility: ${frozenAdIds.joinToString()}")
+        }
+    }
+
+    private fun validateSettlementCurrency(ads: Map<String, Ad>, currency: Currency) {
+        val unsupportedAds = ads.values.filter { ad ->
+            currency !in ad.settlementCurrencies
+        }
+        if (unsupportedAds.isNotEmpty()) {
+            throw IllegalArgumentException("Currency $currency is not accepted by ads: ${unsupportedAds.map { it.id }.joinToString()}")
         }
     }
 

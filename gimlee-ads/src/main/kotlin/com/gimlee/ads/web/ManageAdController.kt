@@ -1,6 +1,5 @@
 package com.gimlee.ads.web
 
-import com.gimlee.ads.domain.AdOutcome
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.AdFilters
 import com.gimlee.ads.domain.model.AdSorting
@@ -9,14 +8,13 @@ import com.gimlee.ads.web.dto.request.CreateAdRequestDto
 import com.gimlee.ads.web.dto.request.SalesAdsRequestDto
 import com.gimlee.ads.web.dto.request.UpdateAdRequestDto
 import com.gimlee.ads.web.dto.response.AdDto
+import com.gimlee.ads.web.dto.response.AllowedCurrenciesDto
 import com.gimlee.ads.web.dto.response.CurrencyInfoDto
 import com.gimlee.auth.annotation.Privileged
-import com.gimlee.auth.model.Role
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
-import com.gimlee.common.domain.model.CommonOutcome
 import com.gimlee.common.domain.model.Currency
-import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.web.dto.StatusResponseDto
+import com.gimlee.payments.domain.service.VolatilityStateService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -32,14 +30,21 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "Ad Management", description = "Endpoints for creating, updating, and activating ads")
 @RestController
 @RequestMapping("/sales/ads")
 class ManageAdController(
     private val adService: AdService,
-    private val messageSource: MessageSource
+    private val messageSource: MessageSource,
+    private val volatilityStateService: VolatilityStateService
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -66,26 +71,32 @@ class ManageAdController(
             sorting = AdSorting(by = request.by, direction = request.dir),
             pageRequest = PageRequest.of(request.p, PAGE_SIZE)
         )
-        return pageOfMyAds.map { AdDto.fromDomain(it) }
+        return pageOfMyAds.map { ad -> AdDto.fromDomain(ad, computeFrozenCurrencies(ad)) }
     }
 
     @Operation(
-        summary = "Get Allowed Settlement Currencies",
-        description = "Retrieves the list of settlement currencies the authenticated user is allowed to list ads in."
+        summary = "Get Allowed Currencies",
+        description = "Retrieves settlement currencies the user can accept and all available reference currencies for pegged pricing."
     )
-    @ApiResponse(responseCode = "200", description = "List of allowed settlement currencies")
+    @ApiResponse(responseCode = "200", description = "Allowed currencies")
     @GetMapping("/allowed-currencies")
     @Privileged("USER")
-    fun getAllowedCurrencies(): ResponseEntity<List<CurrencyInfoDto>> {
+    fun getAllowedCurrencies(): ResponseEntity<AllowedCurrenciesDto> {
         val principal = HttpServletRequestAuthUtil.getPrincipal()
-        val allowedCurrencies = adService.getAllowedCurrencies(principal.userId)
-        val currencyInfos = allowedCurrencies.map { currency ->
+        val locale = LocaleContextHolder.getLocale()
+        val settlementCurrencies = adService.getAllowedCurrencies(principal.userId).map { currency ->
             CurrencyInfoDto(
                 code = currency,
-                name = messageSource.getMessage(currency.messageKey, null, LocaleContextHolder.getLocale())
+                name = messageSource.getMessage(currency.messageKey, null, locale)
             )
         }
-        return ResponseEntity.ok(currencyInfos)
+        val referenceCurrencies = Currency.entries.map { currency ->
+            CurrencyInfoDto(
+                code = currency,
+                name = messageSource.getMessage(currency.messageKey, null, locale)
+            )
+        }
+        return ResponseEntity.ok(AllowedCurrenciesDto(settlementCurrencies, referenceCurrencies))
     }
 
     @Operation(
@@ -115,7 +126,9 @@ class ManageAdController(
             throw AdService.AdNotFoundException(adId)
         }
 
-        return ResponseEntity.ok(AdDto.fromDomain(ad))
+        val frozenCurrencies = computeFrozenCurrencies(ad)
+
+        return ResponseEntity.ok(AdDto.fromDomain(ad, frozenCurrencies))
     }
 
     @Operation(
@@ -138,6 +151,7 @@ class ManageAdController(
         val principal = HttpServletRequestAuthUtil.getPrincipal()
         log.info("User {} attempting to create ad with title '{}'", principal.userId, request.title)
         val createdAdDomain = adService.createAd(principal.userId, request.title, request.categoryId)
+        // Newly created ad has no price/currency, so cannot be frozen
         return ResponseEntity.status(HttpStatus.CREATED).body(AdDto.fromDomain(createdAdDomain))
     }
 
@@ -185,7 +199,8 @@ class ManageAdController(
             userId = principal.userId,
             updateData = request.toDomain()
         )
-        return ResponseEntity.ok(AdDto.fromDomain(updatedAdDomain))
+        val frozenCurrencies = computeFrozenCurrencies(updatedAdDomain)
+        return ResponseEntity.ok(AdDto.fromDomain(updatedAdDomain, frozenCurrencies))
     }
 
     @Operation(
@@ -221,7 +236,8 @@ class ManageAdController(
         val principal = HttpServletRequestAuthUtil.getPrincipal()
         log.info("User {} attempting to activate ad {}", principal.userId, adId)
         val activatedAdDomain = adService.activateAd(adId, principal.userId)
-        return ResponseEntity.ok(AdDto.fromDomain(activatedAdDomain))
+        val frozenCurrencies = computeFrozenCurrencies(activatedAdDomain)
+        return ResponseEntity.ok(AdDto.fromDomain(activatedAdDomain, frozenCurrencies))
     }
 
     @Operation(
@@ -257,6 +273,12 @@ class ManageAdController(
         val principal = HttpServletRequestAuthUtil.getPrincipal()
         log.info("User {} attempting to deactivate ad {}", principal.userId, adId)
         val deactivatedAdDomain = adService.deactivateAd(adId, principal.userId)
-        return ResponseEntity.ok(AdDto.fromDomain(deactivatedAdDomain))
+        val frozenCurrencies = computeFrozenCurrencies(deactivatedAdDomain)
+        return ResponseEntity.ok(AdDto.fromDomain(deactivatedAdDomain, frozenCurrencies))
+    }
+
+    private fun computeFrozenCurrencies(ad: com.gimlee.ads.domain.model.Ad): List<Currency> {
+        if (!ad.volatilityProtection) return emptyList()
+        return ad.settlementCurrencies.filter { volatilityStateService.isFrozen(it) }
     }
 }

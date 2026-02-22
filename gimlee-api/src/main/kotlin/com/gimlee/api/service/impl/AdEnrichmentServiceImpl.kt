@@ -24,6 +24,7 @@ import com.gimlee.auth.service.UserService
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.toMicros
 import com.gimlee.payments.domain.service.CurrencyConverterService
+import com.gimlee.payments.domain.service.VolatilityStateService
 import com.gimlee.user.domain.ProfileService
 import com.gimlee.user.domain.UserPreferencesService
 import com.gimlee.user.domain.UserPresenceService
@@ -45,7 +46,8 @@ class AdEnrichmentServiceImpl(
     private val userPresenceService: UserPresenceService,
     private val adService: AdService,
     private val adVisitService: AdVisitService,
-    private val adDiscoveryProperties: AdDiscoveryProperties
+    private val adDiscoveryProperties: AdDiscoveryProperties,
+    private val volatilityStateService: VolatilityStateService
 ) : AdEnrichmentService {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -74,7 +76,10 @@ class AdEnrichmentServiceImpl(
                 convertPrice(ad.price, preferredCurrency)
             } else null
 
-            AdDiscoveryPreviewDto.fromAdPreview(previewDto, convertedPrice)
+            val frozenCurrencies = computeFrozenCurrencies(ad)
+            val settlementPrices = computeSettlementPrices(ad)
+
+            AdDiscoveryPreviewDto.fromAdPreview(previewDto, convertedPrice, frozenCurrencies, settlementPrices)
         }
     }
 
@@ -142,7 +147,10 @@ class AdEnrichmentServiceImpl(
             stats = AdDiscoveryStatsDto(viewsCount = totalViews)
         }
 
-        return AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails, otherAdsDtos, stats)
+        val frozenCurrencies = computeFrozenCurrencies(ad)
+        val settlementPrices = computeSettlementPrices(ad)
+
+        return AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails, otherAdsDtos, stats, frozenCurrencies, settlementPrices)
     }
 
     override fun getPreferredCurrency(userId: String?): Currency {
@@ -179,6 +187,23 @@ class AdEnrichmentServiceImpl(
         } catch (e: Exception) {
             log.error("Failed to convert price from {} to {}: {}", price.currency, to, e.message)
             null
+        }
+    }
+
+    private fun computeFrozenCurrencies(ad: Ad): List<Currency> {
+        if (!ad.volatilityProtection) return emptyList()
+        return ad.settlementCurrencies.filter { volatilityStateService.isFrozen(it) }
+    }
+
+    private fun computeSettlementPrices(ad: Ad): List<CurrencyAmountDto>? {
+        val price = ad.price ?: return null
+        if (ad.settlementCurrencies.isEmpty()) return null
+        return ad.settlementCurrencies.mapNotNull { sc ->
+            if (sc == price.currency) {
+                CurrencyAmountDto(price.amount, sc)
+            } else {
+                convertPrice(price, sc)
+            }
         }
     }
 }

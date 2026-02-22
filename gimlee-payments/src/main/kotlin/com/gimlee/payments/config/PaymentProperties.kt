@@ -1,15 +1,25 @@
 package com.gimlee.payments.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.bind.ConstructorBinding
 import org.springframework.boot.context.properties.bind.DefaultValue
 
 @ConfigurationProperties(prefix = "gimlee.payments")
-data class PaymentProperties(
+data class PaymentProperties @ConstructorBinding constructor(
     @DefaultValue("1")
     val timeoutHours: Long,
     val pirateChain: PirateChainProperties = PirateChainProperties(),
     val ycash: YcashProperties = YcashProperties(),
-    val exchange: ExchangeProperties = ExchangeProperties()
+    val exchange: ExchangeProperties = ExchangeProperties(),
+    val volatility: VolatilityProperties
+)
+
+data class VolatilityProperties(
+    val downsideThreshold: Double,
+    val windowSeconds: Long,
+    val cooldownSeconds: Long,
+    val stabilizationChecks: Int,
+    val staleThresholdSeconds: Long
 )
 
 data class PirateChainProperties(

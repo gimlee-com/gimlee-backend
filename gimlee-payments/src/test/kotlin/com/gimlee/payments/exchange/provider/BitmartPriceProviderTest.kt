@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.payments.config.PaymentProperties
+import com.gimlee.payments.config.VolatilityProperties
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -17,8 +18,16 @@ import java.math.BigDecimal
 class BitmartPriceProviderTest : StringSpec({
     val httpClient = mockk<HttpClient>()
     val objectMapper = ObjectMapper().registerKotlinModule()
+    val volatilityProperties = VolatilityProperties(
+        downsideThreshold = 0.05,
+        windowSeconds = 600,
+        cooldownSeconds = 1800,
+        stabilizationChecks = 3,
+        staleThresholdSeconds = 3600
+    )
     val properties = PaymentProperties(
-        timeoutHours = 1
+        timeoutHours = 1,
+        volatility = volatilityProperties
     )
     val provider = BitmartPriceProvider(httpClient, objectMapper, properties)
 

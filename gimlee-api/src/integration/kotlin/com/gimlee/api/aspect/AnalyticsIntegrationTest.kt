@@ -1,6 +1,7 @@
 package com.gimlee.api.aspect
 
 import com.gimlee.ads.domain.AdService
+import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.persistence.AdVisitRepository
 import com.gimlee.analytics.persistence.AnalyticsEventRepository
 import com.gimlee.auth.domain.User
@@ -8,6 +9,7 @@ import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRepository
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
+import com.gimlee.common.domain.model.Currency
 import io.kotest.matchers.shouldBe
 import org.awaitility.Awaitility.await
 import org.bson.types.ObjectId
@@ -42,7 +44,8 @@ class AnalyticsIntegrationTest(
         adService.updateAd(ad.id, sellerId.toHexString(), com.gimlee.ads.domain.model.UpdateAdRequest(
             description = "Description",
             price = com.gimlee.ads.domain.model.CurrencyAmount(java.math.BigDecimal("100"), com.gimlee.common.domain.model.Currency.ARRR),
-            location = com.gimlee.ads.domain.model.Location("city", doubleArrayOf(1.0, 1.0))
+            settlementCurrencies = setOf(Currency.ARRR),
+            location = Location("city", doubleArrayOf(1.0, 1.0))
         ))
         adService.activateAd(ad.id, sellerId.toHexString())
         

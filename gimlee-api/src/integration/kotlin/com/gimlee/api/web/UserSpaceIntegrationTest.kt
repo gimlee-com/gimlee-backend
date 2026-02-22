@@ -39,6 +39,7 @@ class UserSpaceIntegrationTest(
         adService.updateAd(ad.id, userId.toHexString(), UpdateAdRequest(
             description = "Test Description",
             price = CurrencyAmount(BigDecimal("1000"), Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             location = com.gimlee.ads.domain.model.Location("city", doubleArrayOf(0.0, 0.0)),
             stock = 1
         ))

@@ -189,7 +189,7 @@ class AdServiceTest : StringSpec({
 
         every { adRepository.findById(adId) } returns existingDoc
 
-        val updateRequest = com.gimlee.ads.domain.model.UpdateAdRequest(
+        val updateRequest = UpdateAdRequest(
             price = com.gimlee.ads.domain.model.CurrencyAmount(BigDecimal("100"), Currency.USD)
         )
 
@@ -197,8 +197,7 @@ class AdServiceTest : StringSpec({
             adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
         }
 
-        exception.outcome shouldBe AdOutcome.CURRENCY_NOT_ALLOWED
-        exception.args shouldBe arrayOf("USD")
+        exception.outcome shouldBe AdOutcome.FIXED_CRYPTO_REQUIRES_SETTLEMENT_CURRENCY
     }
 
     "createAd should set stock" {
@@ -322,8 +321,7 @@ class AdServiceTest : StringSpec({
             adService.activateAd(adId.toHexString(), userId.toHexString())
         }
 
-        exception.outcome shouldBe AdOutcome.CURRENCY_NOT_ALLOWED
-        exception.args shouldBe arrayOf("USD")
+        exception.outcome shouldBe AdOutcome.INCOMPLETE_AD_DATA
     }
 
     "updateAd should fail if stock level is lower than locked stock" {

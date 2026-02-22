@@ -1,8 +1,10 @@
 package com.gimlee.api
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
+import com.gimlee.api.web.dto.AdDiscoveryDetailsDto
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
@@ -14,8 +16,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import java.math.BigDecimal
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.gimlee.api.web.dto.AdDiscoveryDetailsDto
 
 @AutoConfigureMockMvc
 @org.springframework.test.context.TestPropertySource(properties = [
@@ -41,6 +41,7 @@ class OtherAdsIntegrationTest(
             adService.updateAd(ad.id, sellerIdStr, UpdateAdRequest(
                 description = "Desc $i",
                 price = CurrencyAmount(BigDecimal.valueOf(i.toLong()), Currency.ARRR),
+                settlementCurrencies = setOf(Currency.ARRR),
                 location = com.gimlee.ads.domain.model.Location("city1", doubleArrayOf(1.0, 2.0)),
                 stock = 10
             ))

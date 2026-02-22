@@ -6,6 +6,7 @@ import com.gimlee.common.domain.model.Currency
 import com.gimlee.payments.config.ExchangeProperties
 import com.gimlee.payments.config.MexcProperties
 import com.gimlee.payments.config.PaymentProperties
+import com.gimlee.payments.config.VolatilityProperties
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -30,9 +31,17 @@ class MexcPriceProviderTest : StringSpec({
         volatilityKlinesInterval = "60m"
     )
     val exchangeProperties = ExchangeProperties(mexc = mexcProperties)
+    val volatilityProperties = VolatilityProperties(
+        downsideThreshold = 0.05,
+        windowSeconds = 600,
+        cooldownSeconds = 1800,
+        stabilizationChecks = 3,
+        staleThresholdSeconds = 3600
+    )
     val properties = PaymentProperties(
         timeoutHours = 1,
-        exchange = exchangeProperties
+        exchange = exchangeProperties,
+        volatility = volatilityProperties
     )
     
     val provider = MexcPriceProvider(httpClient, objectMapper, properties)

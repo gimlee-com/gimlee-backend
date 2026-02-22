@@ -1,22 +1,19 @@
 package com.gimlee.api.web
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.CurrencyAmount
-import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.web.dto.StatusResponseDto
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.put
-import java.math.BigDecimal
 
 @AutoConfigureMockMvc
 @org.springframework.test.context.TestPropertySource(properties = ["gimlee.auth.jwt.enabled=false"])
@@ -35,10 +32,10 @@ class AdSettlementCurrencyIntegrationTest(
         val principal = Principal(userId = userId.toHexString(), username = "testuser", roles = listOf(Role.USER, Role.PIRATE))
         val ad = adService.createAd(userId.toHexString(), "Test Ad", null, 10)
 
-        When("attempting to set a non-settlement currency (USD) via API") {
+        When("attempting to set a non-settlement currency (USD) as price in FIXED_CRYPTO mode") {
             val updateRequest = mapOf(
                 "price" to 100,
-                "currency" to "USD"
+                "priceCurrency" to "USD"
             )
 
             val result = mockMvc.put("/sales/ads/${ad.id}") {
@@ -52,16 +49,16 @@ class AdSettlementCurrencyIntegrationTest(
             val content = result.response.contentAsString
             val response = objectMapper.readValue(content, StatusResponseDto::class.java)
 
-            Then("it should return a bad request status with AD_CURRENCY_NOT_ALLOWED") {
-                response.status shouldBe "AD_CURRENCY_NOT_ALLOWED"
-                response.message?.contains("Currency USD is not allowed for settlement.") shouldBe true
+            Then("it should return a bad request status with FIXED_CRYPTO_REQUIRES_SETTLEMENT_CURRENCY") {
+                response.status shouldBe "AD_FIXED_CRYPTO_REQUIRES_SETTLEMENT_CURRENCY"
             }
         }
         
         When("attempting to set a settlement currency (ARRR) via API with PIRATE role") {
             val updateRequest = mapOf(
                 "price" to 100,
-                "currency" to "ARRR"
+                "priceCurrency" to "ARRR",
+                "settlementCurrencies" to listOf("ARRR")
             )
 
             mockMvc.put("/sales/ads/${ad.id}") {
@@ -86,7 +83,8 @@ class AdSettlementCurrencyIntegrationTest(
 
             val updateRequest = mapOf(
                 "price" to 100,
-                "currency" to "ARRR"
+                "priceCurrency" to "ARRR",
+                "settlementCurrencies" to listOf("ARRR")
             )
 
             val result = mockMvc.put("/sales/ads/${ad2.id}") {
@@ -104,10 +102,10 @@ class AdSettlementCurrencyIntegrationTest(
         }
 
         When("attempting to set a settlement currency (YEC) via API without YCASH role") {
-            // principal has PIRATE, but not YCASH. userId already has PIRATE in DB.
             val updateRequest = mapOf(
                 "price" to 100,
-                "currency" to "YEC"
+                "priceCurrency" to "YEC",
+                "settlementCurrencies" to listOf("YEC")
             )
 
             val result = mockMvc.put("/sales/ads/${ad.id}") {
@@ -130,7 +128,8 @@ class AdSettlementCurrencyIntegrationTest(
             
             val updateRequest = mapOf(
                 "price" to 100,
-                "currency" to "YEC"
+                "priceCurrency" to "YEC",
+                "settlementCurrencies" to listOf("YEC")
             )
 
             mockMvc.put("/sales/ads/${ad.id}") {

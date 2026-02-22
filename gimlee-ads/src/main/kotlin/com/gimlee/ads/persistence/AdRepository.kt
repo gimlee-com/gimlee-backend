@@ -1,13 +1,25 @@
 package com.gimlee.ads.persistence
 
-import com.gimlee.ads.domain.model.*
+import com.gimlee.ads.domain.model.AdFilters
+import com.gimlee.ads.domain.model.AdSorting
+import com.gimlee.ads.domain.model.AdStatus
+import com.gimlee.ads.domain.model.By
+import com.gimlee.ads.domain.model.Direction
+import com.gimlee.ads.domain.model.PricingMode
 import com.gimlee.ads.persistence.model.AdDocument
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.persistence.mongo.MongoExceptionUtils
 import com.mongodb.MongoException
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
-import com.mongodb.client.model.*
+import com.mongodb.client.model.Accumulators
+import com.mongodb.client.model.Aggregates
+import com.mongodb.client.model.Filters
+import com.mongodb.client.model.FindOneAndUpdateOptions
+import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.client.model.ReturnDocument
+import com.mongodb.client.model.Sorts
+import com.mongodb.client.model.Updates
 import org.bson.Document
 import org.bson.conversions.Bson
 import org.bson.types.Decimal128
@@ -255,8 +267,10 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             .append(AdDocument.FIELD_USER_ID, ad.userId)
             .append(AdDocument.FIELD_TITLE, ad.title)
             .append(AdDocument.FIELD_DESCRIPTION, ad.description)
+            .append(AdDocument.FIELD_PRICING_MODE, ad.pricingMode.shortName)
             .append(AdDocument.FIELD_PRICE, ad.price?.let { Decimal128(it) })
             .append(AdDocument.FIELD_CURRENCY, ad.currency?.name)
+            .append(AdDocument.FIELD_SETTLEMENT_CURRENCIES, ad.settlementCurrencies.map { it.name })
             .append(AdDocument.FIELD_STATUS, ad.status.name)
             .append(AdDocument.FIELD_CREATED_AT, ad.createdAtMicros)
             .append(AdDocument.FIELD_UPDATED_AT, ad.updatedAtMicros)
@@ -266,6 +280,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             .append(AdDocument.FIELD_MAIN_PHOTO_PATH, ad.mainPhotoPath)
             .append(AdDocument.FIELD_STOCK, ad.stock)
             .append(AdDocument.FIELD_LOCKED_STOCK, ad.lockedStock)
+            .append(AdDocument.FIELD_VOLATILITY_PROTECTION, ad.volatilityProtection)
 
 
         // Map GeoJsonPoint to Document format { type: "Point", coordinates: [lon, lat] }
@@ -283,6 +298,10 @@ class AdRepository(mongoDatabase: MongoDatabase) {
         val price = doc.get(AdDocument.FIELD_PRICE, Decimal128::class.java)?.bigDecimalValue()
         val currencyString = doc.getString(AdDocument.FIELD_CURRENCY)
         val statusString = doc.getString(AdDocument.FIELD_STATUS)
+        val pricingModeString = doc.getString(AdDocument.FIELD_PRICING_MODE)
+
+        @Suppress("UNCHECKED_CAST")
+        val settlementCurrencyStrings = doc.get(AdDocument.FIELD_SETTLEMENT_CURRENCIES) as? List<String> ?: emptyList()
 
         // Map location Document back to GeoJsonPoint
         val locationDoc = doc.get(AdDocument.FIELD_LOCATION, Document::class.java)
@@ -303,8 +322,10 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             userId = doc.getObjectId(AdDocument.FIELD_USER_ID),
             title = doc.getString(AdDocument.FIELD_TITLE),
             description = doc.getString(AdDocument.FIELD_DESCRIPTION),
+            pricingMode = pricingModeString?.let { PricingMode.fromShortName(it) } ?: PricingMode.FIXED_CRYPTO,
             price = price,
             currency = currencyString?.let { Currency.valueOf(it)},
+            settlementCurrencies = settlementCurrencyStrings.map { Currency.valueOf(it) }.toSet(),
             status = AdStatus.valueOf(statusString ?: AdStatus.INACTIVE.name),
             createdAtMicros = doc.getLong(AdDocument.FIELD_CREATED_AT),
             updatedAtMicros = doc.getLong(AdDocument.FIELD_UPDATED_AT),
@@ -314,7 +335,8 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             mediaPaths = mediaPathsList ?: emptyList(),
             mainPhotoPath = doc.getString(AdDocument.FIELD_MAIN_PHOTO_PATH),
             stock = doc.getInteger(AdDocument.FIELD_STOCK) ?: 0,
-            lockedStock = doc.getInteger(AdDocument.FIELD_LOCKED_STOCK) ?: 0
+            lockedStock = doc.getInteger(AdDocument.FIELD_LOCKED_STOCK) ?: 0,
+            volatilityProtection = doc.getBoolean(AdDocument.FIELD_VOLATILITY_PROTECTION) ?: false
         )
     }
 }

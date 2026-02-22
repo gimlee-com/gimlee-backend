@@ -57,6 +57,7 @@ class PurchaseFacadeIntegrationTest(
         adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
             description = "Test Description",
             price = CurrencyAmount(BigDecimal("10.00"), Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             location = Location("city1", doubleArrayOf(1.0, 2.0)),
             stock = 10
         ))
@@ -191,6 +192,7 @@ class PurchaseFacadeIntegrationTest(
                 adService.updateAd(ad2.id, anotherSellerId.toHexString(), UpdateAdRequest(
                     description = "Another Description",
                     price = CurrencyAmount(BigDecimal("5.00"), Currency.ARRR),
+                    settlementCurrencies = setOf(Currency.ARRR),
                     location = Location("city2", doubleArrayOf(3.0, 4.0)),
                     stock = 5
                 ))
@@ -219,6 +221,7 @@ class PurchaseFacadeIntegrationTest(
                 adService.updateAd(ad2.id, sellerId.toHexString(), UpdateAdRequest(
                     description = "Same Seller Item Description",
                     price = CurrencyAmount(BigDecimal("20.00"), Currency.ARRR),
+                    settlementCurrencies = setOf(Currency.ARRR),
                     location = Location("city1", doubleArrayOf(1.0, 2.0)),
                     stock = 5
                 ))

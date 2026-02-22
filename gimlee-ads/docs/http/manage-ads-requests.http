@@ -59,7 +59,9 @@ Authorization: Bearer {{auth_token}}
     "path/to/media/details/image2.png"
   ],
   "mainPhotoPath": "path/to/media/image1.jpg",
-  "stock": 10
+  "stock": 10,
+  "volatilityProtection": true,
+  "peggedCurrency": "USD"
 }
 
 ### Expected Response (Success - 200 OK):
@@ -88,6 +90,9 @@ Authorization: Bearer {{auth_token}}
 #   "stock": 10,
 #   "lockedStock": 0,
 #   "availableStock": 10,
+#   "volatilityProtection": true,
+#   "peggedCurrency": "USD",
+#   "isFrozen": false, // New field, dynamically calculated
 #   "createdAt": "2023-01-01T10:00:00Z",
 #   "updatedAt": "2023-01-01T10:05:00Z"
 # }

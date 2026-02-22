@@ -28,6 +28,7 @@ class AdVisibilityIntegrationTest(
         adService.updateAd(activeAd.id, sellerIdStr, UpdateAdRequest(
             description = "Desc",
             price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             location = com.gimlee.ads.domain.model.Location("city1", doubleArrayOf(1.0, 2.0)),
             stock = 10
         ))

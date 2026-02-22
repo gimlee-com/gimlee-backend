@@ -50,6 +50,7 @@ class PurchaseFlowIntegrationTest(
         adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
             description = "Test Description",
             price = CurrencyAmount(BigDecimal("10.00"), Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             location = Location("city1", doubleArrayOf(1.0, 2.0)),
             stock = 10
         ))

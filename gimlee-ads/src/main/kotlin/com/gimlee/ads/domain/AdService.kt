@@ -1,6 +1,14 @@
 package com.gimlee.ads.domain
 
-import com.gimlee.ads.domain.model.*
+import com.gimlee.ads.domain.model.Ad
+import com.gimlee.ads.domain.model.AdFilters
+import com.gimlee.ads.domain.model.AdSorting
+import com.gimlee.ads.domain.model.AdStatus
+import com.gimlee.ads.domain.model.By
+import com.gimlee.ads.domain.model.CurrencyAmount
+import com.gimlee.ads.domain.model.Direction
+import com.gimlee.ads.domain.model.PricingMode
+import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.ads.persistence.model.AdDocument
 import com.gimlee.auth.persistence.UserRoleRepository
@@ -56,8 +64,10 @@ class AdService(
             userId = ObjectId(userId),
             title = title,
             description = null,
+            pricingMode = PricingMode.FIXED_CRYPTO,
             price = null,
             currency = null,
+            settlementCurrencies = emptySet(),
             status = AdStatus.INACTIVE,
             createdAtMicros = nowMicros,
             updatedAtMicros = nowMicros,
@@ -133,6 +143,31 @@ class AdService(
 
         val newPrice = updateData.price?.amount ?: existingAdDoc.price
         val newCurrency = updateData.price?.currency ?: existingAdDoc.currency
+        val newPricingMode = updateData.pricingMode ?: existingAdDoc.pricingMode
+        val newSettlementCurrencies = updateData.settlementCurrencies ?: existingAdDoc.settlementCurrencies
+        val newVolatilityProtection = updateData.volatilityProtection ?: existingAdDoc.volatilityProtection
+
+        // Validate: volatility protection only allowed in PEGGED mode
+        if (newVolatilityProtection && newPricingMode != PricingMode.PEGGED) {
+            throw AdOperationException(AdOutcome.VOLATILITY_PROTECTION_REQUIRES_PEGGED)
+        }
+
+        // Validate: FIXED_CRYPTO requires price currency to be a settlement currency in the set
+        if (newPricingMode == PricingMode.FIXED_CRYPTO && newCurrency != null) {
+            if (!newCurrency.isSettlement) {
+                throw AdOperationException(AdOutcome.FIXED_CRYPTO_REQUIRES_SETTLEMENT_CURRENCY)
+            }
+            if (newSettlementCurrencies.isNotEmpty() && newCurrency !in newSettlementCurrencies) {
+                throw AdOperationException(AdOutcome.FIXED_CRYPTO_PRICE_CURRENCY_NOT_IN_SETTLEMENT)
+            }
+        }
+
+        // Validate: settlement currencies must all be actual settlement currencies
+        newSettlementCurrencies.forEach { sc ->
+            if (!sc.isSettlement) {
+                throw AdOperationException(AdOutcome.CURRENCY_NOT_ALLOWED, sc.name)
+            }
+        }
 
         if (newPrice != null && newCurrency != null) {
             val oldPriceValue = existingAdDoc.price
@@ -142,7 +177,13 @@ class AdService(
             adPriceValidator.validatePrice(CurrencyAmount(newPrice, newCurrency), oldPrice)
         }
 
-        if (newCurrency != null) {
+        // Validate user roles for all settlement currencies
+        if (newSettlementCurrencies.isNotEmpty()) {
+            val roles = userRoleRepository.getAll(userObjectId)
+            newSettlementCurrencies.forEach { sc ->
+                adCurrencyValidator.validateUserCanListInCurrency(roles, sc)
+            }
+        } else if (newCurrency != null && newCurrency.isSettlement) {
             val roles = userRoleRepository.getAll(userObjectId)
             adCurrencyValidator.validateUserCanListInCurrency(roles, newCurrency)
         }
@@ -153,14 +194,17 @@ class AdService(
         val updatedAdDoc = existingAdDoc.copy(
             title = newTitle,
             description = updateData.description ?: existingAdDoc.description,
+            pricingMode = newPricingMode,
             price = newPrice,
             currency = newCurrency,
+            settlementCurrencies = newSettlementCurrencies,
             cityId = finalCityId,
             categoryIds = if (updateData.categoryId != null) resolveCategoryPath(updateData.categoryId) else existingAdDoc.categoryIds,
             location = finalGeoPoint,
             mediaPaths = newMediaPaths,
             mainPhotoPath = newMainPhotoPath,
             stock = newStock,
+            volatilityProtection = newVolatilityProtection,
             updatedAtMicros = Instant.now().toMicros()
         )
 
@@ -278,9 +322,11 @@ class AdService(
             throw AdOperationException(AdOutcome.INVALID_AD_STATUS)
         }
 
-        existingAdDoc.currency?.let {
+        if (existingAdDoc.settlementCurrencies.isNotEmpty()) {
             val roles = userRoleRepository.getAll(userObjectId)
-            adCurrencyValidator.validateUserCanListInCurrency(roles, it)
+            existingAdDoc.settlementCurrencies.forEach { sc ->
+                adCurrencyValidator.validateUserCanListInCurrency(roles, sc)
+            }
         }
 
         checkForCompleteness(existingAdDoc, adId)
@@ -345,24 +391,27 @@ class AdService(
     }
 
     private fun checkForCompleteness(existingAd: AdDocument, adId: String) {
+        val hasValidSettlement = existingAd.settlementCurrencies.isNotEmpty() &&
+                existingAd.settlementCurrencies.all { it.isSettlement }
+
         val isComplete = existingAd.title.isNotBlank() &&
                 !existingAd.description.isNullOrBlank() &&
                 existingAd.price != null &&
                 existingAd.currency != null &&
-                existingAd.currency.isSettlement &&
+                hasValidSettlement &&
                 existingAd.cityId != null &&
                 existingAd.location != null &&
                 existingAd.stock > 0
 
         if (!isComplete) {
             log.warn(
-                "Attempted to activate incomplete ad {}: title={}, desc={}, price={}, curr={}, currSettlement={}, cityId={}, location={}, stock={}",
+                "Attempted to activate incomplete ad {}: title={}, desc={}, price={}, curr={}, settlement={}, cityId={}, location={}, stock={}",
                 adId,
                 existingAd.title.isNotBlank(),
                 !existingAd.description.isNullOrBlank(),
                 existingAd.price != null,
                 existingAd.currency != null,
-                existingAd.currency?.isSettlement == true,
+                hasValidSettlement,
                 existingAd.cityId != null,
                 existingAd.location != null,
                 existingAd.stock

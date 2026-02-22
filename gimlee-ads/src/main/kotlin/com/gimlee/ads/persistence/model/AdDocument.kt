@@ -4,6 +4,7 @@ import com.gimlee.ads.domain.model.Ad
 import com.gimlee.ads.domain.model.AdStatus
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
+import com.gimlee.ads.domain.model.PricingMode
 import com.gimlee.common.InstantUtils.fromMicros
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.location.cities.data.cityDataById
@@ -16,8 +17,10 @@ data class AdDocument(
     val userId: ObjectId,
     val title: String,
     val description: String?,
+    val pricingMode: PricingMode = PricingMode.FIXED_CRYPTO,
     val price: BigDecimal?,
     val currency: Currency?,
+    val settlementCurrencies: Set<Currency> = emptySet(),
     val status: AdStatus,
     val createdAtMicros: Long,
     val updatedAtMicros: Long,
@@ -27,15 +30,18 @@ data class AdDocument(
     val mediaPaths: List<String>? = emptyList(),
     val mainPhotoPath: String?,
     val stock: Int = 0,
-    val lockedStock: Int = 0
+    val lockedStock: Int = 0,
+    val volatilityProtection: Boolean = false
 ) {
     companion object {
         const val FIELD_ID = "_id"
         const val FIELD_USER_ID = "uid"
         const val FIELD_TITLE = "t"
         const val FIELD_DESCRIPTION = "d"
+        const val FIELD_PRICING_MODE = "pm"
         const val FIELD_PRICE = "p"
         const val FIELD_CURRENCY = "c"
+        const val FIELD_SETTLEMENT_CURRENCIES = "sc"
         const val FIELD_STATUS = "s"
         const val FIELD_CREATED_AT = "crt"
         const val FIELD_UPDATED_AT = "upd"
@@ -46,6 +52,7 @@ data class AdDocument(
         const val FIELD_MAIN_PHOTO_PATH = "mpp"
         const val FIELD_STOCK = "stk"
         const val FIELD_LOCKED_STOCK = "lstk"
+        const val FIELD_VOLATILITY_PROTECTION = "vp"
     }
 
     /**
@@ -58,7 +65,9 @@ data class AdDocument(
             userId = userId.toHexString(),
             title = title,
             description = description,
+            pricingMode = pricingMode,
             price = domainPrice,
+            settlementCurrencies = settlementCurrencies,
             status = status,
             createdAt = fromMicros(createdAtMicros),
             updatedAt = fromMicros(updatedAtMicros),
@@ -73,7 +82,8 @@ data class AdDocument(
             mediaPaths = mediaPaths,
             mainPhotoPath = mainPhotoPath,
             stock = stock,
-            lockedStock = lockedStock
+            lockedStock = lockedStock,
+            volatilityProtection = volatilityProtection
         )
     }
 }

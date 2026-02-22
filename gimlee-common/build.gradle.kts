@@ -18,6 +18,7 @@ dependencies {
     api(libs.xxhash)
     
     testFixturesApi(libs.spring.boot.starter.test)
+    testFixturesApi(libs.spring.boot.starter.data.mongodb)
     testFixturesApi(platform(libs.kotest.bom))
     testFixturesApi(libs.kotest.runner.junit5)
     testFixturesApi(libs.kotest.assertions.core)

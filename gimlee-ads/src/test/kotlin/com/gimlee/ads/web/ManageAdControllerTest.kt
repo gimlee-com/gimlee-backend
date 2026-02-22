@@ -6,10 +6,14 @@ import com.gimlee.ads.web.dto.response.AdDto
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
 import com.gimlee.common.domain.model.Currency
-import com.gimlee.common.web.dto.StatusResponseDto
+import com.gimlee.payments.domain.service.VolatilityStateService
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import org.springframework.context.MessageSource
 import org.springframework.http.HttpStatus
 import org.springframework.web.context.request.RequestAttributes
@@ -20,7 +24,8 @@ class ManageAdControllerTest : StringSpec({
 
     val adService = mockk<AdService>()
     val messageSource = mockk<MessageSource>()
-    val controller = ManageAdController(adService, messageSource)
+    val volatilityStateService = mockk<VolatilityStateService>(relaxed = true)
+    val controller = ManageAdController(adService, messageSource, volatilityStateService)
 
     beforeTest {
         mockkStatic(RequestContextHolder::class)
@@ -43,13 +48,16 @@ class ManageAdControllerTest : StringSpec({
         val request = UpdateAdRequestDto(
             title = "Test",
             description = null,
+            pricingMode = null,
             price = BigDecimal("10"),
-            currency = Currency.ARRR,
+            priceCurrency = Currency.ARRR,
+            settlementCurrencies = setOf(Currency.ARRR),
             location = null,
             categoryId = null,
             mediaPaths = null,
             mainPhotoPath = null,
-            stock = 1
+            stock = 1,
+            volatilityProtection = null
         )
 
         val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdCurrencyRoleException> {
@@ -65,18 +73,21 @@ class ManageAdControllerTest : StringSpec({
         
         val updatedAd = mockk<com.gimlee.ads.domain.model.Ad>(relaxed = true)
         every { adService.updateAd(any(), any(), any()) } returns updatedAd
-        every { AdDto.fromDomain(any()) } returns mockk()
+        every { AdDto.fromDomain(any(), any<List<Currency>>()) } returns mockk()
 
         val request = UpdateAdRequestDto(
             title = "Test",
             description = null,
+            pricingMode = null,
             price = BigDecimal("10"),
-            currency = Currency.ARRR,
+            priceCurrency = Currency.ARRR,
+            settlementCurrencies = setOf(Currency.ARRR),
             location = null,
             categoryId = null,
             mediaPaths = null,
             mainPhotoPath = null,
-            stock = 1
+            stock = 1,
+            volatilityProtection = null
         )
 
         val response = controller.updateAd("ad1", request)

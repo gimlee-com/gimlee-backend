@@ -41,38 +41,8 @@ class AdDiscoveryFilteringIntegrationTest(
         userRoleRepository.add(sellerId, Role.PIRATE)
         userRoleRepository.add(sellerId, Role.YCASH)
         val sellerIdStr = sellerId.toHexString()
-        
-        // Ad 1: 100 ARRR
-        val ad1 = adService.createAd(sellerIdStr, "ARRR Ad", null, 10)
-        adService.updateAd(ad1.id, sellerIdStr, UpdateAdRequest(
-            description = "Description 1",
-            price = CurrencyAmount(BigDecimal("100"), Currency.ARRR),
-            location = com.gimlee.ads.domain.model.Location("city1", doubleArrayOf(0.0, 0.0)),
-            stock = 10
-        ))
-        adService.activateAd(ad1.id, sellerIdStr)
 
-        // Ad 2: 100 YEC
-        val ad2 = adService.createAd(sellerIdStr, "YEC Ad", null, 10)
-        adService.updateAd(ad2.id, sellerIdStr, UpdateAdRequest(
-            description = "Description 2",
-            price = CurrencyAmount(BigDecimal("100"), Currency.YEC),
-            location = com.gimlee.ads.domain.model.Location("city2", doubleArrayOf(0.0, 0.0)),
-            stock = 10
-        ))
-        adService.activateAd(ad2.id, sellerIdStr)
-        
-        // Ad 3: 500 ARRR (outside range)
-        val ad3 = adService.createAd(sellerIdStr, "Expensive Ad", null, 10)
-        adService.updateAd(ad3.id, sellerIdStr, UpdateAdRequest(
-            description = "Description 3",
-            price = CurrencyAmount(BigDecimal("500"), Currency.ARRR),
-            location = com.gimlee.ads.domain.model.Location("city3", doubleArrayOf(0.0, 0.0)),
-            stock = 10
-        ))
-        adService.activateAd(ad3.id, sellerIdStr)
-
-        // Exchange rates:
+        // Exchange rates must be seeded before ad creation (AdPriceValidator requires them)
         // 1 ARRR = 0.5 USD (so 100 ARRR = 50 USD)
         // 1 YEC = 0.5 USD (so 100 YEC = 50 USD)
         exchangeRateRepository.save(ExchangeRate(
@@ -89,6 +59,39 @@ class AdDiscoveryFilteringIntegrationTest(
             updatedAt = Instant.now(),
             source = "test"
         ))
+
+        // Ad 1: 100 ARRR
+        val ad1 = adService.createAd(sellerIdStr, "ARRR Ad", null, 10)
+        adService.updateAd(ad1.id, sellerIdStr, UpdateAdRequest(
+            description = "Description 1",
+            price = CurrencyAmount(BigDecimal("100"), Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
+            location = com.gimlee.ads.domain.model.Location("city1", doubleArrayOf(0.0, 0.0)),
+            stock = 10
+        ))
+        adService.activateAd(ad1.id, sellerIdStr)
+
+        // Ad 2: 100 YEC
+        val ad2 = adService.createAd(sellerIdStr, "YEC Ad", null, 10)
+        adService.updateAd(ad2.id, sellerIdStr, UpdateAdRequest(
+            description = "Description 2",
+            price = CurrencyAmount(BigDecimal("100"), Currency.YEC),
+            settlementCurrencies = setOf(Currency.YEC),
+            location = com.gimlee.ads.domain.model.Location("city2", doubleArrayOf(0.0, 0.0)),
+            stock = 10
+        ))
+        adService.activateAd(ad2.id, sellerIdStr)
+        
+        // Ad 3: 500 ARRR (outside range)
+        val ad3 = adService.createAd(sellerIdStr, "Expensive Ad", null, 10)
+        adService.updateAd(ad3.id, sellerIdStr, UpdateAdRequest(
+            description = "Description 3",
+            price = CurrencyAmount(BigDecimal("500"), Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
+            location = com.gimlee.ads.domain.model.Location("city3", doubleArrayOf(0.0, 0.0)),
+            stock = 10
+        ))
+        adService.activateAd(ad3.id, sellerIdStr)
 
         When("filtering by price range 40-60 USD (as a guest, default currency USD)") {
             Then("it should find both the 100 ARRR ad and the 100 YEC ad") {

@@ -57,6 +57,7 @@ class OrderHistoryIntegrationTest(
         adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
             description = "Desc",
             price = CurrencyAmount(BigDecimal("50.00"), Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             location = Location("city1", doubleArrayOf(1.0, 2.0)),
             stock = 10
         ))

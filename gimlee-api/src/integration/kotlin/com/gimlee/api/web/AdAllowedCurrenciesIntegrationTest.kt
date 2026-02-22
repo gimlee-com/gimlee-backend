@@ -2,6 +2,7 @@ package com.gimlee.api.web
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.gimlee.ads.web.dto.response.AllowedCurrenciesDto
 import com.gimlee.ads.web.dto.response.CurrencyInfoDto
 import com.gimlee.auth.model.Principal
 import com.gimlee.auth.model.Role
@@ -51,12 +52,17 @@ class AdAllowedCurrenciesIntegrationTest(
                 status { isOk() }
             }.andReturn()
 
-            val currencies: List<CurrencyInfoDto> = objectMapper.readValue(result.response.contentAsString)
+            val response: AllowedCurrenciesDto = objectMapper.readValue(result.response.contentAsString)
 
-            Then("it should only contain ARRR with localized names") {
-                currencies shouldContainExactlyInAnyOrder listOf(
+            Then("settlement currencies should only contain ARRR") {
+                response.settlementCurrencies shouldContainExactlyInAnyOrder listOf(
                     CurrencyInfoDto(Currency.ARRR, "Pirate Chain"),
                 )
+            }
+
+            Then("reference currencies should contain all supported currencies") {
+                response.referenceCurrencies.map { it.code } shouldContainExactlyInAnyOrder
+                    Currency.entries.toList()
             }
         }
 
@@ -67,10 +73,10 @@ class AdAllowedCurrenciesIntegrationTest(
                 status { isOk() }
             }.andReturn()
 
-            val currencies: List<CurrencyInfoDto> = objectMapper.readValue(result.response.contentAsString)
+            val response: AllowedCurrenciesDto = objectMapper.readValue(result.response.contentAsString)
 
-            Then("it should only contain YEC with localized names") {
-                currencies shouldContainExactlyInAnyOrder listOf(
+            Then("settlement currencies should only contain YEC") {
+                response.settlementCurrencies shouldContainExactlyInAnyOrder listOf(
                     CurrencyInfoDto(Currency.YEC, "YCash")
                 )
             }
@@ -83,27 +89,27 @@ class AdAllowedCurrenciesIntegrationTest(
                 status { isOk() }
             }.andReturn()
 
-            val currencies: List<CurrencyInfoDto> = objectMapper.readValue(result.response.contentAsString)
+            val response: AllowedCurrenciesDto = objectMapper.readValue(result.response.contentAsString)
 
-            Then("it should contain ARRR and YEC with localized names") {
-                currencies shouldContainExactlyInAnyOrder listOf(
+            Then("settlement currencies should contain ARRR and YEC") {
+                response.settlementCurrencies shouldContainExactlyInAnyOrder listOf(
                     CurrencyInfoDto(Currency.ARRR, "Pirate Chain"),
                     CurrencyInfoDto(Currency.YEC, "YCash")
                 )
             }
         }
 
-        When("user with no roles fetches allowed currencies") {
+        When("user with no crypto roles fetches allowed currencies") {
             val result = mockMvc.get("/sales/ads/allowed-currencies") {
                 requestAttr("principal", nonePrincipal)
             }.andExpect {
                 status { isOk() }
             }.andReturn()
 
-            val currencies: List<CurrencyInfoDto> = objectMapper.readValue(result.response.contentAsString)
+            val response: AllowedCurrenciesDto = objectMapper.readValue(result.response.contentAsString)
 
-            Then("it should be empty") {
-                currencies shouldBe emptyList<CurrencyInfoDto>()
+            Then("settlement currencies should be empty") {
+                response.settlementCurrencies shouldBe emptyList<CurrencyInfoDto>()
             }
         }
     }

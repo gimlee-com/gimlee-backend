@@ -45,6 +45,7 @@ class AdDiscoveryIntegrationTest(
         adService.updateAd(ad.id, sellerIdStr, UpdateAdRequest(
             description = "Description",
             price = CurrencyAmount(BigDecimal("100"), Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             location = com.gimlee.ads.domain.model.Location("city", doubleArrayOf(0.0, 0.0)),
             stock = 10
         ))

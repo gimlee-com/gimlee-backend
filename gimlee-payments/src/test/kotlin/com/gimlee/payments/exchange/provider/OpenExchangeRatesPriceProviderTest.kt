@@ -3,9 +3,10 @@ package com.gimlee.payments.exchange.provider
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.gimlee.common.domain.model.Currency
-import com.gimlee.payments.config.PaymentProperties
 import com.gimlee.payments.config.ExchangeProperties
 import com.gimlee.payments.config.OpenExchangeRatesProperties
+import com.gimlee.payments.config.PaymentProperties
+import com.gimlee.payments.config.VolatilityProperties
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -23,13 +24,21 @@ class OpenExchangeRatesPriceProviderTest : StringSpec({
 
     val httpClient = mockk<HttpClient>()
     val objectMapper = ObjectMapper().registerKotlinModule()
+    val volatilityProperties = VolatilityProperties(
+        downsideThreshold = 0.05,
+        windowSeconds = 600,
+        cooldownSeconds = 1800,
+        stabilizationChecks = 3,
+        staleThresholdSeconds = 3600
+    )
     val properties = PaymentProperties(
         timeoutHours = 1,
         exchange = ExchangeProperties(
             openExchangeRates = OpenExchangeRatesProperties(
                 appId = "test-app-id"
             )
-        )
+        ),
+        volatility = volatilityProperties
     )
     val provider = OpenExchangeRatesPriceProvider(httpClient, objectMapper, properties)
 

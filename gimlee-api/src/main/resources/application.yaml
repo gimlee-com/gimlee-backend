@@ -139,3 +139,9 @@ gimlee:
       open-exchange-rates:
         base-url: https://openexchangerates.org/api
         update-interval-ms: 21600000
+    volatility:
+      downside-threshold: 0.05
+      window-seconds: 600
+      cooldown-seconds: 1800
+      stabilization-checks: 3
+      stale-threshold-seconds: 3600

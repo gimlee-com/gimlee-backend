@@ -1,0 +1,25 @@
+### Get Volatility Status
+# Returns the current volatility state for all monitored currencies.
+# Includes cooldown timers and downside drop percentages.
+#
+# @name Volatility Status
+GET {{host}}/api/payments/volatility/status
+Authorization: Bearer {{auth_token}}
+
+### Expected Response
+# {
+#   "ARRR": {
+#     "isVolatile": false,
+#     "startTime": null,
+#     "maxPriceInWindow": 10.5,
+#     "currentDropPct": 0.01,
+#     "lastUpdated": "2025-01-20T10:00:00Z"
+#   },
+#   "YEC": {
+#     "isVolatile": true,
+#     "startTime": "2025-01-20T09:50:00Z",
+#     "maxPriceInWindow": 5.0,
+#     "currentDropPct": 0.06,
+#     "lastUpdated": "2025-01-20T10:00:00Z"
+#   }
+# }

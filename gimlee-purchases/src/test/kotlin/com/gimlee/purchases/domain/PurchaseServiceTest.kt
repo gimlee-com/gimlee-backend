@@ -1,23 +1,28 @@
 package com.gimlee.purchases.domain
-import com.gimlee.common.domain.model.Currency
 
-import com.gimlee.events.PurchaseEvent
-import com.gimlee.purchases.domain.model.PurchaseStatus
-import com.gimlee.events.PaymentEvent
-import com.gimlee.purchases.domain.model.Purchase
-import com.gimlee.purchases.persistence.PurchaseRepository
-import com.gimlee.payments.domain.PaymentService
-import com.gimlee.payments.domain.model.PaymentMethod
-import com.gimlee.payments.domain.model.PaymentStatus
-import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.shouldBe
-import io.mockk.*
-import org.bson.types.ObjectId
-import org.springframework.context.ApplicationEventPublisher
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.Ad
 import com.gimlee.ads.domain.model.AdStatus
 import com.gimlee.ads.domain.model.CurrencyAmount
+import com.gimlee.common.domain.model.Currency
+import com.gimlee.events.PaymentEvent
+import com.gimlee.events.PurchaseEvent
+import com.gimlee.payments.domain.PaymentService
+import com.gimlee.payments.domain.model.PaymentMethod
+import com.gimlee.payments.domain.model.PaymentStatus
+import com.gimlee.payments.domain.service.VolatilityStateService
+import com.gimlee.purchases.domain.model.Purchase
+import com.gimlee.purchases.domain.model.PurchaseStatus
+import com.gimlee.purchases.persistence.PurchaseRepository
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
+import org.bson.types.ObjectId
+import org.springframework.context.ApplicationEventPublisher
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -27,7 +32,8 @@ class PurchaseServiceTest : StringSpec({
     val paymentService = mockk<PaymentService>(relaxed = true)
     val adService = mockk<AdService>(relaxed = true)
     val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
-    val service = PurchaseService(purchaseRepository, paymentService, adService, eventPublisher)
+    val volatilityStateService = mockk<VolatilityStateService>(relaxed = true)
+    val service = PurchaseService(purchaseRepository, paymentService, adService, eventPublisher, volatilityStateService)
 
     "should init purchase and payment and publish events" {
         val buyerId = ObjectId.get()
@@ -46,6 +52,41 @@ class PurchaseServiceTest : StringSpec({
         verify(exactly = 2) { eventPublisher.publishEvent(any<PurchaseEvent>()) }
     }
 
+    "should reject purchase if ad is volatile and protection enabled" {
+        val buyerId = ObjectId.get()
+        val adId = ObjectId.get()
+        val sellerId = ObjectId.get()
+        val ad = Ad(
+            id = adId.toHexString(),
+            userId = sellerId.toHexString(),
+            title = "Volatile Ad",
+            description = "Desc",
+            pricingMode = com.gimlee.ads.domain.model.PricingMode.PEGGED,
+            price = CurrencyAmount(BigDecimal.TEN, Currency.USD),
+            settlementCurrencies = setOf(Currency.ARRR),
+            status = AdStatus.ACTIVE,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            location = null,
+            mainPhotoPath = null,
+            stock = 5,
+            lockedStock = 0,
+            volatilityProtection = true
+        )
+
+        every { adService.getAds(listOf(adId.toHexString())) } returns listOf(ad)
+        every { volatilityStateService.isFrozen(Currency.ARRR) } returns true
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<IllegalStateException> {
+            service.purchase(
+                buyerId,
+                listOf(com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.TEN)),
+                Currency.ARRR
+            )
+        }
+        exception.message shouldContain "Purchase temporarily suspended"
+    }
+
     "should init purchase successfully if stock available" {
         val buyerId = ObjectId.get()
         val adId = ObjectId.get()
@@ -56,6 +97,7 @@ class PurchaseServiceTest : StringSpec({
             title = "Test Ad",
             description = "Desc",
             price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             status = AdStatus.ACTIVE,
             createdAt = Instant.now(),
             updatedAt = Instant.now(),
@@ -82,6 +124,7 @@ class PurchaseServiceTest : StringSpec({
             title = "Test Ad",
             description = "Desc",
             price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             status = AdStatus.ACTIVE,
             createdAt = Instant.now(),
             updatedAt = Instant.now(),
@@ -112,6 +155,7 @@ class PurchaseServiceTest : StringSpec({
             title = "Ad 1",
             description = "Desc 1",
             price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             status = AdStatus.ACTIVE,
             createdAt = Instant.now(),
             updatedAt = Instant.now(),
@@ -126,6 +170,7 @@ class PurchaseServiceTest : StringSpec({
             title = "Ad 2",
             description = "Desc 2",
             price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             status = AdStatus.ACTIVE,
             createdAt = Instant.now(),
             updatedAt = Instant.now(),
@@ -160,6 +205,7 @@ class PurchaseServiceTest : StringSpec({
             title = "Ad 1",
             description = "Desc 1",
             price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             status = AdStatus.ACTIVE,
             createdAt = Instant.now(),
             updatedAt = Instant.now(),
@@ -174,6 +220,7 @@ class PurchaseServiceTest : StringSpec({
             title = "Ad 2",
             description = "Desc 2",
             price = CurrencyAmount(BigDecimal("20.0"), Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             status = AdStatus.ACTIVE,
             createdAt = Instant.now(),
             updatedAt = Instant.now(),
@@ -209,6 +256,7 @@ class PurchaseServiceTest : StringSpec({
             title = "Inactive Ad",
             description = "Desc",
             price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR),
             status = AdStatus.INACTIVE,
             createdAt = Instant.now(),
             updatedAt = Instant.now(),

@@ -1,14 +1,15 @@
 package com.gimlee.payments.domain
 
+import com.gimlee.payments.client.model.RpcResponse
 import com.gimlee.payments.config.PaymentProperties
+import com.gimlee.payments.config.VolatilityProperties
+import com.gimlee.payments.crypto.client.model.RawReceivedTransaction
+import com.gimlee.payments.crypto.piratechain.client.PirateChainRpcClient
+import com.gimlee.payments.crypto.piratechain.domain.PirateChainPaymentMonitor
 import com.gimlee.payments.domain.model.Payment
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.payments.persistence.PaymentRepository
-import com.gimlee.payments.crypto.piratechain.client.PirateChainRpcClient
-import com.gimlee.payments.crypto.client.model.RawReceivedTransaction
-import com.gimlee.payments.client.model.RpcResponse
-import com.gimlee.payments.crypto.piratechain.domain.PirateChainPaymentMonitor
 import io.kotest.core.spec.style.StringSpec
 import io.mockk.every
 import io.mockk.mockk
@@ -24,7 +25,14 @@ class PirateChainPaymentMonitorTest : StringSpec({
     val paymentRepository = mockk<PaymentRepository>(relaxed = true)
     val paymentService = mockk<PaymentService>(relaxed = true)
     val rpcClient = mockk<PirateChainRpcClient>(relaxed = true)
-    val paymentProperties = PaymentProperties(timeoutHours = 1)
+    val volatilityProperties = VolatilityProperties(
+        downsideThreshold = 0.05,
+        windowSeconds = 600,
+        cooldownSeconds = 1800,
+        stabilizationChecks = 3,
+        staleThresholdSeconds = 3600
+    )
+    val paymentProperties = PaymentProperties(timeoutHours = 1, volatility = volatilityProperties)
     val executorService = Executors.newSingleThreadExecutor()
     val monitor = PirateChainPaymentMonitor(paymentRepository, paymentService, rpcClient, paymentProperties, executorService)
 

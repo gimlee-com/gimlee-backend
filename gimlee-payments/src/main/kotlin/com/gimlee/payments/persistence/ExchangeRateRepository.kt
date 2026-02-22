@@ -72,6 +72,19 @@ class ExchangeRateRepository(
         return collection.countDocuments()
     }
 
+    fun findRatesInWindow(baseCurrency: Currency, quoteCurrency: Currency, fromMicros: Long, toMicros: Long): List<ExchangeRate> {
+        val filter = Filters.and(
+            Filters.eq(FIELD_BASE_CURRENCY, baseCurrency.name),
+            Filters.eq(FIELD_QUOTE_CURRENCY, quoteCurrency.name),
+            Filters.gte(FIELD_UPDATED_AT, fromMicros),
+            Filters.lte(FIELD_UPDATED_AT, toMicros)
+        )
+        return collection.find(filter)
+            .sort(Sorts.descending(FIELD_UPDATED_AT))
+            .map { it.toExchangeRate() }
+            .toList()
+    }
+
     fun deleteOlderThan(timestampMicros: Long): Long {
         val filter = Filters.lt(FIELD_UPDATED_AT, timestampMicros)
         return collection.deleteMany(filter).deletedCount

@@ -35,6 +35,12 @@ gimlee:
       update-interval-ms: 3600000
       bitmart:
         base-url: http://localhost:${wiremock.server.port}
+    volatility:
+      downside-threshold: 0.05
+      window-seconds: 600
+      cooldown-seconds: 1800
+      stabilization-checks: 3
+      stale-threshold-seconds: 3600
   auth:
     rest:
       unsecured-paths: "/api/playground/**,/payments/currency/**"

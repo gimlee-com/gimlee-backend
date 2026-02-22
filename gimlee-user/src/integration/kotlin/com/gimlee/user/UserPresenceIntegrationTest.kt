@@ -11,15 +11,13 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.bson.types.ObjectId
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.data.mongodb.core.MongoTemplate
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 class UserPresenceIntegrationTest(
     private val userPresenceService: UserPresenceService,
     private val userPresenceRepository: UserPresenceRepository,
-    private val eventPublisher: ApplicationEventPublisher,
-    private val mongoTemplate: MongoTemplate
+    private val eventPublisher: ApplicationEventPublisher
 ) : BaseIntegrationTest({
 
     Given("a user id") {
