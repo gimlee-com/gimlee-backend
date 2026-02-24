@@ -6,6 +6,7 @@ import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.CategoryService
 import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
+import com.gimlee.ads.domain.model.PricingMode
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.api.playground.ads.domain.AdTemplate
 import com.gimlee.api.playground.media.data.PlaygroundMediaRepository
@@ -44,6 +45,9 @@ class AdsPopulator(
         private const val THREAD_POOL_SIZE = 8 // Dedicated thread pool size
         private const val MEDIA_ADD_CHANCE = 0.7 // 70% chance to add media to an ad
         private const val MAX_MEDIA_ITEMS_PER_AD = 20 // Max number of media items to add if chosen
+        private const val MULTI_SETTLEMENT_CHANCE = 0.3 // 30% chance to accept both settlement currencies
+        private val SETTLEMENT_CURRENCIES = Currency.entries.filter { it.isSettlement }
+        private val REFERENCE_CURRENCIES = listOf(Currency.USD)
     }
 
     // Load ad templates once
@@ -105,7 +109,7 @@ class AdsPopulator(
                 val chunkSize = 50
                 repeat(totalAds / chunkSize) {
                     tasks.add(executorService.submit {
-                        createAdsForUser(pirateSeller, chunkSize, "ARRR Ad ", Currency.ARRR)
+                        createAdsForUser(pirateSeller, chunkSize, "ARRR Ad ", forceSettlementCurrency = Currency.ARRR)
                     })
                 }
             }
@@ -115,7 +119,7 @@ class AdsPopulator(
                 val chunkSize = 50
                 repeat(totalAds / chunkSize) {
                     tasks.add(executorService.submit {
-                        createAdsForUser(ycashSeller, chunkSize, "YEC Ad ", Currency.YEC)
+                        createAdsForUser(ycashSeller, chunkSize, "YEC Ad ", forceSettlementCurrency = Currency.YEC)
                     })
                 }
             }
@@ -176,7 +180,7 @@ class AdsPopulator(
         log.info("All ad population tasks completed.")
     }
 
-    private fun createAdsForUser(user: User, count: Int, titlePrefix: String = "", forceCurrency: Currency? = null) {
+    private fun createAdsForUser(user: User, count: Int, titlePrefix: String = "", forceSettlementCurrency: Currency? = null) {
         val userId = user.id?.toHexString()
         if (userId == null) {
             log.warn("User ${user.username} has no ID. Skipping ad creation.")
@@ -194,9 +198,21 @@ class AdsPopulator(
                 }
 
                 val template = adTemplates.random()
-                val price = BigDecimal.valueOf(Random.nextDouble(MIN_PRICE, MAX_PRICE))
-                    .setScale(2, RoundingMode.HALF_UP)
-                val currency = forceCurrency ?: if (Random.nextBoolean()) Currency.YEC else Currency.ARRR
+                val pricingMode = if (Random.nextBoolean()) PricingMode.FIXED_CRYPTO else PricingMode.PEGGED
+                val settlementCurrencies = resolveSettlementCurrencies(forceSettlementCurrency)
+
+                val (priceAmount, priceCurrency) = when (pricingMode) {
+                    PricingMode.FIXED_CRYPTO -> {
+                        val sc = settlementCurrencies.random()
+                        randomPrice(sc) to sc
+                    }
+                    PricingMode.PEGGED -> {
+                        val ref = REFERENCE_CURRENCIES.random()
+                        randomPrice(ref) to ref
+                    }
+                }
+
+                val volatilityProtection = pricingMode == PricingMode.PEGGED && Random.nextBoolean()
                 val location = Location(city.id, doubleArrayOf(city.lon, city.lat))
                 val randomCategoryId = categoryService.getRandomLeafCategoryId()
 
@@ -232,11 +248,14 @@ class AdsPopulator(
                 val updateRequest = UpdateAdRequest(
                     title = title,
                     description = template.description,
-                    price = CurrencyAmount(price, currency),
+                    pricingMode = pricingMode,
+                    price = CurrencyAmount(priceAmount, priceCurrency),
+                    settlementCurrencies = settlementCurrencies,
                     location = location,
                     mediaPaths = adMediaPaths,
                     mainPhotoPath = adMainPhotoPath,
-                    stock = Random.nextInt(1, 100)
+                    stock = Random.nextInt(1, 100),
+                    volatilityProtection = volatilityProtection
                 )
                 val updatedAd = adService.updateAd(createdAd.id, userId, updateRequest)
 
@@ -253,6 +272,17 @@ class AdsPopulator(
         }
         log.debug("Finished creating ads for user ${user.username}")
     }
+
+    private fun resolveSettlementCurrencies(forced: Currency?): Set<Currency> {
+        if (forced != null) {
+            return if (Random.nextDouble() < MULTI_SETTLEMENT_CHANCE) SETTLEMENT_CURRENCIES.toSet() else setOf(forced)
+        }
+        return if (Random.nextBoolean()) setOf(SETTLEMENT_CURRENCIES.random()) else SETTLEMENT_CURRENCIES.toSet()
+    }
+
+    private fun randomPrice(currency: Currency): BigDecimal =
+        BigDecimal.valueOf(Random.nextDouble(MIN_PRICE, MAX_PRICE))
+            .setScale(currency.decimalPlaces, RoundingMode.HALF_UP)
 
     private fun shutdownAndAwaitTermination() {
         if (!::executorService.isInitialized || executorService.isShutdown) {
