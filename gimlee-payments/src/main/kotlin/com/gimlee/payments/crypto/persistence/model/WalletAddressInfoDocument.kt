@@ -9,6 +9,7 @@ import org.bson.types.ObjectId
  */
 data class WalletAddressInfo(
     val type: Currency,
+    val addressType: WalletShieldedAddressType,
     val zAddress: String,
     val viewKeyHash: String,
     val viewKeySalt: String,
@@ -16,10 +17,23 @@ data class WalletAddressInfo(
 ) {
     companion object {
         const val FIELD_TYPE = "t"
+        const val FIELD_ADDRESS_TYPE = "at"
         const val FIELD_Z_ADDRESS = "addr"
         const val FIELD_VIEW_KEY_HASH = "vkh"
         const val FIELD_VIEW_KEY_SALT = "vks"
         const val FIELD_LAST_UPDATE_TIMESTAMP = "ts"
+    }
+}
+
+enum class WalletShieldedAddressType(val rpcName: String) {
+    SPROUT("sprout"),
+    SAPLING("sapling"),
+    ORCHARD("orchard");
+
+    companion object {
+        fun fromRpcName(rpcName: String): WalletShieldedAddressType =
+            entries.firstOrNull { it.rpcName == rpcName.lowercase() }
+                ?: throw IllegalArgumentException("Unknown shielded address type: $rpcName")
     }
 }
 

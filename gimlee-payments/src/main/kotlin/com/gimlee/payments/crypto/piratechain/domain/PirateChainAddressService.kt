@@ -5,6 +5,7 @@ import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.payments.crypto.domain.CryptoAddressService
 import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
+import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
 import com.gimlee.payments.crypto.piratechain.client.PirateChainRpcClient
 import org.springframework.stereotype.Service
 
@@ -18,5 +19,6 @@ class PirateChainAddressService(
     pirateChainRpcClient,
     userRoleRepository,
     Currency.ARRR,
-    Role.PIRATE
+    Role.PIRATE,
+    setOf(WalletShieldedAddressType.SAPLING, WalletShieldedAddressType.ORCHARD)
 )

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.payments.crypto.piratechain.client.PirateChainRpcClient
+import com.gimlee.payments.crypto.domain.UnsupportedViewingKeyAddressTypeException
 import com.gimlee.payments.crypto.piratechain.domain.PirateChainAddressService
 import com.gimlee.payments.crypto.piratechain.domain.PirateChainPaymentService
 import com.gimlee.payments.crypto.ycash.client.YcashRpcClient
@@ -39,8 +40,12 @@ class CryptoPaymentsController(
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    private fun handleOutcome(outcome: Outcome, data: Any? = null): ResponseEntity<Any> {
-        val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
+    private fun handleOutcome(
+        outcome: Outcome,
+        data: Any? = null,
+        messageArgs: Array<Any>? = null
+    ): ResponseEntity<Any> {
+        val message = messageSource.getMessage(outcome.messageKey, messageArgs, LocaleContextHolder.getLocale())
         return ResponseEntity.status(outcome.httpCode).body(StatusResponseDto.fromOutcome(outcome, message, data))
     }
 
@@ -67,7 +72,7 @@ class CryptoPaymentsController(
     )
     @ApiResponse(
         responseCode = "400",
-        description = "Invalid view key or state error. Possible status codes: PAYMENT_INVALID_PAYMENT_DATA, PAYMENT_INVALID_VIEWING_KEY",
+        description = "Invalid view key or state error. Possible status codes: PAYMENT_INVALID_PAYMENT_DATA, PAYMENT_INVALID_VIEWING_KEY, PAYMENT_UNSUPPORTED_VIEWING_KEY_ADDRESS_TYPE",
         content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
     )
     @ApiResponse(
@@ -101,6 +106,22 @@ class CryptoPaymentsController(
         } catch (e: IllegalStateException) {
             log.warn("State error during addViewKey for user {} ({}): {}", userId, crypto, e.message)
             handleOutcome(PaymentOutcome.INVALID_PAYMENT_DATA)
+        } catch (e: UnsupportedViewingKeyAddressTypeException) {
+            val supportedTypes = e.supportedAddressTypes
+                .map { it.rpcName }
+                .sorted()
+                .joinToString(", ")
+            log.warn(
+                "Unsupported viewing-key address type for user {} ({}): {}. Supported: {}",
+                userId,
+                crypto,
+                e.addressType,
+                supportedTypes
+            )
+            handleOutcome(
+                outcome = PaymentOutcome.UNSUPPORTED_VIEWING_KEY_ADDRESS_TYPE,
+                messageArgs = arrayOf(e.addressType, supportedTypes, e.currency.name)
+            )
         } catch (e: PirateChainRpcClient.PirateChainRpcException) {
             log.warn("Pirate Chain RPC error during addViewKey for user {} ({}): {}", userId, crypto, e.message)
             if (e.errorCode == -5) {

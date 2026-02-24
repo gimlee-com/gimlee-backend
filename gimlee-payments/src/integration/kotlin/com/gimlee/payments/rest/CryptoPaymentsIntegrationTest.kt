@@ -45,6 +45,28 @@ class CryptoPaymentsIntegrationTest(
         }
     """.trimIndent()
 
+    val unsupportedPirateAddressTypeResponse = """
+        {
+          "result": {
+            "type": "sprout",
+            "address": "zs1piratesprout"
+          },
+          "error": null,
+          "id": "1"
+        }
+    """.trimIndent()
+
+    val unsupportedYcashAddressTypeResponse = """
+        {
+          "result": {
+            "type": "orchard",
+            "address": "ys1ycashorchard"
+          },
+          "error": null,
+          "id": "1"
+        }
+    """.trimIndent()
+
     Given("A user trying to add an invalid Pirate Chain viewing key") {
         wireMockServer.stubFor(
             post(urlEqualTo("/pirate"))
@@ -94,6 +116,66 @@ class CryptoPaymentsIntegrationTest(
                 result.andExpect {
                     status { isBadRequest() }
                     jsonPath("$.status") { value("PAYMENT_INVALID_VIEWING_KEY") }
+                }
+            }
+        }
+    }
+
+    Given("A user trying to add a Pirate Chain viewing key with unsupported address type") {
+        wireMockServer.stubFor(
+            post(urlEqualTo("/pirate"))
+                .willReturn(
+                    aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(unsupportedPirateAddressTypeResponse)
+                )
+        )
+
+        When("The request is made") {
+            val result = mockMvc.post("/payments/piratechain/addresses/view-key") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(AddViewKeyRequest(viewKey = "invalid-type-key"))
+                requestAttr("principal", principal)
+            }
+
+            Then("It should reject unsupported address type") {
+                result.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.status") { value("PAYMENT_UNSUPPORTED_VIEWING_KEY_ADDRESS_TYPE") }
+                    jsonPath("$.message") {
+                        value("""Imported viewing key address type "sprout" is not supported for ARRR. Supported types: orchard, sapling.""")
+                    }
+                }
+            }
+        }
+    }
+
+    Given("A user trying to add a Ycash viewing key with unsupported address type") {
+        wireMockServer.stubFor(
+            post(urlEqualTo("/ycash"))
+                .willReturn(
+                    aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(unsupportedYcashAddressTypeResponse)
+                )
+        )
+
+        When("The request is made") {
+            val result = mockMvc.post("/payments/ycash/addresses/view-key") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(AddViewKeyRequest(viewKey = "invalid-type-key"))
+                requestAttr("principal", principal)
+            }
+
+            Then("It should reject unsupported address type") {
+                result.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.status") { value("PAYMENT_UNSUPPORTED_VIEWING_KEY_ADDRESS_TYPE") }
+                    jsonPath("$.message") {
+                        value("""Imported viewing key address type "orchard" is not supported for YEC. Supported types: sapling.""")
+                    }
                 }
             }
         }

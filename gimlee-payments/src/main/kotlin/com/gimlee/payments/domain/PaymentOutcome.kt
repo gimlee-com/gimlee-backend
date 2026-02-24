@@ -6,6 +6,7 @@ enum class PaymentOutcome(override val httpCode: Int) : Outcome {
     NODE_COMMUNICATION_ERROR(503),
     INVALID_PAYMENT_DATA(400),
     INVALID_VIEWING_KEY(400),
+    UNSUPPORTED_VIEWING_KEY_ADDRESS_TYPE(400),
     PAYMENT_NOT_FOUND(404);
 
     override val code: String get() = "PAYMENT_$name"

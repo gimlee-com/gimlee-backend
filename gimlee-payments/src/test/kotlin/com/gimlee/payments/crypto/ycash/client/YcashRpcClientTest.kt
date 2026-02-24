@@ -62,6 +62,7 @@ class YcashRpcClientTest : StringSpec({
 
         val result = client.importViewingKey("view-key")
         
+        result.result?.type shouldBe "sapling"
         result.result?.address shouldBe address
         result.error shouldBe null
     }

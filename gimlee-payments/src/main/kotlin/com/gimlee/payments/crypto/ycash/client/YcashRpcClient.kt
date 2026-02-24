@@ -157,7 +157,7 @@ class YcashRpcClient(
                     ADDRESS_REGEX.find(msg)?.groupValues?.get(1) ?: "unknown"
                 }
                 log.info("Viewing key already has a private key in the wallet for address: {}. Ignoring error as we are not in prod.", address)
-                RpcResponse(result = Address(address), error = null, id = null)
+                RpcResponse(result = Address(type = "sapling", address = address), error = null, id = null)
             } else {
                 throw e
             }

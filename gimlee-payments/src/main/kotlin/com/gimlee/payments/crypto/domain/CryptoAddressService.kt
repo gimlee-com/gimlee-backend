@@ -8,6 +8,7 @@ import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import com.gimlee.payments.crypto.client.CryptoClient
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
+import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
 import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.util.anonymize
 import java.security.SecureRandom
@@ -22,7 +23,8 @@ abstract class CryptoAddressService(
     private val cryptoClient: CryptoClient,
     private val userRoleRepository: UserRoleRepository,
     private val cryptoCurrency: Currency,
-    private val requiredRole: Role
+    private val requiredRole: Role,
+    private val supportedAddressTypes: Set<WalletShieldedAddressType>
 ) {
 
     companion object {
@@ -79,8 +81,26 @@ abstract class CryptoAddressService(
         val currentTimestampMicros = Instant.now().toMicros()
 
         val addressInfo = rpcResponse.result?.let {
+            val importedAddressTypeName = it.type.lowercase()
+            val importedAddressType = WalletShieldedAddressType.entries.firstOrNull { addressType ->
+                addressType.rpcName == importedAddressTypeName
+            }
+            if (importedAddressType !in supportedAddressTypes) {
+                throw UnsupportedViewingKeyAddressTypeException(
+                    currency = cryptoCurrency,
+                    addressType = importedAddressTypeName,
+                    supportedAddressTypes = supportedAddressTypes
+                )
+            }
+            val validatedAddressType = importedAddressType
+                ?: throw UnsupportedViewingKeyAddressTypeException(
+                    currency = cryptoCurrency,
+                    addressType = importedAddressTypeName,
+                    supportedAddressTypes = supportedAddressTypes
+                )
             WalletAddressInfo(
                 type = cryptoCurrency,
+                addressType = validatedAddressType,
                 zAddress = it.address,
                 viewKeyHash = viewKeyHash,
                 viewKeySalt = viewKeySalt,

@@ -114,6 +114,7 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **Response Format:** Use `StatusResponseDto` for a unified response structure. It includes `success` (Boolean), `status` (String slug), `message` (Localized human-readable string), and optional `data` (Any).
 *   **HTTP Status Mapping:** The `Outcome` determines the HTTP status code (via `httpCode`). Controllers must ensure the `ResponseEntity` status matches the outcome.
 *   **I18n Integration:** Each `Outcome` provides a `messageKey` used to resolve localized messages via Spring's `MessageSource`.
+*   **Informative but Safe Error Outcomes:** Outcome messages should be actionable and sufficiently informative for clients, while avoiding disclosure of sensitive internals. For constrained external values (e.g., RPC-reported types), include only non-sensitive context needed for recovery.
 *   **Exception Handling:** The `WebExceptionHandler` in `gimlee-api` automatically converts common security exceptions (`AuthenticationException`, `AuthorizationException`) into appropriate `Outcome`-based `StatusResponseDto` responses.
 
 ## Setup & Configuration

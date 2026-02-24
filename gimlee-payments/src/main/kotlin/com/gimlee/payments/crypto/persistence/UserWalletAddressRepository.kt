@@ -2,11 +2,13 @@ package com.gimlee.payments.crypto.persistence
 import com.gimlee.common.domain.model.Currency
 
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
+import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo.Companion.FIELD_ADDRESS_TYPE
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo.Companion.FIELD_LAST_UPDATE_TIMESTAMP
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo.Companion.FIELD_TYPE
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo.Companion.FIELD_VIEW_KEY_HASH
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo.Companion.FIELD_VIEW_KEY_SALT
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo.Companion.FIELD_Z_ADDRESS
+import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
 import com.gimlee.payments.crypto.persistence.model.UserWalletAddresses
 import com.gimlee.payments.crypto.persistence.model.UserWalletAddresses.Companion.FIELD_ADDRESSES
 import com.gimlee.payments.crypto.persistence.model.UserWalletAddresses.Companion.FIELD_USER_ID
@@ -65,6 +67,7 @@ class UserWalletAddressRepository(
         )
 
         val updateOperations = Updates.combine(
+            Updates.set("$FIELD_ADDRESSES.$.$FIELD_ADDRESS_TYPE", addressInfo.addressType.rpcName),
             Updates.set("$FIELD_ADDRESSES.$.$FIELD_VIEW_KEY_HASH", addressInfo.viewKeyHash),
             Updates.set("$FIELD_ADDRESSES.$.$FIELD_VIEW_KEY_SALT", addressInfo.viewKeySalt),
             Updates.set("$FIELD_ADDRESSES.$.$FIELD_LAST_UPDATE_TIMESTAMP", addressInfo.lastUpdateTimestamp)
@@ -130,6 +133,7 @@ class UserWalletAddressRepository(
     private fun mapToAddressInfoDocument(addressInfo: WalletAddressInfo): Document {
         return Document()
             .append(FIELD_TYPE, addressInfo.type.name)
+            .append(FIELD_ADDRESS_TYPE, addressInfo.addressType.rpcName)
             .append(FIELD_Z_ADDRESS, addressInfo.zAddress)
             .append(FIELD_VIEW_KEY_HASH, addressInfo.viewKeyHash)
             .append(FIELD_VIEW_KEY_SALT, addressInfo.viewKeySalt)
@@ -139,6 +143,7 @@ class UserWalletAddressRepository(
     private fun Document.toWalletAddressInfo(): WalletAddressInfo {
         return WalletAddressInfo(
             type = Currency.valueOf(this.getString(FIELD_TYPE))!!,
+            addressType = WalletShieldedAddressType.fromRpcName(this.getString(FIELD_ADDRESS_TYPE)),
             zAddress = this.getString(FIELD_Z_ADDRESS),
             viewKeyHash = this.getString(FIELD_VIEW_KEY_HASH),
             viewKeySalt = this.getString(FIELD_VIEW_KEY_SALT),
