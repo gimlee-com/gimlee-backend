@@ -128,4 +128,22 @@ class VolatilityStateServiceTest : BehaviorSpec({
             }
         }
     }
+
+    Given("Market becomes fresh after being stale but has no rates in current window") {
+        val oldTime = Instant.now().minusSeconds(4000)
+        every { exchangeRateRepository.findLatest(any(), any()) } returns rate(Currency.ARRR, BigDecimal("10.0"), oldTime)
+        service.updateVolatilityStates()
+
+        every { exchangeRateRepository.findLatest(any(), any()) } returns rate(Currency.ARRR, BigDecimal("10.0"), Instant.now())
+        every { exchangeRateRepository.findRatesInWindow(any(), any(), any(), any()) } returns emptyList()
+
+        When("Update volatility states with fresh latest rate") {
+            service.updateVolatilityStates()
+
+            Then("ARRR stale flag should clear immediately") {
+                val state = service.getVolatilityState(Currency.ARRR)
+                state.isStale shouldBe false
+            }
+        }
+    }
 })

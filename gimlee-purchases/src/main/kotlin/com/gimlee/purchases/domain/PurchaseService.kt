@@ -4,6 +4,7 @@ import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.model.Ad
 import com.gimlee.ads.domain.model.AdStatus
 import com.gimlee.ads.domain.model.CurrencyAmount
+import com.gimlee.ads.domain.model.PricingMode
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.events.PaymentEvent
 import com.gimlee.payments.domain.PaymentService
@@ -21,6 +22,7 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.event.EventListener
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.Instant
@@ -32,7 +34,9 @@ class PurchaseService(
     private val adService: AdService,
     private val eventPublisher: ApplicationEventPublisher,
     private val volatilityStateService: VolatilityStateService,
-    private val currencyConverterService: com.gimlee.payments.domain.service.CurrencyConverterService
+    private val currencyConverterService: com.gimlee.payments.domain.service.CurrencyConverterService,
+    @Value("\${gimlee.purchases.price-tolerance-pct:0.01}")
+    private val priceTolerancePct: BigDecimal
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -98,7 +102,7 @@ class PurchaseService(
 
     private fun validateAdsVolatility(ads: Map<String, Ad>, currency: Currency) {
         val frozenAds = ads.values.filter { ad ->
-            ad.volatilityProtection && volatilityStateService.isFrozen(currency)
+            isProtectedSettlementCurrency(ad, currency) && volatilityStateService.isFrozen(currency)
         }
         
         if (frozenAds.isNotEmpty()) {
@@ -123,7 +127,6 @@ class PurchaseService(
         paymentCurrency: Currency
     ): Map<String, BigDecimal> {
         val priceMap = mutableMapOf<String, BigDecimal>()
-        val tolerancePct = BigDecimal("0.01") // 1% tolerance
 
         items.forEach { itemRequest ->
             val ad = ads[itemRequest.adId]!!
@@ -137,19 +140,41 @@ class PurchaseService(
 
             // Check tolerance: abs(request - expected) / expected <= tolerance
             val diff = (itemRequest.unitPrice.subtract(expectedPrice)).abs()
-            val allowedDiff = expectedPrice.multiply(tolerancePct)
+            val allowedDiff = expectedPrice.multiply(priceTolerancePct)
 
             if (diff > allowedDiff) {
                 log.warn(
                     "Price mismatch for ad {}: requested={}, expected={}, diff={}, allowed={}",
                     itemRequest.adId, itemRequest.unitPrice, expectedPrice, diff, allowedDiff
                 )
-                // We return current expected prices in the exception so client can update
-                throw AdPriceMismatchException(emptyMap()) // Simplification: in real scenario, we'd recalculate all
+                throw AdPriceMismatchException(calculateCurrentPrices(items, ads, paymentCurrency))
             }
             priceMap[itemRequest.adId] = expectedPrice
         }
         return priceMap
+    }
+
+    private fun calculateCurrentPrices(
+        items: List<PurchaseItemRequestDto>,
+        ads: Map<String, Ad>,
+        paymentCurrency: Currency
+    ): Map<String, CurrencyAmount> {
+        return items.associate { itemRequest ->
+            val ad = ads[itemRequest.adId]!!
+            val adPrice = ad.price ?: throw IllegalStateException("Ad ${itemRequest.adId} has no price set.")
+            val expectedPrice = if (adPrice.currency == paymentCurrency) {
+                adPrice.amount
+            } else {
+                currencyConverterService.convert(adPrice.amount, adPrice.currency, paymentCurrency).targetAmount
+            }
+            itemRequest.adId to CurrencyAmount(expectedPrice, paymentCurrency)
+        }
+    }
+
+    private fun isProtectedSettlementCurrency(ad: Ad, settlementCurrency: Currency): Boolean {
+        if (!ad.volatilityProtection || ad.pricingMode != PricingMode.PEGGED) return false
+        val referenceCurrency = ad.price?.currency ?: return false
+        return referenceCurrency != settlementCurrency
     }
 
     private fun collectPurchasedItemDetails(

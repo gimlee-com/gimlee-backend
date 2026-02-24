@@ -9,6 +9,7 @@ import com.gimlee.ads.domain.model.AdSorting
 import com.gimlee.ads.domain.model.AdStatus
 import com.gimlee.ads.domain.model.By
 import com.gimlee.ads.domain.model.CurrencyAmount
+import com.gimlee.ads.domain.model.PricingMode
 import com.gimlee.ads.domain.model.Direction
 import com.gimlee.ads.web.dto.response.AdDetailsDto
 import com.gimlee.ads.web.dto.response.AdPreviewDto
@@ -191,8 +192,11 @@ class AdEnrichmentServiceImpl(
     }
 
     private fun computeFrozenCurrencies(ad: Ad): List<Currency> {
-        if (!ad.volatilityProtection) return emptyList()
-        return ad.settlementCurrencies.filter { volatilityStateService.isFrozen(it) }
+        if (!ad.volatilityProtection || ad.pricingMode != PricingMode.PEGGED) return emptyList()
+        val referenceCurrency = ad.price?.currency ?: return emptyList()
+        return ad.settlementCurrencies.filter { settlementCurrency ->
+            settlementCurrency != referenceCurrency && volatilityStateService.isFrozen(settlementCurrency)
+        }
     }
 
     private fun computeSettlementPrices(ad: Ad): List<CurrencyAmountDto>? {

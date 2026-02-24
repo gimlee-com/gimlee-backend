@@ -68,13 +68,14 @@ class VolatilityStateService(
 
         monitoredPairs.forEach { (base, quote) ->
             try {
+                val currentState = volatilityStates[base] ?: VolatilityState()
+
                 // Check for staleness first
                 val latestRate = exchangeRateRepository.findLatest(base, quote)
                 
                 if (latestRate == null || 
                     latestRate.updatedAt.isBefore(now.minusSeconds(staleThresholdSeconds))) {
                     
-                    val currentState = volatilityStates[base] ?: VolatilityState()
                     if (!currentState.isStale) {
                          log.warn("Volatility Status: {} is STALE. Last update: {}", base, latestRate?.updatedAt)
                     }
@@ -90,6 +91,11 @@ class VolatilityStateService(
                     )
                     return@forEach
                 }
+
+                val freshState = currentState.copy(
+                    isStale = false,
+                    lastUpdated = now
+                )
 
                 // Not stale, proceed to volatility check
                 // Reset stale flag if it was stale
@@ -112,6 +118,7 @@ class VolatilityStateService(
                     // If we had volatility before, and now no trades -> we don't know if it recovered.
                     // But if no trades, price didn't drop further.
                     // Let's assume stability if no trades within window but not stale.
+                    volatilityStates[base] = freshState
                     return@forEach
                 }
 
@@ -121,17 +128,15 @@ class VolatilityStateService(
                 // Max rate in window
                 val maxRate = rates.maxOf { it.rate }
 
-                if (maxRate.compareTo(BigDecimal.ZERO) == 0) return@forEach
+                if (maxRate.compareTo(BigDecimal.ZERO) == 0) {
+                    volatilityStates[base] = freshState
+                    return@forEach
+                }
 
                 // Calculate drop: (max - current) / max
                 val drop = (maxRate.subtract(currentRate))
                     .divide(maxRate, 4, RoundingMode.HALF_UP)
                 
-                val currentState = volatilityStates[base] ?: VolatilityState()
-                
-                // If it was stale, clear stale flag
-                val isStale = false
-
                 if (drop >= threshold) {
                     // Trigger volatility
                     // If not volatile before, log it
@@ -150,7 +155,7 @@ class VolatilityStateService(
                         maxPriceInWindow = maxRate,
                         currentDropPct = drop,
                         lastUpdated = now,
-                        isStale = isStale
+                        isStale = false
                     )
                 } else {
                     // Drop is below threshold. Check recovery.
@@ -168,7 +173,7 @@ class VolatilityStateService(
                                 maxPriceInWindow = maxRate,
                                 currentDropPct = drop,
                                 lastUpdated = now,
-                                isStale = isStale
+                                isStale = false
                             )
                         } else {
                             // Still in cooldown
@@ -177,7 +182,7 @@ class VolatilityStateService(
                                 maxPriceInWindow = maxRate,
                                 currentDropPct = drop,
                                 lastUpdated = now,
-                                isStale = isStale
+                                isStale = false
                             )
                         }
                     } else {
@@ -188,7 +193,7 @@ class VolatilityStateService(
                             maxPriceInWindow = maxRate,
                             currentDropPct = drop,
                             lastUpdated = now,
-                            isStale = isStale
+                            isStale = false
                         )
                     }
                 }

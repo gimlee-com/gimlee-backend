@@ -43,6 +43,10 @@ gimlee:
   # gimlee-ads properties
   ads:
 
+  # gimlee-purchases properties
+  purchases:
+    price-tolerance-pct: 0.01
+
   # gimlee-media-store properties
   media:
     store:

@@ -108,6 +108,10 @@ gimlee:
       # batch-ms: 1000
       # batch-size: 100
 
+  # gimlee-purchases properties
+  purchases:
+    price-tolerance-pct: 0.05
+
   # gimlee-payments properties
   payments:
     pirate-chain:

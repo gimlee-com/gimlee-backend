@@ -40,7 +40,15 @@ class PurchaseServiceTest : StringSpec({
     val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
     val volatilityStateService = mockk<VolatilityStateService>(relaxed = true)
     val currencyConverterService = mockk<CurrencyConverterService>(relaxed = true)
-    val service = PurchaseService(purchaseRepository, paymentService, adService, eventPublisher, volatilityStateService, currencyConverterService)
+    val service = PurchaseService(
+        purchaseRepository,
+        paymentService,
+        adService,
+        eventPublisher,
+        volatilityStateService,
+        currencyConverterService,
+        BigDecimal("0.01")
+    )
 
     "should init purchase and payment and publish events" {
         val buyerId = ObjectId.get()
@@ -120,6 +128,46 @@ class PurchaseServiceTest : StringSpec({
         exception.message shouldContain "Purchase temporarily suspended"
     }
 
+    "should allow pegged purchase in reference settlement currency even when that currency is frozen" {
+        val buyerId = ObjectId.get()
+        val adId = ObjectId.get()
+        val sellerId = ObjectId.get()
+        val ad = Ad(
+            id = adId.toHexString(),
+            userId = sellerId.toHexString(),
+            title = "Pegged in ARRR",
+            description = "Desc",
+            pricingMode = PricingMode.PEGGED,
+            price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+            settlementCurrencies = setOf(Currency.ARRR, Currency.YEC),
+            status = AdStatus.ACTIVE,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            location = null,
+            mainPhotoPath = null,
+            stock = 5,
+            lockedStock = 0,
+            volatilityProtection = true
+        )
+
+        every { adService.getAds(listOf(adId.toHexString())) } returns listOf(ad)
+        every { volatilityStateService.isFrozen(Currency.ARRR) } returns true
+        every { currencyConverterService.convert(any(), any(), any()) } answers {
+            val amt = firstArg<BigDecimal>()
+            val from = secondArg<Currency>()
+            val to = thirdArg<Currency>()
+            ConversionResult(amt, from, to, emptyList(), Instant.now(), false)
+        }
+
+        service.purchase(
+            buyerId,
+            listOf(PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.TEN)),
+            Currency.ARRR
+        )
+
+        verify { purchaseRepository.save(any()) }
+    }
+
     "should init purchase successfully if stock available" {
         val buyerId = ObjectId.get()
         val adId = ObjectId.get()
@@ -188,7 +236,7 @@ class PurchaseServiceTest : StringSpec({
         val exception = shouldThrow<PurchaseService.AdPriceMismatchException> {
             service.purchase(buyerId, listOf(PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.ONE)), Currency.ARRR)
         }
-        exception.currentPrices.isEmpty() shouldBe true
+        exception.currentPrices[adId.toHexString()] shouldBe CurrencyAmount(BigDecimal.TEN, Currency.ARRR)
     }
 
     "should throw IllegalArgumentException if items from multiple sellers" {
@@ -306,7 +354,8 @@ class PurchaseServiceTest : StringSpec({
         val exception = shouldThrow<PurchaseService.AdPriceMismatchException> {
             service.purchase(buyerId, items, Currency.ARRR)
         }
-        exception.currentPrices.isEmpty() shouldBe true
+        exception.currentPrices[adId1.toHexString()] shouldBe CurrencyAmount(BigDecimal.TEN, Currency.ARRR)
+        exception.currentPrices[adId2.toHexString()] shouldBe CurrencyAmount(BigDecimal("20.0"), Currency.ARRR)
     }
 
     "should throw IllegalStateException if ad is not ACTIVE" {
