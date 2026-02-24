@@ -27,23 +27,12 @@ class UsersPopulator(
         private const val PASSWORD = "Password1"
         private const val PHONE = "123456789"
         private const val EMAIL = "playground-user@gimlee.com"
+        private const val SELLER_USERNAME = "playground_seller"
     }
 
     fun populateUsers(pirateViewKey: String? = null, ycashViewKey: String? = null): List<Pair<User, List<Role>>> {
-        val sellers = mutableListOf<Pair<User, List<Role>>>()
-        if (pirateViewKey != null) {
-            sellers.add(createSeller("pirate_seller", pirateViewKey, Role.PIRATE) { userId, vk ->
-                pirateChainAddressService.importAndAssociateViewKey(userId, vk)
-            })
-        }
-        if (ycashViewKey != null) {
-            sellers.add(createSeller("ycash_seller", ycashViewKey, Role.YCASH) { userId, vk ->
-                ycashAddressService.importAndAssociateViewKey(userId, vk)
-            })
-        }
-
-        if (sellers.isNotEmpty()) {
-            return sellers
+        if (pirateViewKey != null || ycashViewKey != null) {
+            return listOf(createSeller(pirateViewKey, ycashViewKey))
         }
 
         val users = createUsers()
@@ -61,16 +50,16 @@ class UsersPopulator(
         }
     }
 
-    private fun createSeller(username: String, viewKey: String, role: Role, importFunc: (String, String) -> Unit): Pair<User, List<Role>> {
-        val existingUser = userRepository.findOneByField(FIELD_USERNAME, username)
+    private fun createSeller(pirateViewKey: String?, ycashViewKey: String?): Pair<User, List<Role>> {
+        val existingUser = userRepository.findOneByField(FIELD_USERNAME, SELLER_USERNAME)
         val user = if (existingUser != null) {
-            log.info("User '$username' already exists. Reusing.")
+            log.info("User '$SELLER_USERNAME' already exists. Reusing.")
             existingUser
         } else {
             val (salt, passwordHash) = createHexSaltAndPasswordHash(PASSWORD, generateSalt())
             val newUser = User(
-                username = username,
-                displayName = username,
+                username = SELLER_USERNAME,
+                displayName = SELLER_USERNAME,
                 phone = PHONE,
                 email = EMAIL,
                 password = passwordHash,
@@ -79,22 +68,34 @@ class UsersPopulator(
                 lastLogin = LocalDateTime.now()
             )
             val savedUser = userRepository.save(newUser)
-            log.info("User '$username' created.")
+            log.info("User '$SELLER_USERNAME' created.")
             savedUser
         }
 
+        val targetRoles = listOfNotNull(
+            Role.USER,
+            pirateViewKey?.let { Role.PIRATE },
+            ycashViewKey?.let { Role.YCASH }
+        )
         val existingRoles = userRoleRepository.getAll(user.id!!)
-        val rolesToAdd = listOf(Role.USER, role).filter { it !in existingRoles }
+        val rolesToAdd = listOf(Role.USER).filter { it !in existingRoles }
         rolesToAdd.forEach { r ->
             userRoleRepository.add(user.id!!, r)
         }
         if (rolesToAdd.isNotEmpty()) {
-            log.info("Roles $rolesToAdd added to user '$username'.")
+            log.info("Roles $rolesToAdd added to user '$SELLER_USERNAME'.")
         }
 
-        importFunc(user.id!!.toHexString(), viewKey)
-        log.info("ViewKey registered for user '$username'.")
+        val userId = user.id!!.toHexString()
+        if (pirateViewKey != null) {
+            pirateChainAddressService.importAndAssociateViewKey(userId, pirateViewKey)
+            log.info("Pirate view key registered for user '$SELLER_USERNAME'.")
+        }
+        if (ycashViewKey != null) {
+            ycashAddressService.importAndAssociateViewKey(userId, ycashViewKey)
+            log.info("Ycash view key registered for user '$SELLER_USERNAME'.")
+        }
 
-        return Pair(user, listOf(Role.USER, role))
+        return Pair(user, targetRoles)
     }
 }

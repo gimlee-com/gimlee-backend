@@ -39,15 +39,18 @@ class AdsPopulator(
     companion object {
         private val log = LogManager.getLogger()
         private const val ADS_TEMPLATE_RESOURCE_PATH = "/playground/ads.tsv"
-        private const val MIN_PRICE = 10.0
-        private const val MAX_PRICE = 5000.0
+        private const val MIN_PRICE = 1.0
+        private const val MAX_REFERENCE_PRICE = 100.0
+        private const val MAX_ARRR_PRICE = 400.0
+        private const val MAX_YEC_PRICE = 500.0
         private const val ADS_CHECK_USER = "admin" // User to check if ads potentially exist
         private const val THREAD_POOL_SIZE = 8 // Dedicated thread pool size
         private const val MEDIA_ADD_CHANCE = 0.7 // 70% chance to add media to an ad
         private const val MAX_MEDIA_ITEMS_PER_AD = 20 // Max number of media items to add if chosen
-        private const val MULTI_SETTLEMENT_CHANCE = 0.3 // 30% chance to accept both settlement currencies
-        private val SETTLEMENT_CURRENCIES = Currency.entries.filter { it.isSettlement }
-        private val REFERENCE_CURRENCIES = listOf(Currency.USD)
+        private const val MULTI_SETTLEMENT_CHANCE = 0.3 // 30% chance to accept all available settlement currencies
+        private const val PLAYGROUND_SELLER_USERNAME = "playground_seller"
+        private const val SELLER_ADS_PER_SETTLEMENT_CONFIG = 200
+        private val REFERENCE_CURRENCIES = Currency.entries
     }
 
     // Load ad templates once
@@ -98,33 +101,24 @@ class AdsPopulator(
             return
         }
 
-        val pirateSeller = userRepository.findOneByField("username", "pirate_seller")
-        val ycashSeller = userRepository.findOneByField("username", "ycash_seller")
-
-        if (pirateSeller != null || ycashSeller != null) {
+        val playgroundSeller = userRepository.findOneByField("username", PLAYGROUND_SELLER_USERNAME)
+        if (playgroundSeller != null) {
             val tasks = mutableListOf<java.util.concurrent.Future<*>>()
-            if (pirateSeller != null) {
-                log.info("User 'pirate_seller' found. Creating 500 ARRR ads.")
-                val totalAds = 500
-                val chunkSize = 50
-                repeat(totalAds / chunkSize) {
-                    tasks.add(executorService.submit {
-                        createAdsForUser(pirateSeller, chunkSize, "ARRR Ad ", forceSettlementCurrency = Currency.ARRR)
-                    })
-                }
-            }
-            if (ycashSeller != null) {
-                log.info("User 'ycash_seller' found. Creating 500 YEC ads.")
-                val totalAds = 500
-                val chunkSize = 50
-                repeat(totalAds / chunkSize) {
-                    tasks.add(executorService.submit {
-                        createAdsForUser(ycashSeller, chunkSize, "YEC Ad ", forceSettlementCurrency = Currency.YEC)
-                    })
-                }
+            val chunkSize = 50
+            log.info("User '$PLAYGROUND_SELLER_USERNAME' found. Creating ads with ARRR-only, YEC-only, and ARRR+YEC settlement options.")
+            repeat(SELLER_ADS_PER_SETTLEMENT_CONFIG / chunkSize) {
+                tasks.add(executorService.submit {
+                    createAdsForUser(playgroundSeller, chunkSize, "ARRR Ad ", forceSettlementCurrencies = setOf(Currency.ARRR))
+                })
+                tasks.add(executorService.submit {
+                    createAdsForUser(playgroundSeller, chunkSize, "YEC Ad ", forceSettlementCurrencies = setOf(Currency.YEC))
+                })
+                tasks.add(executorService.submit {
+                    createAdsForUser(playgroundSeller, chunkSize, "ARRR+YEC Ad ", forceSettlementCurrencies = setOf(Currency.ARRR, Currency.YEC))
+                })
             }
             tasks.forEach { it.get() }
-            log.info("Finished creating ads for sellers.")
+            log.info("Finished creating ads for '$PLAYGROUND_SELLER_USERNAME'.")
             return
         }
 
@@ -180,10 +174,30 @@ class AdsPopulator(
         log.info("All ad population tasks completed.")
     }
 
-    private fun createAdsForUser(user: User, count: Int, titlePrefix: String = "", forceSettlementCurrency: Currency? = null) {
+    private fun createAdsForUser(
+        user: User,
+        count: Int,
+        titlePrefix: String = "",
+        forceSettlementCurrency: Currency? = null,
+        forceSettlementCurrencies: Set<Currency>? = null
+    ) {
         val userId = user.id?.toHexString()
         if (userId == null) {
             log.warn("User ${user.username} has no ID. Skipping ad creation.")
+            return
+        }
+
+        val allowedSettlementCurrencies = adService.getAllowedCurrencies(userId).toSet()
+        if (allowedSettlementCurrencies.isEmpty()) {
+            log.warn("User ${user.username} has no allowed settlement currencies. Skipping ad creation.")
+            return
+        }
+        if (forceSettlementCurrency != null && forceSettlementCurrency !in allowedSettlementCurrencies) {
+            log.warn("Forced settlement currency $forceSettlementCurrency is not allowed for user ${user.username}. Skipping ad creation.")
+            return
+        }
+        if (forceSettlementCurrencies != null && (forceSettlementCurrencies.isEmpty() || !allowedSettlementCurrencies.containsAll(forceSettlementCurrencies))) {
+            log.warn("Forced settlement currencies $forceSettlementCurrencies are not allowed for user ${user.username}. Skipping ad creation.")
             return
         }
 
@@ -199,7 +213,7 @@ class AdsPopulator(
 
                 val template = adTemplates.random()
                 val pricingMode = if (Random.nextBoolean()) PricingMode.FIXED_CRYPTO else PricingMode.PEGGED
-                val settlementCurrencies = resolveSettlementCurrencies(forceSettlementCurrency)
+                val settlementCurrencies = resolveSettlementCurrencies(allowedSettlementCurrencies, forceSettlementCurrency, forceSettlementCurrencies)
 
                 val (priceAmount, priceCurrency) = when (pricingMode) {
                     PricingMode.FIXED_CRYPTO -> {
@@ -273,16 +287,29 @@ class AdsPopulator(
         log.debug("Finished creating ads for user ${user.username}")
     }
 
-    private fun resolveSettlementCurrencies(forced: Currency?): Set<Currency> {
-        if (forced != null) {
-            return if (Random.nextDouble() < MULTI_SETTLEMENT_CHANCE) SETTLEMENT_CURRENCIES.toSet() else setOf(forced)
+    private fun resolveSettlementCurrencies(
+        allowedSettlementCurrencies: Set<Currency>,
+        forced: Currency?,
+        forcedSet: Set<Currency>?
+    ): Set<Currency> {
+        if (forcedSet != null) {
+            return forcedSet
         }
-        return if (Random.nextBoolean()) setOf(SETTLEMENT_CURRENCIES.random()) else SETTLEMENT_CURRENCIES.toSet()
+        if (forced != null) {
+            return if (Random.nextDouble() < MULTI_SETTLEMENT_CHANCE) allowedSettlementCurrencies else setOf(forced)
+        }
+        return if (Random.nextBoolean()) setOf(allowedSettlementCurrencies.random()) else allowedSettlementCurrencies
     }
 
-    private fun randomPrice(currency: Currency): BigDecimal =
-        BigDecimal.valueOf(Random.nextDouble(MIN_PRICE, MAX_PRICE))
+    private fun randomPrice(currency: Currency): BigDecimal {
+        val maxPrice = when (currency) {
+            Currency.ARRR -> MAX_ARRR_PRICE
+            Currency.YEC -> MAX_YEC_PRICE
+            else -> MAX_REFERENCE_PRICE
+        }
+        return BigDecimal.valueOf(Random.nextDouble(MIN_PRICE, maxPrice))
             .setScale(currency.decimalPlaces, RoundingMode.HALF_UP)
+    }
 
     private fun shutdownAndAwaitTermination() {
         if (!::executorService.isInitialized || executorService.isShutdown) {

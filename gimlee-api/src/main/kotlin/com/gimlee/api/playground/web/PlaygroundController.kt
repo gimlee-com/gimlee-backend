@@ -30,7 +30,7 @@ class PlaygroundController(
     @Lazy private val databaseCleaner: DatabaseCleaner,
     @Lazy private val ycashFaucetService: YcashFaucetService
 ) {
-    @Operation(summary = "Create Playground Users", description = "Populates the database with a set of test users. If view keys are provided, 'pirate_seller' and/or 'ycash_seller' users are created.")
+    @Operation(summary = "Create Playground Users", description = "Populates the database with a set of test users. If view keys are provided, a single 'playground_seller' user is created/updated.")
     @ApiResponse(
         responseCode = "200",
         description = "Users created successfully. Possible status codes: SUCCESS",
