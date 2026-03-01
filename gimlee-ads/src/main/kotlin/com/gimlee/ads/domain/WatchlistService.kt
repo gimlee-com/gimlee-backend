@@ -1,8 +1,8 @@
 package com.gimlee.ads.domain
 
 import com.gimlee.ads.persistence.WatchlistRepository
-import com.gimlee.events.AdAddedToWatchlistEvent
-import com.gimlee.events.AdRemovedFromWatchlistEvent
+import com.gimlee.events.AdWatchlistEvent
+import com.gimlee.events.WatchlistEventType
 import org.bson.types.ObjectId
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -18,7 +18,7 @@ class WatchlistService(
         val adObjectId = ObjectId(adId)
         
         if (watchlistRepository.add(userObjectId, adObjectId)) {
-            eventPublisher.publishEvent(AdAddedToWatchlistEvent(userId, adId))
+            eventPublisher.publishEvent(AdWatchlistEvent(userId, adId, WatchlistEventType.ADDED))
         }
     }
 
@@ -27,7 +27,7 @@ class WatchlistService(
         val adObjectId = ObjectId(adId)
         
         if (watchlistRepository.remove(userObjectId, adObjectId)) {
-            eventPublisher.publishEvent(AdRemovedFromWatchlistEvent(userId, adId))
+            eventPublisher.publishEvent(AdWatchlistEvent(userId, adId, WatchlistEventType.REMOVED))
         }
     }
 
