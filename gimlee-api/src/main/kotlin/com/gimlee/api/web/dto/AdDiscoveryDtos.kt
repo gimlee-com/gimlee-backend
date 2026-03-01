@@ -23,14 +23,16 @@ data class AdDiscoveryPreviewDto(
     val categoryPath: List<CategoryPathElementDto>? = null,
     val location: LocationWithCityDetailsDto? = null,
     val frozenCurrencies: List<Currency> = emptyList(),
-    val isBuyable: Boolean = true
+    val isBuyable: Boolean = true,
+    val isWatched: Boolean? = null
 ) {
     companion object {
         fun fromAdPreview(
             preview: AdPreviewDto,
             preferredPrice: CurrencyAmountDto?,
             frozenCurrencies: List<Currency> = emptyList(),
-            settlementPrices: List<CurrencyAmountDto>? = null
+            settlementPrices: List<CurrencyAmountDto>? = null,
+            isWatched: Boolean? = null
         ): AdDiscoveryPreviewDto {
             val buyable = frozenCurrencies.size < preview.settlementCurrencies.size
             return AdDiscoveryPreviewDto(
@@ -46,7 +48,8 @@ data class AdDiscoveryPreviewDto(
                 categoryPath = preview.categoryPath,
                 location = preview.location,
                 frozenCurrencies = frozenCurrencies,
-                isBuyable = buyable
+                isBuyable = buyable,
+                isWatched = isWatched
             )
         }
     }
@@ -73,7 +76,8 @@ data class AdDiscoveryDetailsDto(
     val otherAds: List<AdDiscoveryPreviewDto>? = null,
     val stats: AdDiscoveryStatsDto? = null,
     val frozenCurrencies: List<Currency> = emptyList(),
-    val isBuyable: Boolean = true
+    val isBuyable: Boolean = true,
+    val isWatched: Boolean? = null
 ) {
     companion object {
         fun fromAdDetails(
@@ -83,7 +87,8 @@ data class AdDiscoveryDetailsDto(
             otherAds: List<AdDiscoveryPreviewDto>? = null,
             stats: AdDiscoveryStatsDto? = null,
             frozenCurrencies: List<Currency> = emptyList(),
-            settlementPrices: List<CurrencyAmountDto>? = null
+            settlementPrices: List<CurrencyAmountDto>? = null,
+            isWatched: Boolean? = null
         ): AdDiscoveryDetailsDto {
             val buyable = frozenCurrencies.size < details.settlementCurrencies.size
             return AdDiscoveryDetailsDto(
@@ -105,7 +110,8 @@ data class AdDiscoveryDetailsDto(
                 otherAds = otherAds,
                 stats = stats,
                 frozenCurrencies = frozenCurrencies,
-                isBuyable = buyable
+                isBuyable = buyable,
+                isWatched = isWatched
             )
         }
     }
@@ -114,5 +120,7 @@ data class AdDiscoveryDetailsDto(
 @Schema(description = "Ad statistics")
 data class AdDiscoveryStatsDto(
     @Schema(description = "Total number of views")
-    val viewsCount: Long
+    val viewsCount: Long,
+    @Schema(description = "Total number of users who have this ad in their watchlist")
+    val watchersCount: Long? = null
 )

@@ -3,6 +3,7 @@ package com.gimlee.api.web
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.WatchlistService
 import com.gimlee.api.service.AdEnrichmentService
+import com.gimlee.api.service.AdEnrichmentType
 import com.gimlee.api.web.dto.AdDiscoveryPreviewDto
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
@@ -41,7 +42,11 @@ class WatchlistFacadeController(
         return ResponseEntity.ok(adEnrichmentService.enrichAdPreviews(
             ads,
             userId,
-            setOf(com.gimlee.api.service.AdEnrichmentType.PREFERRED_CURRENCY_PRICE, com.gimlee.api.service.AdEnrichmentType.CATEGORY_PATH)
+            setOf(
+                AdEnrichmentType.PREFERRED_CURRENCY_PRICE,
+                AdEnrichmentType.CATEGORY_PATH,
+                AdEnrichmentType.WATCHLIST
+            )
         ))
     }
 }

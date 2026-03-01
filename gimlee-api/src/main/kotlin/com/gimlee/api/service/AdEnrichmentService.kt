@@ -10,7 +10,8 @@ enum class AdEnrichmentType {
     CATEGORY_PATH,
     USER_DETAILS,
     OTHER_ADS,
-    STATS
+    STATS,
+    WATCHLIST
 }
 
 interface AdEnrichmentService {

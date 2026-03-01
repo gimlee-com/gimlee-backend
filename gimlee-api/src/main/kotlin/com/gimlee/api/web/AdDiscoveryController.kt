@@ -83,7 +83,8 @@ class AdDiscoveryController(
             userId,
             setOf(
                 AdEnrichmentType.PREFERRED_CURRENCY_PRICE,
-                AdEnrichmentType.CATEGORY_PATH
+                AdEnrichmentType.CATEGORY_PATH,
+                AdEnrichmentType.WATCHLIST
             )
         )
         val dtoMap = enrichedDtos.associateBy { it.id }
@@ -108,7 +109,8 @@ class AdDiscoveryController(
             userId,
             setOf(
                 AdEnrichmentType.PREFERRED_CURRENCY_PRICE,
-                AdEnrichmentType.CATEGORY_PATH
+                AdEnrichmentType.CATEGORY_PATH,
+                AdEnrichmentType.WATCHLIST
             )
         )
         val dtoMap = enrichedDtos.associateBy { it.id }
@@ -156,7 +158,8 @@ class AdDiscoveryController(
                 AdEnrichmentType.CATEGORY_PATH,
                 AdEnrichmentType.USER_DETAILS,
                 AdEnrichmentType.OTHER_ADS,
-                AdEnrichmentType.STATS
+                AdEnrichmentType.STATS,
+                AdEnrichmentType.WATCHLIST
             )
         )
         

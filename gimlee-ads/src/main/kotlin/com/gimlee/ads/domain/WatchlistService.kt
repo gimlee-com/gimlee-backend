@@ -39,4 +39,16 @@ class WatchlistService(
     fun isInWatchlist(userId: String, adId: String): Boolean {
         return watchlistRepository.exists(ObjectId(userId), ObjectId(adId))
     }
+
+    fun getWatchedAdIds(userId: String, adIds: List<String>): Set<String> {
+        if (adIds.isEmpty()) return emptySet()
+        val objectIds = adIds.map { ObjectId(it) }
+        return watchlistRepository.findWatchedAdIds(ObjectId(userId), objectIds)
+            .map { it.toHexString() }
+            .toSet()
+    }
+
+    fun getWatchersCount(adId: String): Long {
+        return watchlistRepository.countByAdId(ObjectId(adId))
+    }
 }

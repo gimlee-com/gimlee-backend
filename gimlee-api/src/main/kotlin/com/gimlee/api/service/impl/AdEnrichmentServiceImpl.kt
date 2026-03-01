@@ -3,6 +3,7 @@ package com.gimlee.api.service.impl
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.AdVisitService
 import com.gimlee.ads.domain.CategoryService
+import com.gimlee.ads.domain.WatchlistService
 import com.gimlee.ads.domain.model.Ad
 import com.gimlee.ads.domain.model.AdFilters
 import com.gimlee.ads.domain.model.AdSorting
@@ -48,7 +49,8 @@ class AdEnrichmentServiceImpl(
     private val adService: AdService,
     private val adVisitService: AdVisitService,
     private val adDiscoveryProperties: AdDiscoveryProperties,
-    private val volatilityStateService: VolatilityStateService
+    private val volatilityStateService: VolatilityStateService,
+    private val watchlistService: WatchlistService
 ) : AdEnrichmentService {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -69,6 +71,10 @@ class AdEnrichmentServiceImpl(
             categoryService.getFullCategoryPaths(categoryIds, LocaleContextHolder.getLocale().toLanguageTag())
         } else emptyMap()
 
+        val watchedAdIds = if (types.contains(AdEnrichmentType.WATCHLIST) && !userId.isNullOrBlank()) {
+            watchlistService.getWatchedAdIds(userId, ads.map { it.id })
+        } else emptySet()
+
         return ads.map { ad ->
             val categoryPath = ad.categoryId?.let { categoryPaths[it] }
             val previewDto = AdPreviewDto.fromAd(ad, categoryPath)
@@ -80,7 +86,11 @@ class AdEnrichmentServiceImpl(
             val frozenCurrencies = computeFrozenCurrencies(ad)
             val settlementPrices = computeSettlementPrices(ad)
 
-            AdDiscoveryPreviewDto.fromAdPreview(previewDto, convertedPrice, frozenCurrencies, settlementPrices)
+            val isWatched = if (types.contains(AdEnrichmentType.WATCHLIST) && !userId.isNullOrBlank()) {
+                ad.id in watchedAdIds
+            } else null
+
+            AdDiscoveryPreviewDto.fromAdPreview(previewDto, convertedPrice, frozenCurrencies, settlementPrices, isWatched)
         }
     }
 
@@ -145,13 +155,20 @@ class AdEnrichmentServiceImpl(
             val beginningOfTime = LocalDate.of(2025, 1, 1) // Should ideally be config or older
             val now = LocalDate.now()
             val totalViews = adVisitService.getVisitCount(ad.id!!, beginningOfTime, now)
-            stats = AdDiscoveryStatsDto(viewsCount = totalViews)
+            val watchersCount = if (types.contains(AdEnrichmentType.WATCHLIST)) {
+                watchlistService.getWatchersCount(ad.id)
+            } else null
+            stats = AdDiscoveryStatsDto(viewsCount = totalViews, watchersCount = watchersCount)
         }
 
         val frozenCurrencies = computeFrozenCurrencies(ad)
         val settlementPrices = computeSettlementPrices(ad)
 
-        return AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails, otherAdsDtos, stats, frozenCurrencies, settlementPrices)
+        val isWatched = if (types.contains(AdEnrichmentType.WATCHLIST) && !userId.isNullOrBlank()) {
+            watchlistService.isInWatchlist(userId, ad.id)
+        } else null
+
+        return AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails, otherAdsDtos, stats, frozenCurrencies, settlementPrices, isWatched)
     }
 
     override fun getPreferredCurrency(userId: String?): Currency {
