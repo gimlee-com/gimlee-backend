@@ -15,6 +15,7 @@ import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.toMicros
 import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
+import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
 import com.gimlee.purchases.domain.model.PurchaseStatus
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import com.gimlee.purchases.web.dto.request.PurchaseRequestDto
@@ -46,6 +47,7 @@ class PurchaseFacadeIntegrationTest(
 
         val addressInfo = WalletAddressInfo(
             type = Currency.ARRR,
+            addressType = WalletShieldedAddressType.SAPLING,
             zAddress = "zs1testaddress",
             viewKeyHash = "hash",
             viewKeySalt = "salt",

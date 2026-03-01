@@ -12,6 +12,7 @@ import com.gimlee.common.toMicros
 import com.gimlee.events.PaymentEvent
 import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
+import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.purchases.domain.PurchaseService
@@ -39,6 +40,7 @@ class PurchaseFlowIntegrationTest(
         // Add Pirate Chain address for the seller
         val addressInfo = WalletAddressInfo(
             type = Currency.ARRR,
+            addressType = WalletShieldedAddressType.SAPLING,
             zAddress = "zs1testaddress",
             viewKeyHash = "hash",
             viewKeySalt = "salt",

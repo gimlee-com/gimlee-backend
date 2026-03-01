@@ -14,6 +14,7 @@ import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.toMicros
 import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
+import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
 import com.gimlee.purchases.domain.PurchaseService
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import io.kotest.matchers.shouldBe
@@ -43,6 +44,7 @@ class OrderHistoryIntegrationTest(
 
         val addressInfo = WalletAddressInfo(
             type = Currency.ARRR,
+            addressType = WalletShieldedAddressType.SAPLING,
             zAddress = "zs1testaddress",
             viewKeyHash = "hash",
             viewKeySalt = "salt",
