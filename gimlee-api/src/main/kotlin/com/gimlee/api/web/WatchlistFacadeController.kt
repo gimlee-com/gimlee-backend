@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "User Watchlist", description = "Endpoints for viewing user's watchlist with full ad details")
 @RestController
-@RequestMapping("/api/v1/user/watchlist")
+@RequestMapping("/user/watchlist")
 class WatchlistFacadeController(
     private val watchlistService: WatchlistService,
     private val adService: AdService,

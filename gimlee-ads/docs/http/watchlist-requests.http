@@ -12,13 +12,13 @@ Content-Type: application/json
 %}
 
 ### Add to Watchlist
-POST {{host}}/api/v1/user/watchlist/60d5ec9af682fbd39a1d4b6e
+POST {{host}}/api/user/watchlist/60d5ec9af682fbd39a1d4b6e
 Authorization: Bearer {{auth_token}}
 
 ### Get Watchlist
-GET {{host}}/api/v1/user/watchlist
+GET {{host}}/api/user/watchlist
 Authorization: Bearer {{auth_token}}
 
 ### Remove from Watchlist
-DELETE {{host}}/api/v1/user/watchlist/60d5ec9af682fbd39a1d4b6e
+DELETE {{host}}/api/user/watchlist/60d5ec9af682fbd39a1d4b6e
 Authorization: Bearer {{auth_token}}
