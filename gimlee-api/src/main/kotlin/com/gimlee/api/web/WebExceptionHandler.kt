@@ -7,6 +7,7 @@ import com.gimlee.auth.exception.AuthenticationException
 import com.gimlee.auth.exception.AuthorizationException
 import com.gimlee.common.domain.model.CommonOutcome
 import com.gimlee.common.domain.model.Outcome
+import com.gimlee.common.web.dto.FieldErrorDto
 import com.gimlee.common.web.dto.StatusResponseDto
 import org.apache.logging.log4j.LogManager
 import org.springframework.context.MessageSource
@@ -34,12 +35,13 @@ class WebExceptionHandler(private val messageSource: MessageSource) : ResponseEn
         status: HttpStatusCode,
         request: WebRequest
     ): ResponseEntity<Any>? {
-        val fieldErrors = ex.bindingResult.fieldErrors.joinToString("; ") { "${it.field}: ${it.defaultMessage}" }
-        val message = fieldErrors.ifEmpty { "The request contains invalid data." }
-        log.warn("Validation failed: $message")
+        val locale = LocaleContextHolder.getLocale()
+        val fieldErrors = ex.bindingResult.fieldErrors.map { FieldErrorDto(it.field, it.defaultMessage ?: "Invalid value.") }
+        val message = messageSource.getMessage(CommonOutcome.BAD_REQUEST.messageKey, null, locale)
+        log.warn("Validation failed: {}", fieldErrors.joinToString("; ") { "${it.field}: ${it.message}" })
         return handleExceptionInternal(
             ex,
-            StatusResponseDto.fromOutcome(CommonOutcome.BAD_REQUEST, message),
+            StatusResponseDto.fromOutcome(CommonOutcome.BAD_REQUEST, message, fieldErrors = fieldErrors),
             headers,
             HttpStatus.BAD_REQUEST,
             request
@@ -66,6 +68,22 @@ class WebExceptionHandler(private val messageSource: MessageSource) : ResponseEn
         return handleExceptionInternal(
             ex,
             StatusResponseDto.fromOutcome(outcome, message),
+            HttpHeaders(),
+            HttpStatus.valueOf(outcome.httpCode),
+            req
+        )
+    }
+
+    @ExceptionHandler(AdService.AdValidationException::class)
+    fun handleAdValidationException(ex: AdService.AdValidationException, req: WebRequest): ResponseEntity<Any>? {
+        val outcome = ex.outcome
+        val locale = LocaleContextHolder.getLocale()
+        val message = messageSource.getMessage(outcome.messageKey, null, locale)
+        val fieldErrors = ex.fieldErrors.map { FieldErrorDto(it.field, messageSource.getMessage(it.messageKey, null, locale)) }
+        log.warn("Ad validation failed: {}", fieldErrors.joinToString("; ") { "${it.field}: ${it.message}" })
+        return handleExceptionInternal(
+            ex,
+            StatusResponseDto.fromOutcome(outcome, message, fieldErrors = fieldErrors),
             HttpHeaders(),
             HttpStatus.valueOf(outcome.httpCode),
             req

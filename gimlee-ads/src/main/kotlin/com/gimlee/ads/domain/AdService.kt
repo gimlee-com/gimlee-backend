@@ -49,6 +49,14 @@ class AdService(
     /** Thrown when an ad operation cannot be performed due to business rules. */
     class AdOperationException(val outcome: AdOutcome, vararg val args: Any) : RuntimeException()
 
+    /** Thrown when ad completeness validation fails with field-level details. */
+    class AdValidationException(
+        val outcome: AdOutcome,
+        val fieldErrors: List<FieldError>
+    ) : RuntimeException() {
+        data class FieldError(val field: String, val messageKey: String)
+    }
+
     /** Thrown when a user lacks the required role for a currency. */
     class AdCurrencyRoleException(val outcome: AdOutcome) : RuntimeException()
 
@@ -444,29 +452,37 @@ class AdService(
         val hasValidSettlement = existingAd.settlementCurrencies.isNotEmpty() &&
                 existingAd.settlementCurrencies.all { it.isSettlement }
 
-        val isComplete = existingAd.title.isNotBlank() &&
-                !existingAd.description.isNullOrBlank() &&
-                existingAd.price != null &&
-                existingAd.currency != null &&
-                hasValidSettlement &&
-                existingAd.cityId != null &&
-                existingAd.location != null &&
-                existingAd.stock > 0
+        val fieldErrors = mutableListOf<AdValidationException.FieldError>()
 
-        if (!isComplete) {
+        if (existingAd.title.isBlank()) {
+            fieldErrors += AdValidationException.FieldError("title", "validation.ad.title-required")
+        }
+        if (existingAd.description.isNullOrBlank()) {
+            fieldErrors += AdValidationException.FieldError("description", "validation.ad.description-required")
+        }
+        if (existingAd.price == null) {
+            fieldErrors += AdValidationException.FieldError("price", "validation.ad.price-required")
+        }
+        if (existingAd.currency == null) {
+            fieldErrors += AdValidationException.FieldError("priceCurrency", "validation.ad.price-currency-required")
+        }
+        if (!hasValidSettlement) {
+            fieldErrors += AdValidationException.FieldError("settlementCurrencies", "validation.ad.settlement-currencies-required")
+        }
+        if (existingAd.cityId == null || existingAd.location == null) {
+            fieldErrors += AdValidationException.FieldError("location", "validation.ad.location-required")
+        }
+        if (existingAd.stock <= 0) {
+            fieldErrors += AdValidationException.FieldError("stock", "validation.ad.stock-required")
+        }
+
+        if (fieldErrors.isNotEmpty()) {
             log.warn(
-                "Attempted to activate incomplete ad {}: title={}, desc={}, price={}, curr={}, settlement={}, cityId={}, location={}, stock={}",
+                "Completeness check failed for ad {}: {}",
                 adId,
-                existingAd.title.isNotBlank(),
-                !existingAd.description.isNullOrBlank(),
-                existingAd.price != null,
-                existingAd.currency != null,
-                hasValidSettlement,
-                existingAd.cityId != null,
-                existingAd.location != null,
-                existingAd.stock
+                fieldErrors.joinToString(", ") { it.field }
             )
-            throw AdOperationException(outcome)
+            throw AdValidationException(outcome, fieldErrors)
         }
     }
 

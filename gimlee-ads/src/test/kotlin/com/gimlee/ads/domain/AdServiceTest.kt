@@ -288,7 +288,7 @@ class AdServiceTest : StringSpec({
         every { adRepository.findById(adId) } returns existingDoc
         every { userRoleRepository.getAll(userId) } returns listOf(Role.USER, Role.PIRATE)
 
-        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdValidationException> {
             adService.activateAd(adId.toHexString(), userId.toHexString())
         }
 
@@ -319,7 +319,7 @@ class AdServiceTest : StringSpec({
         every { adRepository.findById(adId) } returns existingDoc
         every { userRoleRepository.getAll(userId) } returns listOf(Role.USER)
 
-        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdValidationException> {
             adService.activateAd(adId.toHexString(), userId.toHexString())
         }
 
@@ -466,7 +466,7 @@ class AdServiceTest : StringSpec({
 
         val updateRequest = UpdateAdRequest(stock = 0)
 
-        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdValidationException> {
             adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
         }
 

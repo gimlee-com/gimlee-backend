@@ -89,11 +89,15 @@ class AdManagementIntegrationTest(
 
             val response = restClient.put("/sales/ads/${ad.id}", body, headers)
 
-            Then("it should be rejected with ACTIVE_AD_INCOMPLETE_UPDATE") {
+            Then("it should be rejected with ACTIVE_AD_INCOMPLETE_UPDATE and field errors") {
                 response.statusCode shouldBe 400
                 val responseBody = response.bodyAs<Map<String, Any>>()!!
                 responseBody["status"] shouldBe "AD_ACTIVE_AD_INCOMPLETE_UPDATE"
                 (responseBody["message"] as String) shouldContain "incomplete state"
+                val fieldErrors = responseBody["fieldErrors"] as List<*>
+                fieldErrors.size shouldBe 1
+                val error = fieldErrors[0] as Map<*, *>
+                error["field"] shouldBe "stock"
             }
         }
 
@@ -103,10 +107,14 @@ class AdManagementIntegrationTest(
 
             val response = restClient.put("/sales/ads/${ad.id}", body, headers)
 
-            Then("it should be rejected with ACTIVE_AD_INCOMPLETE_UPDATE") {
+            Then("it should be rejected with ACTIVE_AD_INCOMPLETE_UPDATE and field errors") {
                 response.statusCode shouldBe 400
                 val responseBody = response.bodyAs<Map<String, Any>>()!!
                 responseBody["status"] shouldBe "AD_ACTIVE_AD_INCOMPLETE_UPDATE"
+                val fieldErrors = responseBody["fieldErrors"] as List<*>
+                fieldErrors.size shouldBe 1
+                val error = fieldErrors[0] as Map<*, *>
+                error["field"] shouldBe "settlementCurrencies"
             }
         }
 
@@ -182,8 +190,11 @@ class AdManagementIntegrationTest(
                 response.statusCode shouldBe 400
                 val responseBody = response.bodyAs<Map<String, Any>>()!!
                 responseBody["status"] shouldBe "BAD_REQUEST"
-                (responseBody["message"] as String) shouldContain "price"
-                (responseBody["message"] as String) shouldContain "positive"
+                val fieldErrors = responseBody["fieldErrors"] as List<*>
+                fieldErrors.size shouldBe 1
+                val error = fieldErrors[0] as Map<*, *>
+                error["field"] shouldBe "price"
+                (error["message"] as String) shouldContain "positive"
             }
         }
 
@@ -197,7 +208,10 @@ class AdManagementIntegrationTest(
                 response.statusCode shouldBe 400
                 val responseBody = response.bodyAs<Map<String, Any>>()!!
                 responseBody["status"] shouldBe "BAD_REQUEST"
-                (responseBody["message"] as String) shouldContain "title"
+                val fieldErrors = responseBody["fieldErrors"] as List<*>
+                fieldErrors.size shouldBe 1
+                val error = fieldErrors[0] as Map<*, *>
+                error["field"] shouldBe "title"
             }
         }
     }
@@ -238,6 +252,46 @@ class AdManagementIntegrationTest(
                 response.statusCode shouldBe 200
                 val responseBody = response.bodyAs<Map<String, Any>>()!!
                 (responseBody["stock"] as Number).toInt() shouldBe 5
+            }
+        }
+    }
+
+    Given("activation validation with field errors") {
+        val sellerId = setupSellerWithWallet()
+        val headers = authHeaders(sellerId)
+
+        When("activating an ad with no description, price, settlement currencies, location, or stock") {
+            val ad = adService.createAd(sellerId.toHexString(), "Draft Ad", null, 0)
+
+            val response = restClient.post("/sales/ads/${ad.id}/activate", null, headers)
+
+            Then("it should return INCOMPLETE_AD_DATA with all missing field errors") {
+                response.statusCode shouldBe 400
+                val responseBody = response.bodyAs<Map<String, Any>>()!!
+                responseBody["status"] shouldBe "AD_INCOMPLETE_AD_DATA"
+                val fieldErrors = responseBody["fieldErrors"] as List<*>
+                val fieldNames = fieldErrors.map { (it as Map<*, *>)["field"] as String }.toSet()
+                fieldNames shouldBe setOf("description", "price", "priceCurrency", "settlementCurrencies", "location", "stock")
+            }
+        }
+
+        When("activating an ad missing only description and stock") {
+            val ad = adService.createAd(sellerId.toHexString(), "Almost Complete", null, 0)
+            adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
+                price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
+                settlementCurrencies = setOf(Currency.ARRR),
+                location = Location("city1", doubleArrayOf(1.0, 2.0))
+            ))
+
+            val response = restClient.post("/sales/ads/${ad.id}/activate", null, headers)
+
+            Then("it should return INCOMPLETE_AD_DATA listing only the missing fields") {
+                response.statusCode shouldBe 400
+                val responseBody = response.bodyAs<Map<String, Any>>()!!
+                responseBody["status"] shouldBe "AD_INCOMPLETE_AD_DATA"
+                val fieldErrors = responseBody["fieldErrors"] as List<*>
+                val fieldNames = fieldErrors.map { (it as Map<*, *>)["field"] as String }.toSet()
+                fieldNames shouldBe setOf("description", "stock")
             }
         }
     }

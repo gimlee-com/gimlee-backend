@@ -115,34 +115,27 @@ Authorization: Bearer {{auth_token}}
 #   "success": false,
 #   "status": "AD_ACTIVE_AD_INCOMPLETE_UPDATE",
 #   "message": "This update would leave the active ad in an incomplete state. Ensure title, description, price (in a supported settlement currency), location, and stock (> 0) are all set, or deactivate the ad first to save incomplete changes.",
-#   "data": null
+#   "data": null,
+#   "fieldErrors": [
+#     {"field": "stock", "message": "Stock must be greater than zero."}
+#   ]
+# }
+# or
+# {
+#   "success": false,
+#   "status": "BAD_REQUEST",
+#   "message": "The request is invalid.",
+#   "data": null,
+#   "fieldErrors": [
+#     {"field": "title", "message": "Title cannot exceed 100 characters."},
+#     {"field": "price", "message": "Price must be positive."}
+#   ]
 # }
 # or
 # {
 #   "success": false,
 #   "status": "AD_INVALID_AD_STATUS",
 #   "message": "Invalid ad status for this operation.",
-#   "data": null
-# }
-# or
-# {
-#   "success": false,
-#   "status": "AD_INVALID_OPERATION",
-#   "message": "Invalid ad operation: Currency USD is not allowed for settlement.",
-#   "data": null
-# }
-# or
-# {
-#   "success": false,
-#   "status": "AD_INVALID_OPERATION",
-#   "message": "Invalid ad operation: Stock (2) cannot be lower than locked stock (3).",
-#   "data": null
-# }
-# or
-# {
-#   "success": false,
-#   "status": "AD_INVALID_OPERATION",
-#   "message": "Invalid ad operation: Category must be a leaf node.",
 #   "data": null
 # }
 
@@ -206,7 +199,22 @@ Authorization: Bearer {{auth_token}}
 # Content-Type: application/json
 #
 # {
-#   "error": "Cannot activate an ad that is already ACTIVE." // Or similar message
+#   "success": false,
+#   "status": "AD_INCOMPLETE_AD_DATA",
+#   "message": "Ad cannot be activated until title, description, price (in a supported settlement currency), location, and stock are set.",
+#   "data": null,
+#   "fieldErrors": [
+#     {"field": "description", "message": "Description is required."},
+#     {"field": "price", "message": "Price is required."},
+#     {"field": "stock", "message": "Stock must be greater than zero."}
+#   ]
+# }
+# or
+# {
+#   "success": false,
+#   "status": "AD_INVALID_AD_STATUS",
+#   "message": "Invalid ad status for this operation.",
+#   "data": null
 # }
 
 
