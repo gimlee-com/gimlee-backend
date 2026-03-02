@@ -25,7 +25,9 @@ enum class AdOutcome(override val httpCode: Int) : Outcome {
     FIXED_CRYPTO_REQUIRES_SETTLEMENT_CURRENCY(400),
     FIXED_CRYPTO_PRICE_CURRENCY_NOT_IN_SETTLEMENT(400),
     ADDED_TO_WATCHLIST(200),
-    REMOVED_FROM_WATCHLIST(200);
+    REMOVED_FROM_WATCHLIST(200),
+    ACTIVE_AD_INCOMPLETE_UPDATE(400),
+    CONCURRENT_MODIFICATION(409);
 
     override val code: String get() = "AD_$name"
     override val messageKey: String get() = "status.ad.${name.replace("_", "-").lowercase()}"

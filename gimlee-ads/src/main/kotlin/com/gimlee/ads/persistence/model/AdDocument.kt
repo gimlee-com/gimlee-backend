@@ -31,7 +31,8 @@ data class AdDocument(
     val mainPhotoPath: String?,
     val stock: Int = 0,
     val lockedStock: Int = 0,
-    val volatilityProtection: Boolean = false
+    val volatilityProtection: Boolean = false,
+    val ver: Long = 0L
 ) {
     companion object {
         const val FIELD_ID = "_id"
@@ -53,6 +54,7 @@ data class AdDocument(
         const val FIELD_STOCK = "stk"
         const val FIELD_LOCKED_STOCK = "lstk"
         const val FIELD_VOLATILITY_PROTECTION = "vp"
+        const val FIELD_VERSION = "v"
     }
 
     /**
@@ -83,7 +85,8 @@ data class AdDocument(
             mainPhotoPath = mainPhotoPath,
             stock = stock,
             lockedStock = lockedStock,
-            volatilityProtection = volatilityProtection
+            volatilityProtection = volatilityProtection,
+            version = ver
         )
     }
 }

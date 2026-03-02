@@ -10,6 +10,7 @@ import com.gimlee.ads.domain.model.Direction
 import com.gimlee.ads.domain.model.PricingMode
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.persistence.AdRepository
+import com.gimlee.ads.persistence.AdRepository.AdConcurrentModificationException
 import com.gimlee.ads.persistence.model.AdDocument
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.domain.model.Currency
@@ -109,9 +110,15 @@ class AdService(
 
         val updatedAdDoc = applyUpdates(existingAdDoc, updatedFields)
 
+        if (existingAdDoc.status == AdStatus.ACTIVE) {
+            checkForCompleteness(updatedAdDoc, adId, AdOutcome.ACTIVE_AD_INCOMPLETE_UPDATE)
+        }
+
         log.info("Updating ad {} for user {}", adId, userId)
         val savedDocument = try {
             adRepository.save(updatedAdDoc)
+        } catch (e: AdConcurrentModificationException) {
+            throw AdOperationException(AdOutcome.CONCURRENT_MODIFICATION)
         } catch (e: IllegalStateException) {
             throw AdOperationException(AdOutcome.UPDATE_FAILED)
         }
@@ -124,8 +131,8 @@ class AdService(
             throw AdOperationException(AdOutcome.NOT_AD_OWNER)
         }
 
-        if (ad.status != AdStatus.INACTIVE) {
-            log.warn("Attempted to update ad {} which is not in INACTIVE state (current: {})", ad.id, ad.status)
+        if (ad.status == AdStatus.DELETED) {
+            log.warn("Attempted to update ad {} which is in DELETED state", ad.id)
             throw AdOperationException(AdOutcome.INVALID_AD_STATUS)
         }
     }
@@ -433,7 +440,7 @@ class AdService(
         return savedDocument.toDomain()
     }
 
-    private fun checkForCompleteness(existingAd: AdDocument, adId: String) {
+    private fun checkForCompleteness(existingAd: AdDocument, adId: String, outcome: AdOutcome = AdOutcome.INCOMPLETE_AD_DATA) {
         val hasValidSettlement = existingAd.settlementCurrencies.isNotEmpty() &&
                 existingAd.settlementCurrencies.all { it.isSettlement }
 
@@ -459,7 +466,7 @@ class AdService(
                 existingAd.location != null,
                 existingAd.stock
             )
-            throw AdOperationException(AdOutcome.INCOMPLETE_AD_DATA)
+            throw AdOperationException(outcome)
         }
     }
 

@@ -13,7 +13,9 @@ import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
@@ -24,6 +26,24 @@ class WebExceptionHandler(private val messageSource: MessageSource) : ResponseEn
 
     companion object {
         private val log = LogManager.getLogger()
+    }
+
+    override fun handleMethodArgumentNotValid(
+        ex: MethodArgumentNotValidException,
+        headers: HttpHeaders,
+        status: HttpStatusCode,
+        request: WebRequest
+    ): ResponseEntity<Any>? {
+        val fieldErrors = ex.bindingResult.fieldErrors.joinToString("; ") { "${it.field}: ${it.defaultMessage}" }
+        val message = fieldErrors.ifEmpty { "The request contains invalid data." }
+        log.warn("Validation failed: $message")
+        return handleExceptionInternal(
+            ex,
+            StatusResponseDto.fromOutcome(CommonOutcome.BAD_REQUEST, message),
+            headers,
+            HttpStatus.BAD_REQUEST,
+            request
+        )
     }
 
     @ExceptionHandler(AuthorizationException::class)

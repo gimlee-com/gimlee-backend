@@ -16,7 +16,6 @@ import com.mongodb.client.model.Accumulators
 import com.mongodb.client.model.Aggregates
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.client.model.ReturnDocument
 import com.mongodb.client.model.Sorts
 import com.mongodb.client.model.Updates
@@ -32,6 +31,8 @@ import org.springframework.stereotype.Repository
 
 @Repository
 class AdRepository(mongoDatabase: MongoDatabase) {
+
+    class AdConcurrentModificationException : IllegalStateException("Ad was modified concurrently")
 
     companion object {
         private const val COLLECTION_NAME_PREFIX = "gimlee-ads"
@@ -64,19 +65,24 @@ class AdRepository(mongoDatabase: MongoDatabase) {
      * Atomically ensures that the new stock value is not lower than the current locked stock.
      */
     fun save(ad: AdDocument): AdDocument {
-        val doc = mapToDocument(ad)
-        val filter = Filters.eq(AdDocument.FIELD_ID, ad.id)
+        val savedDoc = ad.copy(ver = ad.ver + 1)
+        val doc = mapToDocument(savedDoc)
 
-        // Atomic check: ensure new stock is >= current locked stock
         val atomicFilter = Filters.and(
-            filter,
-            Filters.lte(AdDocument.FIELD_LOCKED_STOCK, ad.stock)
+            Filters.eq(AdDocument.FIELD_ID, ad.id),
+            Filters.lte(AdDocument.FIELD_LOCKED_STOCK, ad.stock),
+            Filters.eq(AdDocument.FIELD_VERSION, ad.ver)
         )
 
         try {
-            val result = collection.replaceOne(atomicFilter, doc, ReplaceOptions().upsert(true))
-            if (result.matchedCount == 0L && result.upsertedId == null) {
-                handleConstraintViolation(ad)
+            val result = collection.replaceOne(atomicFilter, doc)
+            if (result.matchedCount == 0L) {
+                // No match: either new document or constraint violation
+                if (findById(ad.id) == null) {
+                    collection.insertOne(doc)
+                } else {
+                    handleConstraintViolation(ad)
+                }
             }
         } catch (e: MongoException) {
             if (MongoExceptionUtils.isDuplicateKeyException(e)) {
@@ -85,13 +91,18 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             throw e
         }
 
-        return ad
+        return savedDoc
     }
 
     private fun handleConstraintViolation(ad: AdDocument) {
         val existing = findById(ad.id)
-        if (existing != null && existing.lockedStock > ad.stock) {
-            throw IllegalStateException("Stock (${ad.stock}) cannot be lower than locked stock (${existing.lockedStock}).")
+        if (existing != null) {
+            if (existing.ver != ad.ver) {
+                throw AdConcurrentModificationException()
+            }
+            if (existing.lockedStock > ad.stock) {
+                throw IllegalStateException("Stock (${ad.stock}) cannot be lower than locked stock (${existing.lockedStock}).")
+            }
         }
     }
 
@@ -193,7 +204,10 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             Filters.eq(AdDocument.FIELD_ID, adId),
             Filters.expr(Document("\$lte", listOf(Document("\$add", listOf("$${AdDocument.FIELD_LOCKED_STOCK}", quantity)), "$${AdDocument.FIELD_STOCK}")))
         )
-        val update = Updates.inc(AdDocument.FIELD_LOCKED_STOCK, quantity)
+        val update = Updates.combine(
+            Updates.inc(AdDocument.FIELD_LOCKED_STOCK, quantity),
+            Updates.inc(AdDocument.FIELD_VERSION, 1L)
+        )
         val result = collection.updateOne(filter, update)
 
         if (result.matchedCount == 0L) {
@@ -209,7 +223,10 @@ class AdRepository(mongoDatabase: MongoDatabase) {
      */
     fun decrementLockedStock(adId: ObjectId, quantity: Int = 1) {
         val filter = Filters.eq(AdDocument.FIELD_ID, adId)
-        val update = Updates.inc(AdDocument.FIELD_LOCKED_STOCK, -quantity)
+        val update = Updates.combine(
+            Updates.inc(AdDocument.FIELD_LOCKED_STOCK, -quantity),
+            Updates.inc(AdDocument.FIELD_VERSION, 1L)
+        )
         collection.updateOne(filter, update)
     }
 
@@ -231,7 +248,8 @@ class AdRepository(mongoDatabase: MongoDatabase) {
                     AdStatus.INACTIVE.name,
                     "\$${AdDocument.FIELD_STATUS}"
                 ))
-            )
+            ),
+            Updates.set(AdDocument.FIELD_VERSION, Document("\$add", listOf("\$${AdDocument.FIELD_VERSION}", 1L)))
         )
         return collection.findOneAndUpdate(filter, pipeline, FindOneAndUpdateOptions().returnDocument(ReturnDocument.BEFORE))
             ?.let { mapToAdDocument(it) }
@@ -281,6 +299,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             .append(AdDocument.FIELD_STOCK, ad.stock)
             .append(AdDocument.FIELD_LOCKED_STOCK, ad.lockedStock)
             .append(AdDocument.FIELD_VOLATILITY_PROTECTION, ad.volatilityProtection)
+            .append(AdDocument.FIELD_VERSION, ad.ver)
 
 
         // Map GeoJsonPoint to Document format { type: "Point", coordinates: [lon, lat] }
@@ -336,7 +355,8 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             mainPhotoPath = doc.getString(AdDocument.FIELD_MAIN_PHOTO_PATH),
             stock = doc.getInteger(AdDocument.FIELD_STOCK) ?: 0,
             lockedStock = doc.getInteger(AdDocument.FIELD_LOCKED_STOCK) ?: 0,
-            volatilityProtection = doc.getBoolean(AdDocument.FIELD_VOLATILITY_PROTECTION) ?: false
+            volatilityProtection = doc.getBoolean(AdDocument.FIELD_VOLATILITY_PROTECTION) ?: false,
+            ver = (doc.get(AdDocument.FIELD_VERSION) as? Number)?.toLong() ?: 0L
         )
     }
 }

@@ -1,8 +1,10 @@
 package com.gimlee.ads.domain
 
 import com.gimlee.ads.domain.model.AdStatus
+import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.persistence.AdRepository
+import com.gimlee.ads.persistence.AdRepository.AdConcurrentModificationException
 import com.gimlee.ads.persistence.model.AdDocument
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
@@ -405,5 +407,134 @@ class AdServiceTest : StringSpec({
         }
 
         exception.outcome shouldBe AdOutcome.CATEGORY_NOT_LEAF
+    }
+
+    "updateAd should succeed for ACTIVE ad with complete data" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Complete Ad",
+            description = "Description",
+            price = BigDecimal("100"),
+            currency = Currency.ARRR,
+            settlementCurrencies = setOf(Currency.ARRR),
+            status = AdStatus.ACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = "city1",
+            location = org.springframework.data.mongodb.core.geo.GeoJsonPoint(1.0, 2.0),
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 10
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+        every { userRoleRepository.getAll(userId) } returns listOf(Role.USER, Role.PIRATE)
+        every { adRepository.save(any()) } answers { it.invocation.args[0] as AdDocument }
+
+        val updateRequest = UpdateAdRequest(title = "Updated Title")
+
+        val result = adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+        result.title shouldBe "Updated Title"
+    }
+
+    "updateAd should fail for ACTIVE ad when resulting data is incomplete" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Complete Ad",
+            description = "Description",
+            price = BigDecimal("100"),
+            currency = Currency.ARRR,
+            settlementCurrencies = setOf(Currency.ARRR),
+            status = AdStatus.ACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = "city1",
+            location = org.springframework.data.mongodb.core.geo.GeoJsonPoint(1.0, 2.0),
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 10
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+        every { userRoleRepository.getAll(userId) } returns listOf(Role.USER, Role.PIRATE)
+
+        val updateRequest = UpdateAdRequest(stock = 0)
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+            adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+        }
+
+        exception.outcome shouldBe AdOutcome.ACTIVE_AD_INCOMPLETE_UPDATE
+    }
+
+    "updateAd should fail for DELETED ad" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Deleted Ad",
+            description = null,
+            price = null,
+            currency = null,
+            status = AdStatus.DELETED,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = null,
+            categoryIds = null,
+            location = null,
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 0
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+
+        val updateRequest = UpdateAdRequest(title = "New Title")
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+            adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+        }
+
+        exception.outcome shouldBe AdOutcome.INVALID_AD_STATUS
+    }
+
+    "updateAd should fail with CONCURRENT_MODIFICATION on version conflict" {
+        val adId = ObjectId()
+        val userId = ObjectId()
+        val existingDoc = AdDocument(
+            id = adId,
+            userId = userId,
+            title = "Title",
+            description = null,
+            price = null,
+            currency = null,
+            status = AdStatus.INACTIVE,
+            createdAtMicros = 1000L,
+            updatedAtMicros = 1000L,
+            cityId = null,
+            categoryIds = null,
+            location = null,
+            mediaPaths = emptyList(),
+            mainPhotoPath = null,
+            stock = 10
+        )
+
+        every { adRepository.findById(adId) } returns existingDoc
+        every { adRepository.save(any()) } throws AdConcurrentModificationException()
+
+        val updateRequest = UpdateAdRequest(title = "Updated")
+
+        val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
+            adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
+        }
+
+        exception.outcome shouldBe AdOutcome.CONCURRENT_MODIFICATION
     }
 })

@@ -157,7 +157,7 @@ class ManageAdController(
 
     @Operation(
         summary = "Update an Existing Ad",
-        description = "Allows updating an INACTIVE ad. Requires USER role authentication."
+        description = "Allows updating an INACTIVE or ACTIVE ad. If the ad is ACTIVE, the update must preserve all required fields (title, description, price, settlement currencies, location, stock > 0). Requires USER role authentication."
     )
     @ApiResponse(
         responseCode = "200",
@@ -171,12 +171,17 @@ class ManageAdController(
     )
     @ApiResponse(
         responseCode = "400",
-        description = "Invalid ad status or ID format. Possible status codes: AD_INVALID_AD_STATUS, AD_INVALID_AD_ID",
+        description = "Invalid update data or incomplete active ad. Possible status codes: AD_INVALID_AD_STATUS, AD_INVALID_AD_ID, AD_ACTIVE_AD_INCOMPLETE_UPDATE",
         content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
     )
     @ApiResponse(
         responseCode = "403",
         description = "Forbidden (e.g., using ARRR without PIRATE role). Possible status codes: AD_PIRATE_ROLE_REQUIRED",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @ApiResponse(
+        responseCode = "409",
+        description = "Concurrent modification detected. Possible status codes: AD_CONCURRENT_MODIFICATION",
         content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
     )
     @ApiResponse(

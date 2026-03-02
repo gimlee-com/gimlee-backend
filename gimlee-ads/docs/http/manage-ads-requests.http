@@ -34,7 +34,11 @@ Authorization: Bearer {{auth_token}}
 
 ### Update an Existing Ad
 # Requires USER role authentication
-# Can only update INACTIVE ads.
+# Can update both INACTIVE and ACTIVE ads.
+# If the ad is ACTIVE, the resulting state must remain complete (title, description, price,
+# settlement currencies, location, stock > 0). Otherwise, the request is rejected with
+# AD_ACTIVE_AD_INCOMPLETE_UPDATE suggesting to deactivate the ad first.
+# Uses optimistic locking — concurrent modifications return 409 AD_CONCURRENT_MODIFICATION.
 # Replace {adId} with the actual ID of the ad you want to update.
 # @name /sales/ads/{adId} [PUT]
 PUT {{host}}/api/sales/ads/{adId}
@@ -109,8 +113,15 @@ Authorization: Bearer {{auth_token}}
 #
 # {
 #   "success": false,
+#   "status": "AD_ACTIVE_AD_INCOMPLETE_UPDATE",
+#   "message": "This update would leave the active ad in an incomplete state. Ensure title, description, price (in a supported settlement currency), location, and stock (> 0) are all set, or deactivate the ad first to save incomplete changes.",
+#   "data": null
+# }
+# or
+# {
+#   "success": false,
 #   "status": "AD_INVALID_AD_STATUS",
-#   "message": "Invalid ad status for this operation. Ad can only be updated when in INACTIVE state.",
+#   "message": "Invalid ad status for this operation.",
 #   "data": null
 # }
 # or
@@ -132,6 +143,16 @@ Authorization: Bearer {{auth_token}}
 #   "success": false,
 #   "status": "AD_INVALID_OPERATION",
 #   "message": "Invalid ad operation: Category must be a leaf node.",
+#   "data": null
+# }
+
+### Expected Response (Conflict - 409 Conflict):
+# Content-Type: application/json
+#
+# {
+#   "success": false,
+#   "status": "AD_CONCURRENT_MODIFICATION",
+#   "message": "The ad was modified by another operation. Please refresh and try again.",
 #   "data": null
 # }
 

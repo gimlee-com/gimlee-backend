@@ -6,8 +6,8 @@ POST {{host}}/api/playground/createUsers
 Content-Type: application/json
 
 {
-  "pirateViewKey": "zxviews...",
-  "ycashViewKey": "zxviewregtestsapling..."
+  "pirateViewKey": "pirate-extended-viewing-key1qv3qpuyuqqqqpqqfpq2urr27kpteafxgrxrs5umz8pdxqclxpezzgwhunjd5kud4v4kw5r0apnnfrlg6y0730etg86c5mv4ymnh64747t26v2xvavvzzkljc00ktqhkmxenkstldkq4pc95em65yl50k9pum6f7c9wm3ztgr27r6mfuskckachjrwtpq3nk002nnkv0nm7tnvm4geyzf29lhdy7sg95fyv",
+  "ycashViewKey": "zxviewregtestsapling1qve3tla0qyqqpqrs4tcnhs5j2rku6nrzw5e4836ze4lnn9l5sj3ncknxg9xw3madwd7uwcxxf5yqld22vjje0gmcpzzlset4n24xmyspu5dyfl4knjxx6rkutxwqvndac0rm0u0egcxmnl57m39csvszcv5nmdkhmvy9wwpy5xzvphmegavm0ltuscjr9phn6n9x4wep9fvey2hpy0c9c9xy0u25l7a0fygx5u9j945gp0da7n27jalzmdy34gff8w3x4dwesfrm2nccfzdan"
 }
 
 ### Expected Response (Success - 200 OK):
