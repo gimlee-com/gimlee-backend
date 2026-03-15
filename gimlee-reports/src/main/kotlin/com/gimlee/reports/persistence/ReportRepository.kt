@@ -40,6 +40,14 @@ class ReportRepository(private val mongoDatabase: MongoDatabase) {
         return doc.copy(id = id)
     }
 
+    fun existsByTargetAndReporter(targetId: ObjectId, reporterId: ObjectId): Boolean {
+        val filter = Filters.and(
+            Filters.eq(FIELD_TARGET_ID, targetId),
+            Filters.eq(FIELD_REPORTER_ID, reporterId)
+        )
+        return collection.countDocuments(filter) > 0
+    }
+
     fun deleteByTargetIds(targetIds: List<ObjectId>) {
         if (targetIds.isEmpty()) return
         collection.deleteMany(Filters.`in`(FIELD_TARGET_ID, targetIds))

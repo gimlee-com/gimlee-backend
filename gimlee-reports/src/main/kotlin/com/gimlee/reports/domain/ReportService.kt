@@ -31,14 +31,21 @@ class ReportService(
 
         val targetInfo = resolver.resolve(targetType, targetId) ?: return ReportOutcome.REPORT_TARGET_NOT_FOUND
 
+        val targetObjectId = ObjectId(targetInfo.targetId)
+        val reporterObjectId = ObjectId(reporterId)
+
+        if (reportRepository.existsByTargetAndReporter(targetObjectId, reporterObjectId)) {
+            return ReportOutcome.ALREADY_REPORTED
+        }
+
         val now = Instant.now().toMicros()
         try {
             reportRepository.save(
                 ReportDocument(
-                    targetId = ObjectId(targetInfo.targetId),
+                    targetId = targetObjectId,
                     targetType = targetType.shortName,
                     contextId = targetInfo.contextId?.let { ObjectId(it) },
-                    reporterId = ObjectId(reporterId),
+                    reporterId = reporterObjectId,
                     reason = reason,
                     createdAt = now
                 )

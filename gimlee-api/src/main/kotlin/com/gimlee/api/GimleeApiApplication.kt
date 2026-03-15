@@ -20,6 +20,7 @@ import org.springframework.scheduling.annotation.EnableAsync
 	"com.gimlee.common",
 	"com.gimlee.chat",
 	"com.gimlee.analytics",
+	"com.gimlee.reports",
 	"com.gimlee.api",
 ])
 class GimleeApiApplication
