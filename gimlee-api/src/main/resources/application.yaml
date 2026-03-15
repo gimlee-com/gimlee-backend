@@ -56,7 +56,8 @@ gimlee:
         /payments/currency/list,
         /session/init,
         /media,
-        /playground/**
+        /playground/**,
+        /qa/ads/**
 
   # gimlee-user properties
   user:
@@ -96,6 +97,15 @@ gimlee:
     gpt:
       url-template: https://www.google.com/basepages/producttype/taxonomy-with-ids.%s.txt
       languages: en-US,pl-PL
+    qa:
+      question-max-length: 500
+      answer-max-length: 2000
+      max-unanswered-per-user-per-ad: 3
+      max-questions-per-ad: 100
+      max-community-answers-per-question: 3
+      max-pinned-per-ad: 3
+      cooldown-seconds: 300
+      upvote-milestones: 5,10,25,50,100
 
   # gimlee-chat properties
   chat:

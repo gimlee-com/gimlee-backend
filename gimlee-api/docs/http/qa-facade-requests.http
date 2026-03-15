@@ -1,0 +1,103 @@
+### Ask a Question on an Ad
+# Submits a new question on an ad listing.
+# The caller must not be the ad owner (seller cannot ask on own ad).
+# Rate limits: max 3 unanswered questions per user per ad, 5-min cooldown.
+#
+# @name askQuestion
+POST {{host}}/api/qa/ads/{{adId}}/questions
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "text": "Is this item available for international shipping?"
+}
+
+###
+
+### Submit an Answer to a Question
+# Submits an answer to a question. The type (SELLER or COMMUNITY) is
+# automatically determined:
+# - If the caller is the ad owner → SELLER answer
+# - If the caller has a completed purchase on the ad → COMMUNITY answer
+# - Otherwise → 403 ANSWER_NOT_PREVIOUS_BUYER
+#
+# @name submitAnswer
+POST {{host}}/api/qa/questions/{{questionId}}/answers
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "text": "Yes, we ship internationally. Shipping costs depend on the destination."
+}
+
+###
+
+### Edit an Answer
+# Edits an existing answer. Only the answer author can edit.
+#
+# @name editAnswer
+PUT {{host}}/api/qa/answers/{{answerId}}
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "text": "Yes, we ship internationally to most countries. Contact us for a shipping quote."
+}
+
+###
+
+### Toggle Upvote on a Question
+# Toggles the upvote status of a question for the authenticated user.
+# If already upvoted, the upvote is removed. Otherwise, it is added.
+#
+# @name toggleUpvote
+POST {{host}}/api/qa/questions/{{questionId}}/upvote
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Toggle Pin on a Question (Seller Only)
+# Toggles the pin status of a question. Only the ad owner can pin.
+# Maximum 3 pinned questions per ad.
+#
+# @name togglePin
+PUT {{host}}/api/qa/questions/{{questionId}}/pin
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Hide a Question (Seller Only)
+# Hides a question from public view. Only the ad owner can hide.
+# Hidden questions are no longer visible in public listings.
+#
+# @name hideQuestion
+PUT {{host}}/api/qa/questions/{{questionId}}/hide
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Remove a Question (Admin Only)
+# Permanently removes a question. Admin/moderator action only.
+#
+# @name removeQuestion
+DELETE {{host}}/api/qa/questions/{{questionId}}
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Get Seller's Unanswered Questions
+# Returns unanswered (pending) questions for the seller's ad.
+# The caller must be the ad owner.
+#
+# @name getSellerUnanswered
+GET {{host}}/api/qa/ads/{{adId}}/questions/seller?page=0&size=10
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Get My Unanswered Questions on an Ad
+# Returns the caller's own unanswered (pending) questions on an ad.
+#
+# @name getMyUnanswered
+GET {{host}}/api/qa/ads/{{adId}}/questions/mine
+Authorization: Bearer {{auth_token}}

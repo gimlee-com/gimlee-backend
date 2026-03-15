@@ -332,4 +332,8 @@ class PurchaseService(
     fun getPurchasesForBuyer(buyerId: ObjectId, pageable: Pageable): Page<Purchase> {
         return purchaseRepository.findAllByBuyerId(buyerId, pageable)
     }
+
+    fun hasCompletedPurchaseForAd(buyerId: ObjectId, adId: ObjectId): Boolean {
+        return purchaseRepository.existsByBuyerIdAndAdIdAndStatus(buyerId, adId, PurchaseStatus.COMPLETE)
+    }
 }

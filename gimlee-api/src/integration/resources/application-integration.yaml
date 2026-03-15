@@ -44,6 +44,8 @@ gimlee:
     category:
       sync:
         enabled: false
+    qa:
+      cooldown-seconds: 0
   # gimlee-auth properties
   auth:
     jwt:
@@ -67,6 +69,7 @@ gimlee:
         - /session/init
         - /media
         - /playground/**
+        - /qa/ads/**
       jwt:
         issuer: gimlee
         key: password

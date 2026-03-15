@@ -40,9 +40,6 @@ gimlee:
       currency-mappings:
         pl-PL: PLN
 
-  # gimlee-ads properties
-  ads:
-
   # gimlee-purchases properties
   purchases:
     price-tolerance-pct: 0.01

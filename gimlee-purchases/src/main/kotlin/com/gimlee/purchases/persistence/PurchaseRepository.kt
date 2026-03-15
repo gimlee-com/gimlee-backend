@@ -89,6 +89,15 @@ class PurchaseRepository(
         return collection.find(filter).map { it.toPurchase() }.toList()
     }
 
+    fun existsByBuyerIdAndAdIdAndStatus(buyerId: ObjectId, adId: ObjectId, status: PurchaseStatus): Boolean {
+        val filter = Filters.and(
+            Filters.eq(FIELD_BUYER_ID, buyerId),
+            Filters.eq(FIELD_STATUS, status.id),
+            Filters.eq("${FIELD_ITEMS}.${PurchaseItemDocument.FIELD_AD_ID}", adId)
+        )
+        return collection.countDocuments(filter) > 0
+    }
+
     private fun Purchase.toDocument(): PurchaseDocument =
         PurchaseDocument(
             id = id,
