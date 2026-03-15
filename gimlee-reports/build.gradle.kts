@@ -2,10 +2,6 @@ dependencies {
     // Module dependencies
     implementation(project(":gimlee-common"))
     implementation(project(":gimlee-events"))
-    implementation(project(":gimlee-auth"))
-    implementation(project(":gimlee-location"))
-    implementation(project(":gimlee-payments"))
-    implementation(project(":gimlee-reports"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)
@@ -16,35 +12,15 @@ dependencies {
     implementation(libs.spring.boot.starter.data.mongodb)
 
     // Other dependencies
-    implementation(libs.httpclient5)
-    implementation(libs.caffeine)
-    implementation(libs.commons.codec)
     implementation(libs.jakarta.validation)
-    implementation(libs.jackson.module.kotlin)
     implementation(libs.springdoc.openapi.starter.webmvc.api)
-    implementation(libs.shedlock.spring)
-    implementation(libs.shedlock.provider.mongo)
-    implementation(libs.lucene.core)
-    implementation(libs.lucene.queryparser)
-    implementation(libs.lucene.analysis.common)
-    
-    testFixturesApi(libs.spring.boot.starter)
-    testFixturesApi(libs.spring.boot.starter.test)
-    testFixturesApi(libs.shedlock.spring)
-    testFixturesApi(libs.shedlock.provider.mongo)
-    testFixturesImplementation(project(":gimlee-payments"))
-    testFixturesImplementation(project(":gimlee-auth"))
-    testFixturesImplementation(libs.mockk)
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(platform(libs.kotest.bom))
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.property)
-    testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.mockk)
-    testImplementation(testFixtures(project))
-    testImplementation(testFixtures(project(":gimlee-common")))
 }
 
 sourceSets {

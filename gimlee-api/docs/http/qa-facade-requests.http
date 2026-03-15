@@ -101,33 +101,3 @@ Authorization: Bearer {{auth_token}}
 # @name getMyUnanswered
 GET {{host}}/api/qa/ads/{{adId}}/questions/mine
 Authorization: Bearer {{auth_token}}
-
-###
-
-### Report a Question
-# Reports a question for violating platform guidelines.
-# One report per user per question; duplicate reports return 409 ALREADY_REPORTED.
-#
-# @name reportQuestion
-POST {{host}}/api/qa/questions/{{questionId}}/report
-Content-Type: application/json
-Authorization: Bearer {{auth_token}}
-
-{
-  "reason": "This question contains spam and irrelevant promotional links."
-}
-
-###
-
-### Report an Answer
-# Reports an answer for violating platform guidelines.
-# One report per user per answer; duplicate reports return 409 ALREADY_REPORTED.
-#
-# @name reportAnswer
-POST {{host}}/api/qa/answers/{{answerId}}/report
-Content-Type: application/json
-Authorization: Bearer {{auth_token}}
-
-{
-  "reason": "This answer is misleading and contains false claims about the product."
-}

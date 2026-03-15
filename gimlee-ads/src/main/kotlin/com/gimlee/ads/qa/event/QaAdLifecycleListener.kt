@@ -1,10 +1,10 @@
 package com.gimlee.ads.qa.event
 
 import com.gimlee.ads.qa.persistence.AnswerRepository
-import com.gimlee.ads.qa.persistence.QaReportRepository
 import com.gimlee.ads.qa.persistence.QuestionRepository
 import com.gimlee.ads.qa.persistence.QuestionUpvoteRepository
 import com.gimlee.events.AdStatusChangedEvent
+import com.gimlee.reports.persistence.ReportRepository
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
@@ -15,7 +15,7 @@ class QaAdLifecycleListener(
     private val questionRepository: QuestionRepository,
     private val answerRepository: AnswerRepository,
     private val questionUpvoteRepository: QuestionUpvoteRepository,
-    private val qaReportRepository: QaReportRepository
+    private val reportRepository: ReportRepository
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -41,7 +41,7 @@ class QaAdLifecycleListener(
             .values.flatten().mapNotNull { it.id }
 
         questionUpvoteRepository.deleteByQuestionIds(questionIds)
-        qaReportRepository.deleteByTargetIds(questionIds + answerIds)
+        reportRepository.deleteByTargetIds(questionIds + answerIds)
         answerRepository.deleteByQuestionIds(questionIds)
         questionRepository.deleteByAdId(adObjectId)
     }

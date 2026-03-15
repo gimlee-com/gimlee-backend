@@ -27,10 +27,7 @@ enum class QaOutcome(override val httpCode: Int) : Outcome {
 
     PIN_LIMIT_REACHED(400),
     PIN_TOGGLED(200),
-    NOT_AD_OWNER(403),
-
-    ALREADY_REPORTED(409),
-    REPORT_SUBMITTED(200);
+    NOT_AD_OWNER(403);
 
     override val code: String get() = name
     override val messageKey: String get() = "status.qa.${name.lowercase().replace('_', '-')}"

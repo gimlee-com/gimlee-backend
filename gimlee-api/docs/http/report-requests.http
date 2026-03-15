@@ -1,0 +1,31 @@
+### Submit a Report — Report a Question
+# Reports a question for violating platform guidelines.
+# One report per user per target; duplicate reports return 409 ALREADY_REPORTED.
+#
+# @name reportQuestion
+POST {{host}}/api/reports
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "targetType": "QUESTION",
+  "targetId": "{{questionId}}",
+  "reason": "This question contains spam and irrelevant promotional links."
+}
+
+###
+
+### Submit a Report — Report an Answer
+# Reports an answer for violating platform guidelines.
+# One report per user per target; duplicate reports return 409 ALREADY_REPORTED.
+#
+# @name reportAnswer
+POST {{host}}/api/reports
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "targetType": "ANSWER",
+  "targetId": "{{answerId}}",
+  "reason": "This answer is misleading and contains false claims about the product."
+}
