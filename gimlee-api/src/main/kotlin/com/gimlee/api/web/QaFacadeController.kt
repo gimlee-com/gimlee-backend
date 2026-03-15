@@ -3,12 +3,14 @@ package com.gimlee.api.web
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.qa.domain.AnswerService
 import com.gimlee.ads.qa.domain.QaOutcome
+import com.gimlee.ads.qa.domain.QaReportService
 import com.gimlee.ads.qa.domain.QuestionService
 import com.gimlee.ads.qa.domain.UpvoteService
 import com.gimlee.ads.qa.domain.model.Answer
 import com.gimlee.ads.qa.domain.model.Question
 import com.gimlee.ads.qa.web.dto.request.AskQuestionRequestDto
 import com.gimlee.ads.qa.web.dto.request.EditAnswerRequestDto
+import com.gimlee.ads.qa.web.dto.request.QaReportRequestDto
 import com.gimlee.ads.qa.web.dto.request.SubmitAnswerRequestDto
 import com.gimlee.ads.qa.web.dto.response.AnswerDto
 import com.gimlee.ads.qa.web.dto.response.QuestionDto
@@ -48,6 +50,7 @@ class QaFacadeController(
     private val questionService: QuestionService,
     private val answerService: AnswerService,
     private val upvoteService: UpvoteService,
+    private val qaReportService: QaReportService,
     private val adService: AdService,
     private val purchaseService: PurchaseService,
     private val userService: UserService,
@@ -329,6 +332,66 @@ class QaFacadeController(
         val usernames = userService.findUsernamesByIds(listOf(principal.userId))
         val dtos = questions.map { q -> toQuestionDto(q, emptyMap(), emptySet(), usernames) }
         return ResponseEntity.ok(dtos)
+    }
+
+    @Operation(
+        summary = "Report a Question",
+        description = "Report a question for violating platform guidelines."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Report submitted. Possible status codes: REPORT_SUBMITTED",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Question not found. Possible status codes: QUESTION_NOT_FOUND",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @ApiResponse(
+        responseCode = "409",
+        description = "Already reported. Possible status codes: ALREADY_REPORTED",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @PostMapping("/questions/{questionId}/report")
+    @Privileged(role = "USER")
+    fun reportQuestion(
+        @Parameter(description = "Question ID") @PathVariable questionId: String,
+        @Valid @RequestBody request: QaReportRequestDto
+    ): ResponseEntity<Any> {
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
+        val outcome = qaReportService.reportQuestion(questionId, principal.userId, request.reason)
+        return handleOutcome(outcome)
+    }
+
+    @Operation(
+        summary = "Report an Answer",
+        description = "Report an answer for violating platform guidelines."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Report submitted. Possible status codes: REPORT_SUBMITTED",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Answer not found. Possible status codes: ANSWER_NOT_FOUND",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @ApiResponse(
+        responseCode = "409",
+        description = "Already reported. Possible status codes: ALREADY_REPORTED",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @PostMapping("/answers/{answerId}/report")
+    @Privileged(role = "USER")
+    fun reportAnswer(
+        @Parameter(description = "Answer ID") @PathVariable answerId: String,
+        @Valid @RequestBody request: QaReportRequestDto
+    ): ResponseEntity<Any> {
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
+        val outcome = qaReportService.reportAnswer(answerId, principal.userId, request.reason)
+        return handleOutcome(outcome)
     }
 
     private fun toQuestionDto(

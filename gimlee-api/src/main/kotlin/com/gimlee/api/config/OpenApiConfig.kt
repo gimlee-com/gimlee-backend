@@ -48,15 +48,19 @@ class OpenApiConfig(
     fun operationCustomizer(): OperationCustomizer {
         return OperationCustomizer { operation, handlerMethod ->
             val paths = getMethodPaths(handlerMethod)
-            val isUnsecured = paths.any { path -> 
+            val privilegedAnnotation = handlerMethod.getMethodAnnotation(Privileged::class.java)
+
+            // @Privileged is the authoritative runtime security marker — it takes
+            // precedence over path-based unsecured matching (e.g. /qa/ads/** is
+            // unsecured for public GETs but the same prefix hosts @Privileged endpoints).
+            val matchesUnsecuredPath = paths.any { path ->
                 unsecuredPathPatterns.any { pattern -> pathMatcher.match(pattern, path) }
             }
+            val isUnsecured = matchesUnsecuredPath && privilegedAnnotation == null
 
             if (isUnsecured) {
                 operation.security = emptyList()
             }
-
-            val privilegedAnnotation = handlerMethod.getMethodAnnotation(Privileged::class.java)
             val description = StringBuilder(operation.description ?: "")
             
             if (isUnsecured) {

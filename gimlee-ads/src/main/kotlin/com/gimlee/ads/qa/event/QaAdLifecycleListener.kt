@@ -1,6 +1,7 @@
 package com.gimlee.ads.qa.event
 
 import com.gimlee.ads.qa.persistence.AnswerRepository
+import com.gimlee.ads.qa.persistence.QaReportRepository
 import com.gimlee.ads.qa.persistence.QuestionRepository
 import com.gimlee.ads.qa.persistence.QuestionUpvoteRepository
 import com.gimlee.events.AdStatusChangedEvent
@@ -13,7 +14,8 @@ import org.springframework.stereotype.Component
 class QaAdLifecycleListener(
     private val questionRepository: QuestionRepository,
     private val answerRepository: AnswerRepository,
-    private val questionUpvoteRepository: QuestionUpvoteRepository
+    private val questionUpvoteRepository: QuestionUpvoteRepository,
+    private val qaReportRepository: QaReportRepository
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -35,7 +37,11 @@ class QaAdLifecycleListener(
             org.springframework.data.domain.Pageable.unpaged()
         ).content.mapNotNull { it.id }
 
+        val answerIds = answerRepository.findByQuestionIds(questionIds)
+            .values.flatten().mapNotNull { it.id }
+
         questionUpvoteRepository.deleteByQuestionIds(questionIds)
+        qaReportRepository.deleteByTargetIds(questionIds + answerIds)
         answerRepository.deleteByQuestionIds(questionIds)
         questionRepository.deleteByAdId(adObjectId)
     }

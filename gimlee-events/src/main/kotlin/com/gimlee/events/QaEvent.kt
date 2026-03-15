@@ -27,3 +27,12 @@ data class QuestionUpvoteMilestoneEvent(
     val upvoteCount: Int,
     val timestamp: Instant = Instant.now()
 )
+
+data class QaContentReportedEvent(
+    val targetId: String,
+    val targetType: String,
+    val adId: String,
+    val reporterId: String,
+    val reason: String,
+    val timestamp: Instant = Instant.now()
+)
