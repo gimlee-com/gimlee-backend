@@ -34,7 +34,8 @@ class AdStockService(
                 adId = adId.toHexString(),
                 oldStatus = AdStatus.ACTIVE.name,
                 newStatus = AdStatus.INACTIVE.name,
-                categoryIds = oldAd.categoryIds ?: emptyList()
+                categoryIds = oldAd.categoryIds ?: emptyList(),
+                reason = AdStatusChangedEvent.Reason.STOCK_DEPLETED
             ))
         }
     }

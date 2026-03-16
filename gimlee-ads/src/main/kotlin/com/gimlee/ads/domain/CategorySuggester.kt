@@ -26,6 +26,7 @@ class CategorySuggester {
     companion object {
         private const val FIELD_ID = "id"
         private const val FIELD_NAME_PREFIX = "name_"
+        private const val FIELD_HIDDEN = "hidden"
     }
 
     fun reindex(categories: List<Category>) {
@@ -36,6 +37,7 @@ class CategorySuggester {
             categories.forEach { category ->
                 val doc = Document()
                 doc.add(StringField(FIELD_ID, category.id.toString(), Field.Store.YES))
+                doc.add(StringField(FIELD_HIDDEN, category.hidden.toString(), Field.Store.YES))
                 
                 category.name.forEach { (lang, catName) ->
                     doc.add(TextField("$FIELD_NAME_PREFIX$lang", catName.name, Field.Store.NO))
@@ -48,7 +50,7 @@ class CategorySuggester {
         searcherReference.set(IndexSearcher(reader))
     }
 
-    fun search(queryStr: String, language: String, limit: Int = 10): List<SearchResult> {
+    fun search(queryStr: String, language: String, limit: Int = 10, includeHidden: Boolean = false): List<SearchResult> {
         val searcher = searcherReference.get() ?: return emptyList()
         val field = "$FIELD_NAME_PREFIX$language"
         
@@ -60,8 +62,17 @@ class CategorySuggester {
             bqb.add(BoostQuery(PrefixQuery(term), 2.0f), BooleanClause.Occur.SHOULD)
             // Fuzzy match for typos
             bqb.add(FuzzyQuery(term, 1), BooleanClause.Occur.SHOULD)
+
+            val query = if (!includeHidden) {
+                val filtered = BooleanQuery.Builder()
+                filtered.add(bqb.build(), BooleanClause.Occur.MUST)
+                filtered.add(TermQuery(Term(FIELD_HIDDEN, "false")), BooleanClause.Occur.FILTER)
+                filtered.build()
+            } else {
+                bqb.build()
+            }
             
-            val topDocs = searcher.search(bqb.build(), limit)
+            val topDocs = searcher.search(query, limit)
             return topDocs.scoreDocs.map {
                 SearchResult(searcher.doc(it.doc).get(FIELD_ID).toInt(), it.score)
             }

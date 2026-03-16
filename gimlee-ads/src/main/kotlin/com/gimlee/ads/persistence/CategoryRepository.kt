@@ -25,6 +25,9 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
         const val FIELD_CREATED_AT = "crt"
         const val FIELD_UPDATED_AT = "upd"
         const val FIELD_DEPRECATED_FLAG = "dep" // Inside flags
+        const val FIELD_DISPLAY_ORDER = "ord"
+        const val FIELD_HIDDEN_FLAG = "hdn" // Inside flags
+        const val FIELD_ADMIN_OVERRIDE_FLAG = "ao" // Inside flags
     }
 
     private val collection: MongoCollection<Document> by lazy {
@@ -124,6 +127,157 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
         collection.deleteMany(Document())
     }
 
+    fun findById(id: Int): Category? {
+        return collection.find(Filters.eq(FIELD_ID, id))
+            .limit(1)
+            .firstOrNull()
+            ?.let { fromDocument(it) }
+    }
+
+    fun existsById(id: Int): Boolean {
+        return collection.find(Filters.eq(FIELD_ID, id))
+            .projection(Projections.include(FIELD_ID))
+            .limit(1)
+            .first() != null
+    }
+
+    fun insert(
+        id: Int,
+        source: Category.Source,
+        parent: Int?,
+        nameMap: Map<String, Category.CategoryName>,
+        displayOrder: Int,
+        now: Long
+    ): Boolean {
+        val doc = Document()
+            .append(FIELD_ID, id)
+            .append(FIELD_SOURCE, Document("type", source.type.shortName).append("id", source.id))
+            .append(FIELD_PARENT, parent)
+            .append(FIELD_NAME, toNameDocument(nameMap))
+            .append(FIELD_DISPLAY_ORDER, displayOrder)
+            .append(FIELD_FLAGS, Document(FIELD_HIDDEN_FLAG, false).append(FIELD_ADMIN_OVERRIDE_FLAG, false).append(FIELD_DEPRECATED_FLAG, false))
+            .append(FIELD_POPULARITY, 0L)
+            .append(FIELD_CREATED_AT, now)
+            .append(FIELD_UPDATED_AT, now)
+        return try {
+            collection.insertOne(doc)
+            true
+        } catch (e: com.mongodb.MongoWriteException) {
+            false
+        }
+    }
+
+    fun updateNameAndSlug(id: Int, nameMap: Map<String, Category.CategoryName>, now: Long) {
+        val update = Updates.combine(
+            Updates.set(FIELD_NAME, toNameDocument(nameMap)),
+            Updates.set(FIELD_UPDATED_AT, now)
+        )
+        collection.updateOne(Filters.eq(FIELD_ID, id), update)
+    }
+
+    fun updateHidden(id: Int, hidden: Boolean) {
+        collection.updateOne(
+            Filters.eq(FIELD_ID, id),
+            Updates.set("$FIELD_FLAGS.$FIELD_HIDDEN_FLAG", hidden)
+        )
+    }
+
+    fun updateHiddenBulk(ids: List<Int>, hidden: Boolean) {
+        if (ids.isEmpty()) return
+        collection.updateMany(
+            Filters.`in`(FIELD_ID, ids),
+            Updates.set("$FIELD_FLAGS.$FIELD_HIDDEN_FLAG", hidden)
+        )
+    }
+
+    fun updateDisplayOrder(id: Int, displayOrder: Int) {
+        collection.updateOne(
+            Filters.eq(FIELD_ID, id),
+            Updates.set(FIELD_DISPLAY_ORDER, displayOrder)
+        )
+    }
+
+    fun updateParent(id: Int, newParentId: Int?, newDisplayOrder: Int, now: Long) {
+        val update = Updates.combine(
+            Updates.set(FIELD_PARENT, newParentId),
+            Updates.set(FIELD_DISPLAY_ORDER, newDisplayOrder),
+            Updates.set(FIELD_UPDATED_AT, now)
+        )
+        collection.updateOne(Filters.eq(FIELD_ID, id), update)
+    }
+
+    fun deleteById(id: Int): Boolean {
+        val result = collection.deleteOne(Filters.eq(FIELD_ID, id))
+        return result.deletedCount > 0
+    }
+
+    fun getMaxDisplayOrderForParent(parentId: Int?): Int {
+        val doc = collection.find(Filters.eq(FIELD_PARENT, parentId))
+            .sort(Sorts.descending(FIELD_DISPLAY_ORDER))
+            .projection(Projections.include(FIELD_DISPLAY_ORDER))
+            .limit(1)
+            .first()
+        return (doc?.get(FIELD_DISPLAY_ORDER) as? Number)?.toInt() ?: -1
+    }
+
+    fun findSiblings(parentId: Int?): List<Category> {
+        return collection.find(Filters.eq(FIELD_PARENT, parentId))
+            .sort(Sorts.ascending(FIELD_DISPLAY_ORDER))
+            .map { fromDocument(it) }
+            .toList()
+    }
+
+    fun setAdminOverride(id: Int, override: Boolean) {
+        collection.updateOne(
+            Filters.eq(FIELD_ID, id),
+            Updates.set("$FIELD_FLAGS.$FIELD_ADMIN_OVERRIDE_FLAG", override)
+        )
+    }
+
+    fun hasAdminOverride(id: Int): Boolean {
+        val doc = collection.find(Filters.eq(FIELD_ID, id))
+            .projection(Projections.include(FIELD_FLAGS))
+            .limit(1)
+            .first() ?: return false
+        val flags = doc.get(FIELD_FLAGS, Document::class.java) ?: return false
+        return flags.getBoolean(FIELD_ADMIN_OVERRIDE_FLAG, false)
+    }
+
+    fun countChildren(id: Int): Int {
+        return collection.countDocuments(Filters.eq(FIELD_PARENT, id)).toInt()
+    }
+
+    fun findAllByIds(ids: List<Int>): List<Category> {
+        if (ids.isEmpty()) return emptyList()
+        return collection.find(Filters.`in`(FIELD_ID, ids))
+            .map { fromDocument(it) }
+            .toList()
+    }
+
+    fun upsertCategoryBySourceTypeSkipName(
+        sourceType: Category.Source.Type,
+        id: Int,
+        sourceId: String,
+        parent: Int?,
+        now: Long
+    ) {
+        val query = Filters.and(
+            Filters.eq(FIELD_SOURCE_TYPE, sourceType.shortName),
+            Filters.eq(FIELD_SOURCE_ID, sourceId)
+        )
+
+        val updates = Updates.combine(
+            Updates.setOnInsert(FIELD_ID, id),
+            Updates.setOnInsert(FIELD_CREATED_AT, now),
+            Updates.setOnInsert(FIELD_SOURCE, Document("type", sourceType.shortName).append("id", sourceId)),
+            Updates.set(FIELD_PARENT, parent),
+            Updates.set(FIELD_UPDATED_AT, now),
+            Updates.set("$FIELD_FLAGS.$FIELD_DEPRECATED_FLAG", false)
+        )
+
+        collection.updateOne(query, updates, UpdateOptions().upsert(true))
+    }
+
     private fun fromDocument(doc: Document): Category {
         val sourceDoc = doc.get(FIELD_SOURCE, Document::class.java)
         val nameDoc = doc.get(FIELD_NAME, Document::class.java)
@@ -146,6 +300,9 @@ class CategoryRepository(mongoDatabase: MongoDatabase) {
             flags = flagsMap,
             name = nameMap,
             popularity = (doc.get(FIELD_POPULARITY) as? Number)?.toLong() ?: 0L,
+            displayOrder = (doc.get(FIELD_DISPLAY_ORDER) as? Number)?.toInt() ?: 0,
+            hidden = flagsDoc.getBoolean(FIELD_HIDDEN_FLAG, false),
+            adminOverride = flagsDoc.getBoolean(FIELD_ADMIN_OVERRIDE_FLAG, false),
             createdAt = doc.getLong(FIELD_CREATED_AT),
             updatedAt = doc.getLong(FIELD_UPDATED_AT)
         )

@@ -277,6 +277,55 @@ class AdRepository(mongoDatabase: MongoDatabase) {
         collection.deleteMany(Document())
     }
 
+    fun countActiveAdsByCategoryIds(categoryIds: List<Int>): Long {
+        if (categoryIds.isEmpty()) return 0
+        val filter = Filters.and(
+            Filters.eq(AdDocument.FIELD_STATUS, AdStatus.ACTIVE.name),
+            Filters.`in`(AdDocument.FIELD_CATEGORY_IDS, categoryIds)
+        )
+        return collection.countDocuments(filter)
+    }
+
+    fun deactivateAdsByCategoryIds(categoryIds: List<Int>, now: Long): List<AdDocument> {
+        if (categoryIds.isEmpty()) return emptyList()
+        val filter = Filters.and(
+            Filters.eq(AdDocument.FIELD_STATUS, AdStatus.ACTIVE.name),
+            Filters.`in`(AdDocument.FIELD_CATEGORY_IDS, categoryIds)
+        )
+        val affectedAds = collection.find(filter).map { mapToAdDocument(it) }.toList()
+        if (affectedAds.isEmpty()) return emptyList()
+
+        collection.updateMany(
+            filter,
+            Updates.combine(
+                Updates.set(AdDocument.FIELD_STATUS, AdStatus.INACTIVE.name),
+                Updates.set(AdDocument.FIELD_UPDATED_AT, now)
+            )
+        )
+        return affectedAds
+    }
+
+    fun updateCategoryPathBulk(oldPathPrefix: List<Int>, newPathPrefix: List<Int>) {
+        if (oldPathPrefix.isEmpty()) return
+        val leafCategoryId = oldPathPrefix.last()
+        val affectedAds = collection.find(
+            Filters.eq(AdDocument.FIELD_CATEGORY_IDS, leafCategoryId)
+        )
+
+        affectedAds.forEach { doc ->
+            val currentPath = doc.getList(AdDocument.FIELD_CATEGORY_IDS, Integer::class.java)
+                ?.map { it.toInt() } ?: return@forEach
+            val oldPrefixSize = oldPathPrefix.size
+            if (currentPath.size >= oldPrefixSize && currentPath.subList(0, oldPrefixSize) == oldPathPrefix) {
+                val newPath = newPathPrefix + currentPath.subList(oldPrefixSize, currentPath.size)
+                collection.updateOne(
+                    Filters.eq(AdDocument.FIELD_ID, doc.get(AdDocument.FIELD_ID)),
+                    Updates.set(AdDocument.FIELD_CATEGORY_IDS, newPath)
+                )
+            }
+        }
+    }
+
     // --- Manual Mapping Functions ---
 
     private fun mapToDocument(ad: AdDocument): Document {

@@ -23,12 +23,24 @@ class CategoryService(
         .expireAfterWrite(1, TimeUnit.HOURS)
         .build<String, Map<Int, Category>>()
 
-    private fun getAllCategories(): List<Category> {
-        return categoriesCache.get("all") {
-            val flatCategories = categoryRepository.findAllCategoriesBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
-            val tree = buildCategoryTree(flatCategories)
+    private val allCategoriesCache = Caffeine.newBuilder()
+        .expireAfterWrite(1, TimeUnit.HOURS)
+        .build<String, List<Category>>()
+
+    private fun getAllCategoriesUnfiltered(): List<Category> {
+        return allCategoriesCache.get("all") {
+            val gptCategories = categoryRepository.findAllCategoriesBySourceType(Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY)
+            val gmlCategories = categoryRepository.findAllCategoriesBySourceType(Category.Source.Type.GIMLEE)
+            val flatCategories = gptCategories + gmlCategories
             categorySuggester.reindex(flatCategories)
-            tree
+            buildCategoryTree(flatCategories)
+        } ?: emptyList()
+    }
+
+    private fun getAllCategories(): List<Category> {
+        return categoriesCache.get("visible") {
+            val allCategories = getAllCategoriesUnfiltered()
+            filterHiddenCategories(allCategories)
         } ?: emptyList()
     }
 
@@ -198,6 +210,28 @@ class CategoryService(
 
     fun clearCache() {
         categoriesCache.invalidateAll()
+        categoryMapCache.invalidateAll()
+        allCategoriesCache.invalidateAll()
+    }
+
+    fun isHidden(categoryId: Int): Boolean {
+        val allCategories = getAllCategoriesUnfiltered()
+        return findCategoryInTree(allCategories, categoryId)?.hidden ?: false
+    }
+
+    private fun findCategoryInTree(categories: List<Category>, id: Int): Category? {
+        for (category in categories) {
+            if (category.id == id) return category
+            val found = findCategoryInTree(category.children, id)
+            if (found != null) return found
+        }
+        return null
+    }
+
+    private fun filterHiddenCategories(categories: List<Category>): List<Category> {
+        return categories
+            .filter { !it.hidden }
+            .map { it.copy(children = filterHiddenCategories(it.children)) }
     }
 
     private fun getPathIds(id: Int, categoryMap: Map<Int, Category>): List<Int> {

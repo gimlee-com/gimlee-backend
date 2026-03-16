@@ -13,10 +13,8 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import java.text.Normalizer
 import java.time.Instant
 import java.util.*
-import java.util.regex.Pattern
 
 @Service
 class CategorySyncService(
@@ -37,8 +35,6 @@ class CategorySyncService(
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(CategorySyncService::class.java)
-        private val NON_LATIN = Pattern.compile("[^\\w-]")
-        private val WHITESPACE = Pattern.compile("[\\s]")
     }
 
     @EventListener(ApplicationReadyEvent::class)
@@ -128,6 +124,15 @@ class CategorySyncService(
             val id = sourceIdToId[sourceId]!!
             val parentId = baseCategory.parentSourceId?.let { sourceIdToId[it] }
 
+            // Skip name/slug updates for categories with admin overrides
+            val existingCategory = existingMap.containsKey(sourceId)
+            if (existingCategory && categoryRepository.hasAdminOverride(id)) {
+                categoryRepository.upsertCategoryBySourceTypeSkipName(
+                    Category.Source.Type.GOOGLE_PRODUCT_TAXONOMY, id, sourceId, parentId, now
+                )
+                return@forEach
+            }
+
             val nameMap = mutableMapOf<String, Category.CategoryName>()
 
             languageMaps.forEach { (lang, map) ->
@@ -204,14 +209,5 @@ class CategorySyncService(
         return result
     }
 
-    private fun slugify(input: String): String {
-        val withAnd = input.replace("&", " and ")
-        val nowhitespace = WHITESPACE.matcher(withAnd).replaceAll("-")
-        val withSpecialReplaced = nowhitespace.replace("ł", "l").replace("Ł", "L")
-        val normalized = Normalizer.normalize(withSpecialReplaced, Normalizer.Form.NFD)
-        val slug = NON_LATIN.matcher(normalized).replaceAll("")
-        return slug.lowercase(Locale.ENGLISH)
-            .replace(Regex("-+"), "-")
-            .trim('-')
-    }
+    private fun slugify(input: String): String = CategorySlugUtils.slugify(input)
 }

@@ -488,6 +488,10 @@ class AdService(
 
     private fun resolveCategoryPath(categoryId: Int?): List<Int>? {
         if (categoryId == null) return null
+
+        if (categoryService.isHidden(categoryId)) {
+            throw AdOperationException(AdOutcome.CATEGORY_HIDDEN)
+        }
         
         if (!categoryService.isLeaf(categoryId)) {
             throw AdOperationException(AdOutcome.CATEGORY_NOT_LEAF)

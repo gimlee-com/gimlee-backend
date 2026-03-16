@@ -7,8 +7,16 @@ import java.time.Instant
  */
 data class AdStatusChangedEvent(
     val adId: String,
+    val sellerId: String? = null,
     val oldStatus: String?,
     val newStatus: String,
     val categoryIds: List<Int>,
+    val reason: Reason = Reason.USER_ACTION,
     val timestamp: Instant = Instant.now()
-)
+) {
+    enum class Reason {
+        USER_ACTION,
+        STOCK_DEPLETED,
+        CATEGORY_HIDDEN
+    }
+}

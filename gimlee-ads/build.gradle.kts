@@ -34,6 +34,7 @@ dependencies {
     testFixturesApi(libs.shedlock.provider.mongo)
     testFixturesImplementation(project(":gimlee-payments"))
     testFixturesImplementation(project(":gimlee-auth"))
+    testFixturesImplementation(project(":gimlee-reports"))
     testFixturesImplementation(libs.mockk)
 
     testImplementation(libs.spring.boot.starter.test)

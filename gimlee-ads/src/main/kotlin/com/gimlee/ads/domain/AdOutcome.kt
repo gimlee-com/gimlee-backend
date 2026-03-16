@@ -27,7 +27,8 @@ enum class AdOutcome(override val httpCode: Int) : Outcome {
     ADDED_TO_WATCHLIST(200),
     REMOVED_FROM_WATCHLIST(200),
     ACTIVE_AD_INCOMPLETE_UPDATE(400),
-    CONCURRENT_MODIFICATION(409);
+    CONCURRENT_MODIFICATION(409),
+    CATEGORY_HIDDEN(400);
 
     override val code: String get() = "AD_$name"
     override val messageKey: String get() = "status.ad.${name.replace("_", "-").lowercase()}"
