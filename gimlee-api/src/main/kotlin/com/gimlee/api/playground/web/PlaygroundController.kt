@@ -1,6 +1,7 @@
 package com.gimlee.api.playground.web
 
 import com.gimlee.api.playground.ads.data.AdsPopulator
+import com.gimlee.api.playground.ads.data.QaPopulator
 import com.gimlee.api.playground.data.DatabaseCleaner
 import com.gimlee.api.playground.media.data.MediaPopulator
 import com.gimlee.api.playground.users.data.UsersPopulator
@@ -27,6 +28,7 @@ class PlaygroundController(
     @Lazy private val usersPopulator: UsersPopulator,
     @Lazy private val mediaPopulator: MediaPopulator,
     @Lazy private val adsPopulator: AdsPopulator,
+    @Lazy private val qaPopulator: QaPopulator,
     @Lazy private val databaseCleaner: DatabaseCleaner,
     @Lazy private val ycashFaucetService: YcashFaucetService
 ) {
@@ -75,6 +77,18 @@ class PlaygroundController(
     @PostMapping("/playground/createAds")
     fun createAds(): StatusResponseDto {
         adsPopulator.populateAds()
+        return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS)
+    }
+
+    @Operation(summary = "Create Playground Q&A", description = "Populates sample questions and answers on recently created ads. Run 'createAds' first.")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Q&A created successfully. Possible status codes: SUCCESS",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @PostMapping("/playground/createQa")
+    fun createQa(): StatusResponseDto {
+        qaPopulator.populateQa()
         return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS)
     }
 

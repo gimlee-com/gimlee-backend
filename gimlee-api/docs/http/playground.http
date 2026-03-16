@@ -34,6 +34,18 @@ POST {{host}}/api/playground/createAds
 # { "status": "SUCCESS", "code": 0, "message": "Success" }
 
 
+### Create Playground Q&A
+# Populates sample questions and answers on recently created ads.
+# Run 'createAds' first. Creates 2-6 questions per ad with seller answers,
+# community answers, pinned questions, and upvotes.
+# Only available in local, dev, or test profiles.
+# @name createQa
+POST {{host}}/api/playground/createQa
+
+### Expected Response (Success - 200 OK):
+# { "status": "SUCCESS", "code": 0, "message": "Success" }
+
+
 ### Clear Database
 # Empties all collections in the database (preserving indexes).
 # Only available in local, dev, or test profiles.
