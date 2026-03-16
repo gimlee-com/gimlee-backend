@@ -8,6 +8,7 @@ data class QuestionDto(
     val adId: String,
     val authorId: String,
     val authorUsername: String? = null,
+    val authorAvatarUrl: String? = null,
     val text: String,
     val upvoteCount: Int,
     val isPinned: Boolean,

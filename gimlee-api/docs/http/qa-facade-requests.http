@@ -1,3 +1,20 @@
+### List Answered Questions for an Ad (Public)
+# Returns paginated answered Q&A pairs for an ad listing.
+# Pinned questions appear first. Supports sorting by upvotes or recency.
+# If the caller is authenticated, `isUpvotedByMe` is decorated per question.
+# Responses include author usernames and avatar URLs.
+#
+# @name listAnsweredQuestions
+GET {{host}}/api/qa/ads/{{adId}}/questions?page=0&size=10&sort=UPVOTES
+
+###
+
+### List Answered Questions - Sort by Recent
+# @name listAnsweredQuestionsRecent
+GET {{host}}/api/qa/ads/{{adId}}/questions?page=0&size=10&sort=RECENT
+
+###
+
 ### Ask a Question on an Ad
 # Submits a new question on an ad listing.
 # The caller must not be the ad owner (seller cannot ask on own ad).

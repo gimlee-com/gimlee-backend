@@ -15,6 +15,14 @@ class ProfileService(private val profileRepository: ProfileRepository) {
         return profileRepository.findByUserId(ObjectId(userId))?.toDomain()
     }
 
+    fun getAvatarsByUserIds(userIds: List<String>): Map<String, String?> {
+        val objectIds = userIds.mapNotNull { runCatching { ObjectId(it) }.getOrNull() }
+        if (objectIds.isEmpty()) return emptyMap()
+        return profileRepository.findByUserIds(objectIds).associate {
+            it.userId.toHexString() to it.avatarUrl
+        }
+    }
+
     fun updateAvatar(userId: String, avatarUrl: String): UserProfile {
         val updatedAt = Instant.now().toMicros()
         val profile = UserProfile(

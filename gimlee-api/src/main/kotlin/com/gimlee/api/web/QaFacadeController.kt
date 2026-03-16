@@ -9,6 +9,7 @@ import com.gimlee.ads.qa.domain.model.Answer
 import com.gimlee.ads.qa.domain.model.Question
 import com.gimlee.ads.qa.web.dto.request.AskQuestionRequestDto
 import com.gimlee.ads.qa.web.dto.request.EditAnswerRequestDto
+import com.gimlee.ads.qa.web.dto.request.QaSortBy
 import com.gimlee.ads.qa.web.dto.request.SubmitAnswerRequestDto
 import com.gimlee.ads.qa.web.dto.response.AnswerDto
 import com.gimlee.ads.qa.web.dto.response.QuestionDto
@@ -18,6 +19,7 @@ import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.web.dto.StatusResponseDto
 import com.gimlee.purchases.domain.PurchaseService
+import com.gimlee.user.domain.ProfileService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -29,6 +31,7 @@ import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -51,6 +54,7 @@ class QaFacadeController(
     private val adService: AdService,
     private val purchaseService: PurchaseService,
     private val userService: UserService,
+    private val profileService: ProfileService,
     private val messageSource: MessageSource
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -58,6 +62,39 @@ class QaFacadeController(
     private fun handleOutcome(outcome: Outcome, data: Any? = null): ResponseEntity<Any> {
         val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
         return ResponseEntity.status(outcome.httpCode).body(StatusResponseDto.fromOutcome(outcome, message, data))
+    }
+
+    @Operation(
+        summary = "List Answered Questions",
+        description = "Returns paginated answered Q&A pairs for an ad, with pinned items first. Public endpoint — enriched with author usernames and avatars."
+    )
+    @ApiResponse(responseCode = "200", description = "Page of answered questions with their answers")
+    @GetMapping("/ads/{adId}/questions")
+    fun getPublicQuestions(
+        @PathVariable adId: String,
+        @Parameter(description = "Page number (0-indexed)") @RequestParam(defaultValue = "0") page: Int,
+        @Parameter(description = "Page size") @RequestParam(defaultValue = "10") size: Int,
+        @Parameter(description = "Sort order") @RequestParam(defaultValue = "UPVOTES") sort: QaSortBy
+    ): ResponseEntity<Page<QuestionDto>> {
+        val pageable = PageRequest.of(page, size.coerceIn(1, 50))
+
+        val pinnedQuestions = questionService.getPinnedQuestions(adId)
+        val questionsPage = questionService.getPublicQuestions(adId, pageable, sort.name)
+
+        val allQuestionIds = (pinnedQuestions.map { it.id } + questionsPage.content.map { it.id }).distinct()
+        val answersMap = answerService.getAnswersForQuestions(allQuestionIds)
+
+        val currentUserId = HttpServletRequestAuthUtil.getPrincipalOrNull()?.userId?.takeIf { it.isNotBlank() }
+        val upvotedIds = if (currentUserId != null) {
+            upvoteService.getUserUpvotes(currentUserId, allQuestionIds)
+        } else emptySet()
+
+        val allUserIds = collectUserIds(questionsPage.content, answersMap)
+        val usernames = userService.findUsernamesByIds(allUserIds)
+        val avatars = profileService.getAvatarsByUserIds(allUserIds)
+
+        val mappedPage = questionsPage.map { q -> toQuestionDto(q, answersMap, upvotedIds, usernames, avatars) }
+        return ResponseEntity.ok(mappedPage)
     }
 
     @Operation(
@@ -101,7 +138,8 @@ class QaFacadeController(
         if (question == null) return handleOutcome(outcome)
 
         val usernames = userService.findUsernamesByIds(listOf(principal.userId))
-        return handleOutcome(outcome, toQuestionDto(question, emptyMap(), emptySet(), usernames))
+        val avatars = profileService.getAvatarsByUserIds(listOf(principal.userId))
+        return handleOutcome(outcome, toQuestionDto(question, emptyMap(), emptySet(), usernames, avatars))
     }
 
     @Operation(
@@ -152,7 +190,8 @@ class QaFacadeController(
         if (answer == null) return handleOutcome(outcome)
 
         val usernames = userService.findUsernamesByIds(listOf(principal.userId))
-        return handleOutcome(outcome, toAnswerDto(answer, usernames))
+        val avatars = profileService.getAvatarsByUserIds(listOf(principal.userId))
+        return handleOutcome(outcome, toAnswerDto(answer, usernames, avatars))
     }
 
     @Operation(
@@ -176,7 +215,8 @@ class QaFacadeController(
         if (answer == null) return handleOutcome(outcome)
 
         val usernames = userService.findUsernamesByIds(listOf(principal.userId))
-        return handleOutcome(outcome, toAnswerDto(answer, usernames))
+        val avatars = profileService.getAvatarsByUserIds(listOf(principal.userId))
+        return handleOutcome(outcome, toAnswerDto(answer, usernames, avatars))
     }
 
     @Operation(
@@ -308,8 +348,9 @@ class QaFacadeController(
 
         val userIds = questionsPage.content.map { it.authorId }.distinct()
         val usernames = userService.findUsernamesByIds(userIds)
+        val avatars = profileService.getAvatarsByUserIds(userIds)
 
-        val mapped = questionsPage.map { q -> toQuestionDto(q, emptyMap(), emptySet(), usernames) }
+        val mapped = questionsPage.map { q -> toQuestionDto(q, emptyMap(), emptySet(), usernames, avatars) }
         return ResponseEntity.ok(mapped)
     }
 
@@ -327,22 +368,31 @@ class QaFacadeController(
         val questions = questionService.getOwnUnansweredQuestions(adId, principal.userId)
 
         val usernames = userService.findUsernamesByIds(listOf(principal.userId))
-        val dtos = questions.map { q -> toQuestionDto(q, emptyMap(), emptySet(), usernames) }
+        val avatars = profileService.getAvatarsByUserIds(listOf(principal.userId))
+        val dtos = questions.map { q -> toQuestionDto(q, emptyMap(), emptySet(), usernames, avatars) }
         return ResponseEntity.ok(dtos)
+    }
+
+    private fun collectUserIds(questions: List<Question>, answersMap: Map<String, List<Answer>>): List<String> {
+        val questionAuthorIds = questions.map { it.authorId }
+        val answerAuthorIds = answersMap.values.flatten().map { it.authorId }
+        return (questionAuthorIds + answerAuthorIds).distinct()
     }
 
     private fun toQuestionDto(
         question: Question,
         answersMap: Map<String, List<Answer>>,
         upvotedIds: Set<String>,
-        usernames: Map<String, String>
+        usernames: Map<String, String>,
+        avatars: Map<String, String?>
     ): QuestionDto {
-        val answers = answersMap[question.id]?.map { toAnswerDto(it, usernames) } ?: emptyList()
+        val answers = answersMap[question.id]?.map { toAnswerDto(it, usernames, avatars) } ?: emptyList()
         return QuestionDto(
             id = question.id,
             adId = question.adId,
             authorId = question.authorId,
             authorUsername = usernames[question.authorId],
+            authorAvatarUrl = avatars[question.authorId],
             text = question.text,
             upvoteCount = question.upvoteCount,
             isPinned = question.isPinned,
@@ -355,12 +405,13 @@ class QaFacadeController(
         )
     }
 
-    private fun toAnswerDto(answer: Answer, usernames: Map<String, String>): AnswerDto {
+    private fun toAnswerDto(answer: Answer, usernames: Map<String, String>, avatars: Map<String, String?>): AnswerDto {
         return AnswerDto(
             id = answer.id,
             questionId = answer.questionId,
             authorId = answer.authorId,
             authorUsername = usernames[answer.authorId],
+            authorAvatarUrl = avatars[answer.authorId],
             type = answer.type,
             text = answer.text,
             createdAt = answer.createdAt,

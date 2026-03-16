@@ -8,6 +8,7 @@ data class AnswerDto(
     val questionId: String,
     val authorId: String,
     val authorUsername: String? = null,
+    val authorAvatarUrl: String? = null,
     val type: AnswerType,
     val text: String,
     val createdAt: Instant,

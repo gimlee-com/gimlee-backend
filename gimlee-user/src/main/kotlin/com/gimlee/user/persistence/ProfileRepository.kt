@@ -41,4 +41,16 @@ class ProfileRepository(private val mongoDatabase: MongoDatabase) {
             updatedAt = doc.getLong(FIELD_UPDATED_AT)
         )
     }
+
+    fun findByUserIds(userIds: List<ObjectId>): List<UserProfileDocument> {
+        if (userIds.isEmpty()) return emptyList()
+        val filter = Filters.`in`(FIELD_USER_ID, userIds)
+        return collection.find(filter).map { doc ->
+            UserProfileDocument(
+                userId = doc.getObjectId(FIELD_USER_ID),
+                avatarUrl = doc.getString(FIELD_AVATAR_URL),
+                updatedAt = doc.getLong(FIELD_UPDATED_AT)
+            )
+        }.toList()
+    }
 }
