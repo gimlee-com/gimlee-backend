@@ -277,12 +277,15 @@ class AdRepository(mongoDatabase: MongoDatabase) {
         collection.deleteMany(Document())
     }
 
-    fun countActiveAdsByCategoryIds(categoryIds: List<Int>): Long {
+    fun countActiveAdsByCategoryIds(categoryIds: List<Int>, limit: Long = 0): Long {
         if (categoryIds.isEmpty()) return 0
         val filter = Filters.and(
             Filters.eq(AdDocument.FIELD_STATUS, AdStatus.ACTIVE.name),
             Filters.`in`(AdDocument.FIELD_CATEGORY_IDS, categoryIds)
         )
+        if (limit > 0) {
+            return collection.countDocuments(filter, com.mongodb.client.model.CountOptions().limit(limit.toInt()))
+        }
         return collection.countDocuments(filter)
     }
 

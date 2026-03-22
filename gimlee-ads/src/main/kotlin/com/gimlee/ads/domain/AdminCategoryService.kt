@@ -12,6 +12,7 @@ import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.toMicros
 import com.gimlee.events.AdStatusChangedEvent
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -22,7 +23,9 @@ class AdminCategoryService(
     private val adRepository: AdRepository,
     private val categoryService: CategoryService,
     private val categorySuggester: CategorySuggester,
-    private val eventPublisher: ApplicationEventPublisher
+    private val eventPublisher: ApplicationEventPublisher,
+    @Value("\${gimlee.ads.admin.active-ads-count-cap:10000}")
+    private val activeAdsCountCap: Long
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -166,12 +169,16 @@ class AdminCategoryService(
     private fun hideCategory(id: Int, acknowledge: Boolean): AdminResult {
         val descendantIds = collectDescendantIds(id)
         val allAffectedIds = listOf(id) + descendantIds
-        val activeAdCount = adRepository.countActiveAdsByCategoryIds(allAffectedIds)
+
+        val countLimit = activeAdsCountCap + 1
+        val activeAdCount = adRepository.countActiveAdsByCategoryIds(allAffectedIds, countLimit)
+        val capped = activeAdCount >= countLimit
+        val reportedCount = if (capped) activeAdsCountCap else activeAdCount
 
         if (activeAdCount > 0 && !acknowledge) {
             return AdminResult(
                 CategoryOutcome.CATEGORY_HAS_ACTIVE_ADS,
-                mapOf("affectedAds" to activeAdCount)
+                mapOf("affectedAds" to reportedCount, "capped" to capped)
             )
         }
 
