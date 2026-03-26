@@ -1,5 +1,7 @@
 package com.gimlee.auth.web
 
+import com.gimlee.auth.annotation.AllowUserStatus
+import com.gimlee.auth.domain.UserStatus
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -32,6 +34,7 @@ class LoginController(
 
     @Operation(summary = "Logout User", description = "Logs out the current user by clearing the session.")
     @ApiResponse(responseCode = "200", description = "Logout successful")
+    @AllowUserStatus(UserStatus.BANNED)
     @PostMapping(path = ["/auth/logout"])
     fun logout() {
     }

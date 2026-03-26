@@ -32,6 +32,11 @@ gimlee:
     rest:
       jwt:
         key: "iamnotmeantforproduction" # JWT tokens will be signed with this key
+    ban:
+      cache:
+        ttl-seconds: 300          # How long banned user status is cached (seconds)
+        max-size: 10000           # Maximum number of cached ban statuses
+      expiry-check-interval-ms: 60000  # How often to check for expired temporary bans (ms)
 
   # gimlee-user properties
   user:

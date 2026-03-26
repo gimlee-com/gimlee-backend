@@ -17,6 +17,7 @@ data class AdStatusChangedEvent(
     enum class Reason {
         USER_ACTION,
         STOCK_DEPLETED,
-        CATEGORY_HIDDEN
+        CATEGORY_HIDDEN,
+        USER_BANNED
     }
 }

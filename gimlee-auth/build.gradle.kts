@@ -18,6 +18,7 @@ dependencies {
 
     implementation(libs.aspectj.weaver)
     implementation(libs.auth0.java.jwt)
+    implementation(libs.caffeine)
     implementation(libs.commons.lang3)
     implementation(libs.commons.codec)
     implementation(libs.commons.io)

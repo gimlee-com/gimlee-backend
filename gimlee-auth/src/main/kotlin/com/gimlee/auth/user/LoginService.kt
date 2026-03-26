@@ -27,6 +27,8 @@ class LoginService(
         val user = userRepository.findOneByField(FIELD_USERNAME, username, includeCredentials = true)
 
         return if (user == null || user.status == UserStatus.SUSPENDED) {
+            // SUSPENDED users are fully blocked from login (hard ban).
+            // BANNED users can log in (soft ban) — restriction is enforced post-authentication.
             val outcome = AuthOutcome.INCORRECT_CREDENTIALS
             IdentityVerificationResponse(
                 success = false,

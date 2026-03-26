@@ -33,6 +33,7 @@ class SessionInitController(
             * `userProfile`: Adds `userProfile` (UserProfileDto?) with the user's profile details.
             * `preferredCurrency`: Adds `preferredCurrency` (String?) with the user's preferred currency (e.g., USD, PLN).
             * `publicChatId`: Adds `publicChatId` (String?) with the hardcoded public chat ID.
+            * `banStatus`: Adds `banned` (Boolean), `banReason` (String?), `bannedAt` (Long?), and `bannedUntil` (Long?) with ban details if the user is currently banned.
         """
     )
     @ApiResponse(
@@ -44,7 +45,7 @@ class SessionInitController(
     fun init(
         @Parameter(
             description = "List of decorators to include in the response",
-            array = ArraySchema(schema = Schema(allowableValues = ["accessToken", "userProfile", "preferredCurrency", "publicChatId"]))
+            array = ArraySchema(schema = Schema(allowableValues = ["accessToken", "userProfile", "preferredCurrency", "publicChatId", "banStatus"]))
         )
         @RequestParam(required = false) decorators: List<String>?,
         request: HttpServletRequest

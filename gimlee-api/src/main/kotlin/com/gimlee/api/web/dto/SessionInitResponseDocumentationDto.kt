@@ -15,5 +15,17 @@ data class SessionInitResponseDocumentationDto(
     val preferredCurrency: String? = null,
 
     @Schema(description = "The public chat ID (included if 'publicChatId' decorator is requested)", example = "019c2016-1e0a-781d-bc00-c002ac9f350f")
-    val publicChatId: String? = null
+    val publicChatId: String? = null,
+
+    @Schema(description = "Whether the user is currently banned (included if 'banStatus' decorator is requested)")
+    val banned: Boolean? = null,
+
+    @Schema(description = "The reason for the ban (included if 'banStatus' decorator is requested and user is banned)")
+    val banReason: String? = null,
+
+    @Schema(description = "When the ban was issued, epoch micros (included if 'banStatus' decorator is requested and user is banned)")
+    val bannedAt: Long? = null,
+
+    @Schema(description = "When the ban expires, epoch micros, null if permanent (included if 'banStatus' decorator is requested and user is banned)")
+    val bannedUntil: Long? = null
 )

@@ -58,6 +58,11 @@ gimlee:
         /media,
         /playground/**,
         /qa/ads/**
+    ban:
+      cache:
+        ttl-seconds: 300
+        max-size: 10000
+      expiry-check-interval-ms: 60000
 
   # gimlee-user properties
   user:

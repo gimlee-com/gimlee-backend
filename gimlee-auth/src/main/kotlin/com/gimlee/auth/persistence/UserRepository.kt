@@ -9,6 +9,7 @@ import com.gimlee.auth.domain.User.Companion.FIELD_PASSWORD
 import com.gimlee.auth.domain.User.Companion.FIELD_PASSWORD_SALT
 import com.gimlee.auth.domain.User.Companion.FIELD_USERNAME
 import com.gimlee.auth.domain.User.Companion.FIELD_VERIFICATION_CODE
+import com.gimlee.auth.domain.UserStatus
 import org.bson.types.ObjectId
 
 @Component
@@ -69,4 +70,63 @@ class UserRepository(
     }
 
     fun save(user: User) = mongoTemplate.save(user, USERS_COLLECTION_NAME)
+
+    fun updateStatus(userId: ObjectId, status: UserStatus) {
+        val query = Query(Criteria.where(User.FIELD_ID).`is`(userId))
+        val update = org.springframework.data.mongodb.core.query.Update()
+            .set("status", status)
+        mongoTemplate.updateFirst(query, update, USERS_COLLECTION_NAME)
+    }
+
+    fun findAllPaginated(
+        search: String?,
+        status: UserStatus?,
+        role: String?,
+        sortField: String?,
+        sortDirection: String?,
+        pageable: org.springframework.data.domain.Pageable
+    ): org.springframework.data.domain.Page<User> {
+        val criteria = mutableListOf<Criteria>()
+
+        if (!search.isNullOrBlank()) {
+            val regex = ".*${Regex.escape(search)}.*"
+            criteria.add(Criteria().orOperator(
+                Criteria.where(FIELD_USERNAME).regex(regex, "i"),
+                Criteria.where(User.FIELD_EMAIL).regex(regex, "i")
+            ))
+        }
+
+        if (status != null) {
+            criteria.add(Criteria.where("status").`is`(status))
+        }
+
+        val query = if (criteria.isEmpty()) Query() else Query(Criteria().andOperator(criteria))
+        query.fields()
+            .exclude(FIELD_PASSWORD)
+            .exclude(FIELD_PASSWORD_SALT)
+            .exclude(FIELD_VERIFICATION_CODE)
+
+        val total = mongoTemplate.count(query, USERS_COLLECTION_NAME)
+
+        val sort = when (sortField) {
+            "username" -> org.springframework.data.domain.Sort.by(
+                if (sortDirection == "ASC") org.springframework.data.domain.Sort.Direction.ASC
+                else org.springframework.data.domain.Sort.Direction.DESC,
+                FIELD_USERNAME
+            )
+            "lastLogin" -> org.springframework.data.domain.Sort.by(
+                if (sortDirection == "ASC") org.springframework.data.domain.Sort.Direction.ASC
+                else org.springframework.data.domain.Sort.Direction.DESC,
+                "lastLogin"
+            )
+            else -> org.springframework.data.domain.Sort.by(
+                org.springframework.data.domain.Sort.Direction.DESC, User.FIELD_ID
+            )
+        }
+
+        query.with(sort).with(pageable)
+
+        val users = mongoTemplate.find(query, User::class.java, USERS_COLLECTION_NAME)
+        return org.springframework.data.domain.PageImpl(users, pageable, total)
+    }
 }

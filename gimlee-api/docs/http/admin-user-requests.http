@@ -1,0 +1,81 @@
+### ===========================
+### Admin User Management
+### ===========================
+
+### List users (default)
+# Fetches the first page of users with default sorting.
+GET {{host}}/api/admin/users
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List users (paginated)
+# Fetches the second page of users with a page size of 10.
+GET {{host}}/api/admin/users?page=1&size=10
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List users (search by username or email)
+# Searches users whose username or email contains the given query.
+GET {{host}}/api/admin/users?search=john
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List users (filter by status)
+# Fetches only users with BANNED status.
+GET {{host}}/api/admin/users?status=BANNED
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List users (sorted by username ascending)
+# Fetches users sorted by username in ascending order.
+GET {{host}}/api/admin/users?sort=username&direction=ASC
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List users (combined filters)
+# Searches for active users matching "pirate", sorted by last login.
+GET {{host}}/api/admin/users?search=pirate&status=ACTIVE&sort=lastLogin&direction=DESC&page=0&size=20
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### Get user details
+# Fetches detailed information about a specific user including profile, preferences, and statistics.
+GET {{host}}/api/admin/users/{{user_id}}
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### Ban user (permanent)
+# Permanently bans a user with a reason. Deactivates all their active ads.
+POST {{host}}/api/admin/users/{{user_id}}/ban
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "reason": "Repeated policy violations and fraudulent listings"
+}
+
+### Ban user (temporary)
+# Temporarily bans a user until the specified timestamp (epoch micros). Deactivates all their active ads.
+POST {{host}}/api/admin/users/{{user_id}}/ban
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "reason": "Inappropriate content in listings - 7-day ban",
+  "bannedUntil": 1750000000000000
+}
+
+### Unban user
+# Lifts the ban from a user, restoring their account to active status.
+# Note: Their ads are NOT automatically reactivated — the user must do that manually.
+POST {{host}}/api/admin/users/{{user_id}}/unban
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### Get ban history
+# Fetches the full ban history for a user, including both active and past bans.
+GET {{host}}/api/admin/users/{{user_id}}/bans
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}

@@ -308,6 +308,35 @@ class AdRepository(mongoDatabase: MongoDatabase) {
         return affectedAds
     }
 
+    fun deactivateAdsByUserId(userId: ObjectId, now: Long): List<AdDocument> {
+        val filter = Filters.and(
+            Filters.eq(AdDocument.FIELD_STATUS, AdStatus.ACTIVE.name),
+            Filters.eq(AdDocument.FIELD_USER_ID, userId)
+        )
+        val affectedAds = collection.find(filter).map { mapToAdDocument(it) }.toList()
+        if (affectedAds.isEmpty()) return emptyList()
+
+        collection.updateMany(
+            filter,
+            Updates.combine(
+                Updates.set(AdDocument.FIELD_STATUS, AdStatus.INACTIVE.name),
+                Updates.set(AdDocument.FIELD_UPDATED_AT, now)
+            )
+        )
+        return affectedAds
+    }
+
+    fun countByUserId(userId: ObjectId): Long {
+        return collection.countDocuments(Filters.eq(AdDocument.FIELD_USER_ID, userId))
+    }
+
+    fun countByUserIdAndStatus(userId: ObjectId, status: AdStatus): Long {
+        return collection.countDocuments(Filters.and(
+            Filters.eq(AdDocument.FIELD_USER_ID, userId),
+            Filters.eq(AdDocument.FIELD_STATUS, status.name)
+        ))
+    }
+
     fun updateCategoryPathBulk(oldPathPrefix: List<Int>, newPathPrefix: List<Int>) {
         if (oldPathPrefix.isEmpty()) return
         val leafCategoryId = oldPathPrefix.last()

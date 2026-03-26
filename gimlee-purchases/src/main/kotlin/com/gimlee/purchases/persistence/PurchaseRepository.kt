@@ -98,6 +98,28 @@ class PurchaseRepository(
         return collection.countDocuments(filter) > 0
     }
 
+    fun countByBuyerId(buyerId: ObjectId): Long {
+        return collection.countDocuments(Filters.eq(FIELD_BUYER_ID, buyerId))
+    }
+
+    fun countBySellerId(sellerId: ObjectId): Long {
+        return collection.countDocuments(Filters.eq(FIELD_SELLER_ID, sellerId))
+    }
+
+    fun countByBuyerIdAndStatus(buyerId: ObjectId, status: PurchaseStatus): Long {
+        return collection.countDocuments(Filters.and(
+            Filters.eq(FIELD_BUYER_ID, buyerId),
+            Filters.eq(FIELD_STATUS, status.id)
+        ))
+    }
+
+    fun countBySellerIdAndStatus(sellerId: ObjectId, status: PurchaseStatus): Long {
+        return collection.countDocuments(Filters.and(
+            Filters.eq(FIELD_SELLER_ID, sellerId),
+            Filters.eq(FIELD_STATUS, status.id)
+        ))
+    }
+
     private fun Purchase.toDocument(): PurchaseDocument =
         PurchaseDocument(
             id = id,
