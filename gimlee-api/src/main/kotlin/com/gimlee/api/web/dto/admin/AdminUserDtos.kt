@@ -49,10 +49,10 @@ data class AdminUserStatsDto(
 data class AdminBanDto(
     @Schema(description = "Ban record ID") val id: String,
     @Schema(description = "Ban reason (free text)") val reason: String,
-    @Schema(description = "Admin who issued the ban") val bannedByUsername: String?,
+    @Schema(description = "Username of the admin who issued the ban") val bannedByUsername: String?,
     @Schema(description = "When the ban was issued (epoch micros)") val bannedAt: Long,
     @Schema(description = "When the ban expires (epoch micros), null if permanent") val bannedUntil: Long?,
-    @Schema(description = "Admin who lifted the ban") val unbannedByUsername: String?,
+    @Schema(description = "Username of the admin who lifted the ban") val unbannedByUsername: String?,
     @Schema(description = "When the ban was lifted (epoch micros)") val unbannedAt: Long?,
     @Schema(description = "Whether this ban is currently active") val active: Boolean
 )

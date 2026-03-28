@@ -54,7 +54,7 @@ class AdminUserController(
         @Parameter(description = "Sort field (username, lastLogin)") @RequestParam(required = false) sort: String?,
         @Parameter(description = "Sort direction (ASC, DESC)") @RequestParam(required = false, defaultValue = "DESC") direction: String?,
         @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") page: Int,
-        @Parameter(description = "Page size") @RequestParam(defaultValue = "30") size: Int
+        @Parameter(description = "Page size (default: 30, no enforced maximum)") @RequestParam(defaultValue = "30") size: Int
     ): Page<AdminUserListItemDto> {
         return adminUserService.listUsers(search, status, sort, direction, page, size)
     }

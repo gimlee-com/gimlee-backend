@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size
 data class BanUserRequestDto(
     @field:NotBlank
     @field:Size(min = 5, max = 2000)
-    @Schema(description = "Reason for banning the user (free text)", example = "Repeated policy violations")
+    @Schema(description = "Reason for banning the user (5–2000 characters)", example = "Repeated policy violations")
     val reason: String,
 
     @Schema(description = "When the ban expires (epoch micros). Null means permanent ban.", example = "null")
