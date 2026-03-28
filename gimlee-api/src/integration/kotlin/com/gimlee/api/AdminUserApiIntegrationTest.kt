@@ -1,20 +1,27 @@
 package com.gimlee.api
 
+import com.gimlee.auth.cache.BannedUserCache
+import com.gimlee.auth.domain.BanExpiryJob
 import com.gimlee.auth.domain.BanService
 import com.gimlee.auth.domain.User
 import com.gimlee.auth.domain.UserStatus
 import com.gimlee.auth.model.Role
+import com.gimlee.auth.persistence.UserBanRepository
 import com.gimlee.auth.persistence.UserRepository
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import org.bson.types.ObjectId
 
 class AdminUserApiIntegrationTest(
     private val userRepository: UserRepository,
     private val userRoleRepository: UserRoleRepository,
-    private val banService: BanService
+    private val banService: BanService,
+    private val bannedUserCache: BannedUserCache,
+    private val banExpiryJob: BanExpiryJob,
+    private val userBanRepository: UserBanRepository
 ) : BaseIntegrationTest({
 
     val adminId = ObjectId.get()
@@ -172,6 +179,14 @@ class AdminUserApiIntegrationTest(
                 val user = userRepository.findOneByField(User.FIELD_ID, user1Id)
                 user?.status shouldBe UserStatus.BANNED
             }
+
+            Then("an active ban record should exist") {
+                val activeBan = banService.getActiveBan(user1Id.toHexString())
+                activeBan shouldNotBe null
+                activeBan!!.reason shouldBe "Repeated policy violations and fraudulent listings"
+                activeBan.active shouldBe true
+                activeBan.bannedUntil shouldBe null
+            }
         }
 
         When("admin bans the same user again") {
@@ -214,6 +229,11 @@ class AdminUserApiIntegrationTest(
                 val user = userRepository.findOneByField(User.FIELD_ID, user1Id)
                 user?.status shouldBe UserStatus.ACTIVE
             }
+
+            Then("the ban record should be deactivated") {
+                val activeBan = banService.getActiveBan(user1Id.toHexString())
+                activeBan shouldBe null
+            }
         }
 
         When("admin tries to unban a non-banned user") {
@@ -232,13 +252,13 @@ class AdminUserApiIntegrationTest(
 
     Given("ban with temporary duration") {
 
-        When("admin bans user with bannedUntil") {
-            val futureTimestamp = (System.currentTimeMillis() + 3600_000) * 1000
+        When("admin bans user with a short-lived bannedUntil") {
+            val bannedUntilMicros = (System.currentTimeMillis() + 100) * 1000 // 100ms from now
             val response = restClient.post(
                 "/admin/users/${user3Id.toHexString()}/ban",
                 mapOf(
-                    "reason" to "Temporary ban for 1 hour",
-                    "bannedUntil" to futureTimestamp
+                    "reason" to "Temporary ban - short duration",
+                    "bannedUntil" to bannedUntilMicros
                 ),
                 adminHeaders()
             )
@@ -247,21 +267,54 @@ class AdminUserApiIntegrationTest(
                 response.statusCode shouldBe 200
                 response.body shouldContain "ADMIN_USER_BANNED_SUCCESSFULLY"
             }
-        }
 
-        When("admin views ban history for the temp-banned user") {
-            val response = restClient.get("/admin/users/${user3Id.toHexString()}/bans", adminHeaders())
-
-            Then("it should return ban record with bannedUntil") {
-                response.statusCode shouldBe 200
-                response.body shouldContain "Temporary ban for 1 hour"
-                response.body shouldContain "bannedUntil"
+            Then("user status should be BANNED in database") {
+                val user = userRepository.findOneByField(User.FIELD_ID, user3Id)
+                user?.status shouldBe UserStatus.BANNED
             }
 
-            // Clean up
-            val user = userRepository.findOneByField(User.FIELD_ID, user3Id)
-            if (user?.status == UserStatus.BANNED) {
-                banService.unbanUser(user3Id.toHexString(), adminId.toHexString())
+            Then("ban record should have the bannedUntil timestamp") {
+                val activeBan = userBanRepository.findActiveByUserId(user3Id.toHexString())
+                activeBan shouldNotBe null
+                activeBan!!.bannedUntil shouldBe bannedUntilMicros
+                activeBan.active shouldBe true
+            }
+
+            Then("the cache should treat the user as banned") {
+                bannedUserCache.invalidate(user3Id.toHexString())
+                // Cache loader checks bannedUntil, may already be expired after 100ms
+                // but the DB status is definitely BANNED at this point
+                val user = userRepository.findOneByField(User.FIELD_ID, user3Id)
+                user?.status shouldBe UserStatus.BANNED
+            }
+        }
+
+        When("the ban expires and the expiry job runs") {
+            Thread.sleep(200) // ensure the 100ms bannedUntil has passed
+            banExpiryJob.processExpiredBans()
+
+            Then("user status should be restored to ACTIVE") {
+                val user = userRepository.findOneByField(User.FIELD_ID, user3Id)
+                user?.status shouldBe UserStatus.ACTIVE
+            }
+
+            Then("the ban record should be deactivated") {
+                val activeBan = userBanRepository.findActiveByUserId(user3Id.toHexString())
+                activeBan shouldBe null
+            }
+
+            Then("the cache should reflect the unban") {
+                bannedUserCache.isBanned(user3Id.toHexString()) shouldBe false
+            }
+        }
+
+        When("admin views ban history after auto-expiry") {
+            val response = restClient.get("/admin/users/${user3Id.toHexString()}/bans", adminHeaders())
+
+            Then("it should contain the expired ban with unbannedBy SYSTEM") {
+                response.statusCode shouldBe 200
+                response.body shouldContain "Temporary ban - short duration"
+                response.body shouldContain "bannedUntil"
             }
         }
     }

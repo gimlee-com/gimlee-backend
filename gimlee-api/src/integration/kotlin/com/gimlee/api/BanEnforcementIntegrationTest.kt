@@ -1,6 +1,7 @@
 package com.gimlee.api
 
 import com.gimlee.auth.cache.BannedUserCache
+import com.gimlee.auth.domain.BanExpiryJob
 import com.gimlee.auth.domain.BanService
 import com.gimlee.auth.domain.User
 import com.gimlee.auth.domain.UserStatus
@@ -20,7 +21,8 @@ class BanEnforcementIntegrationTest(
     private val userRoleRepository: UserRoleRepository,
     private val banService: BanService,
     private val bannedUserCache: BannedUserCache,
-    private val userBanRepository: UserBanRepository
+    private val userBanRepository: UserBanRepository,
+    private val banExpiryJob: BanExpiryJob
 ) : BaseIntegrationTest({
 
     val adminUserId = ObjectId.get()
@@ -63,6 +65,19 @@ class BanEnforcementIntegrationTest(
 
     Given("a banned user attempting mutating requests") {
         banService.banUser(bannedUserId.toHexString(), "Test policy violation", null, adminUserId.toHexString())
+
+        When("verifying the ban was applied") {
+            Then("user status should be BANNED in database") {
+                val user = userRepository.findOneByField(User.FIELD_ID, bannedUserId)
+                user?.status shouldBe UserStatus.BANNED
+            }
+
+            Then("an active ban record should exist") {
+                val activeBan = userBanRepository.findActiveByUserId(bannedUserId.toHexString())
+                activeBan shouldNotBe null
+                activeBan!!.active shouldBe true
+            }
+        }
 
         When("the banned user attempts a POST request") {
             val response = restClient.post(
@@ -147,6 +162,11 @@ class BanEnforcementIntegrationTest(
         When("admin bans a user") {
             banService.banUser(bannedUserId.toHexString(), "Cache test", null, adminUserId.toHexString())
 
+            Then("user status should be BANNED in database") {
+                val user = userRepository.findOneByField(User.FIELD_ID, bannedUserId)
+                user?.status shouldBe UserStatus.BANNED
+            }
+
             Then("the cache should immediately reflect the ban") {
                 bannedUserCache.isBanned(bannedUserId.toHexString()) shouldBe true
             }
@@ -155,25 +175,62 @@ class BanEnforcementIntegrationTest(
         When("admin unbans the user") {
             banService.unbanUser(bannedUserId.toHexString(), adminUserId.toHexString())
 
+            Then("user status should be ACTIVE in database") {
+                val user = userRepository.findOneByField(User.FIELD_ID, bannedUserId)
+                user?.status shouldBe UserStatus.ACTIVE
+            }
+
             Then("the cache should immediately reflect the unban") {
                 bannedUserCache.isBanned(bannedUserId.toHexString()) shouldBe false
             }
         }
     }
 
-    Given("temporary ban with expired bannedUntil is treated as not banned") {
-        val pastMicros = (System.currentTimeMillis() - 60_000) * 1000 // 1 minute ago
+    Given("temporary ban expires and user is automatically unbanned") {
+        val bannedUntilMicros = (System.currentTimeMillis() + 100) * 1000 // 100ms from now
 
-        When("admin bans user with a bannedUntil timestamp in the past") {
-            banService.banUser(bannedUserId.toHexString(), "Short temp ban", pastMicros, adminUserId.toHexString())
+        When("admin bans user with a short-lived bannedUntil") {
+            banService.banUser(bannedUserId.toHexString(), "Short temp ban", bannedUntilMicros, adminUserId.toHexString())
 
-            Then("the cache should treat the user as not banned (expired)") {
-                bannedUserCache.invalidate(bannedUserId.toHexString())
+            Then("user should be BANNED in database") {
+                val user = userRepository.findOneByField(User.FIELD_ID, bannedUserId)
+                user?.status shouldBe UserStatus.BANNED
+            }
+
+            Then("mutating requests should be blocked") {
+                val response = restClient.post(
+                    "/sales/ads",
+                    mapOf("title" to "Should be blocked"),
+                    bannedUserHeaders()
+                )
+                response.statusCode shouldBe 403
+                response.body shouldContain "USER_BANNED"
+            }
+        }
+
+        When("the ban expires and the expiry job processes it") {
+            Thread.sleep(200) // ensure the 100ms bannedUntil has passed
+            banExpiryJob.processExpiredBans()
+
+            Then("user status should be restored to ACTIVE") {
+                val user = userRepository.findOneByField(User.FIELD_ID, bannedUserId)
+                user?.status shouldBe UserStatus.ACTIVE
+            }
+
+            Then("the ban record should be deactivated") {
+                val activeBan = userBanRepository.findActiveByUserId(bannedUserId.toHexString())
+                activeBan shouldBe null
+            }
+
+            Then("the cache should reflect the unban") {
                 bannedUserCache.isBanned(bannedUserId.toHexString()) shouldBe false
             }
 
-            // Clean up
-            banService.unbanUser(bannedUserId.toHexString(), adminUserId.toHexString())
+            Then("mutating requests should be allowed again") {
+                val response = restClient.post("/auth/logout", null, bannedUserHeaders())
+                val body = response.body ?: ""
+                body shouldNotContain "USER_BANNED"
+            }
         }
     }
 
