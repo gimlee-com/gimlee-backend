@@ -4,6 +4,8 @@ import java.time.Instant
 
 data class UserBannedEvent(
     val userId: String,
+    val username: String,
+    val email: String,
     val reason: String,
     val bannedBy: String,
     val bannedUntil: Long?,

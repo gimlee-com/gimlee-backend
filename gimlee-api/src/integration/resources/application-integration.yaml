@@ -9,7 +9,7 @@ spring:
   main:
     allow-bean-definition-overriding: true
   messages:
-    basename: i18n/messages,i18n/common/messages,i18n/auth/messages,i18n/purchases/messages,i18n/ads/messages,i18n/user/messages,i18n/payments/messages,i18n/location/messages,i18n/media/messages,i18n/reports/messages
+    basename: i18n/messages,i18n/common/messages,i18n/auth/messages,i18n/purchases/messages,i18n/ads/messages,i18n/user/messages,i18n/payments/messages,i18n/location/messages,i18n/media/messages,i18n/reports/messages,i18n/notifications/messages
     encoding: UTF-8
   data:
     mongodb:

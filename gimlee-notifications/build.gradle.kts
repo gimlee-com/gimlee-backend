@@ -1,6 +1,7 @@
 dependencies {
     // Module dependencies
     implementation(project(":gimlee-common"))
+    implementation(project(":gimlee-events"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter.mail)
@@ -11,6 +12,7 @@ dependencies {
 
     // Dependencies
     implementation(libs.spring.boot.starter.web)
+    implementation(libs.mustache.java)
 }
 
 sourceSets {

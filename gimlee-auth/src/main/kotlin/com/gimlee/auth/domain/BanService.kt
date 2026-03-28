@@ -64,6 +64,8 @@ class BanService(
 
         eventPublisher.publishEvent(UserBannedEvent(
             userId = userId,
+            username = user.username ?: "",
+            email = user.email ?: "",
             reason = reason,
             bannedBy = adminUserId,
             bannedUntil = bannedUntil
