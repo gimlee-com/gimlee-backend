@@ -10,10 +10,14 @@ import com.gimlee.auth.persistence.UserBanRepository
 import com.gimlee.auth.persistence.UserRepository
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
+import io.kotest.assertions.nondeterministic.eventually
+import io.kotest.assertions.nondeterministic.eventuallyConfig
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import org.bson.types.ObjectId
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class AdminUserApiIntegrationTest(
     private val userRepository: UserRepository,
@@ -290,10 +294,8 @@ class AdminUserApiIntegrationTest(
         }
 
         When("the ban expires and the expiry job runs") {
-            Thread.sleep(200) // ensure the 100ms bannedUntil has passed
-            banExpiryJob.processExpiredBans()
-
-            Then("user status should be restored to ACTIVE") {
+            eventually(eventuallyConfig { duration = 2.seconds; interval = 50.milliseconds }) {
+                banExpiryJob.processExpiredBans()
                 val user = userRepository.findOneByField(User.FIELD_ID, user3Id)
                 user?.status shouldBe UserStatus.ACTIVE
             }
