@@ -6,6 +6,7 @@ import com.gimlee.api.web.dto.admin.AdminUserListItemDto
 import com.gimlee.api.web.dto.admin.BanUserRequestDto
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.domain.UserStatus
+import com.gimlee.auth.model.Role
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.web.dto.StatusResponseDto
@@ -51,12 +52,13 @@ class AdminUserController(
     fun listUsers(
         @Parameter(description = "Search by username or email") @RequestParam(required = false) search: String?,
         @Parameter(description = "Filter by user status") @RequestParam(required = false) status: UserStatus?,
+        @Parameter(description = "Filter by role") @RequestParam(required = false) role: Role?,
         @Parameter(description = "Sort field (username, lastLogin)") @RequestParam(required = false) sort: String?,
         @Parameter(description = "Sort direction (ASC, DESC)") @RequestParam(required = false, defaultValue = "DESC") direction: String?,
         @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") page: Int,
         @Parameter(description = "Page size (default: 30, no enforced maximum)") @RequestParam(defaultValue = "30") size: Int
     ): Page<AdminUserListItemDto> {
-        return adminUserService.listUsers(search, status, sort, direction, page, size)
+        return adminUserService.listUsers(search, status, role, sort, direction, page, size)
     }
 
     @Operation(

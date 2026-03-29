@@ -9,7 +9,9 @@ import com.gimlee.auth.domain.User.Companion.FIELD_PASSWORD
 import com.gimlee.auth.domain.User.Companion.FIELD_PASSWORD_SALT
 import com.gimlee.auth.domain.User.Companion.FIELD_USERNAME
 import com.gimlee.auth.domain.User.Companion.FIELD_VERIFICATION_CODE
+import com.gimlee.auth.domain.UserRole
 import com.gimlee.auth.domain.UserStatus
+import com.gimlee.auth.persistence.UserRoleRepository.Companion.USER_ROLES_COLLECTION_NAME
 import org.bson.types.ObjectId
 
 @Component
@@ -98,6 +100,13 @@ class UserRepository(
 
         if (status != null) {
             criteria.add(Criteria.where("status").`is`(status))
+        }
+
+        if (role != null) {
+            val roleQuery = Query(Criteria.where(UserRole.FIELD_ROLE).`is`(role))
+            val userIds = mongoTemplate.find(roleQuery, UserRole::class.java, USER_ROLES_COLLECTION_NAME)
+                .map { it.userId }
+            criteria.add(Criteria.where(User.FIELD_ID).`in`(userIds))
         }
 
         val query = if (criteria.isEmpty()) Query() else Query(Criteria().andOperator(criteria))

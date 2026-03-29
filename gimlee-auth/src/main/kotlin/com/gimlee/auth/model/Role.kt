@@ -1,5 +1,5 @@
 package com.gimlee.auth.model
 
 enum class Role {
-    USER, ADMIN, UNVERIFIED, PUBLISHER, PIRATE, YCASH
+    USER, ADMIN, SUPPORT, UNVERIFIED, PUBLISHER, PIRATE, YCASH
 }

@@ -11,6 +11,7 @@ import com.gimlee.auth.domain.BanService
 import com.gimlee.auth.domain.User
 import com.gimlee.auth.domain.UserBan
 import com.gimlee.auth.persistence.UserRepository
+import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.auth.service.UserService
 import com.gimlee.common.domain.model.CommonOutcome
@@ -42,13 +43,14 @@ class AdminUserService(
     fun listUsers(
         search: String?,
         status: com.gimlee.auth.domain.UserStatus?,
+        role: Role?,
         sort: String?,
         direction: String?,
         page: Int,
         size: Int
     ): Page<AdminUserListItemDto> {
         val pageable = PageRequest.of(page, size)
-        val usersPage = userRepository.findAllPaginated(search, status, null, sort, direction, pageable)
+        val usersPage = userRepository.findAllPaginated(search, status, role?.name, sort, direction, pageable)
 
         val userIds = usersPage.content.mapNotNull { it.id?.toHexString() }
         val avatars = profileService.getAvatarsByUserIds(userIds)

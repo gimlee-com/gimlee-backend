@@ -22,6 +22,16 @@ class AuthorizingAspect {
     @Resource
     private val request: HttpServletRequest? = null
 
+    private val roleHierarchy: Map<Role, Int> = mapOf(
+        Role.ADMIN to 100,
+        Role.SUPPORT to 80,
+        Role.PUBLISHER to 60,
+        Role.PIRATE to 50,
+        Role.YCASH to 50,
+        Role.USER to 40,
+        Role.UNVERIFIED to 10
+    )
+
     @Pointcut("@annotation(priv)")
     fun annotatedWithPrivileged(priv: Privileged) {
         // noop
@@ -31,18 +41,19 @@ class AuthorizingAspect {
     fun authorize(priv: Privileged, joinPoint: JoinPoint) {
 
         val userRoles = HttpServletRequestAuthUtil.getPrincipal().roles
-        val requiredRole = Role.valueOf(priv.role)
 
         if (priv.role.isNotEmpty()) {
-            userRoles.stream().filter { userRole -> userRole == requiredRole }
-                .findAny()
-                .orElseThrow {
-                    val resource = "${request?.method} ${request?.requestURI} (${joinPoint.signature.toShortString()})"
-                    AuthorizationException(
-                        "Insufficient privileges. The user doesn't have the required role: ${priv.role}.",
-                        resource
-                    )
-                }
+            val requiredRole = Role.valueOf(priv.role)
+            val requiredLevel = roleHierarchy[requiredRole] ?: 0
+            val userMaxLevel = userRoles.maxOfOrNull { roleHierarchy[it] ?: 0 } ?: 0
+
+            if (userMaxLevel < requiredLevel) {
+                val resource = "${request?.method} ${request?.requestURI} (${joinPoint.signature.toShortString()})"
+                throw AuthorizationException(
+                    "Insufficient privileges. The user doesn't have the required role: ${priv.role}.",
+                    resource
+                )
+            }
         }
     }
 }
