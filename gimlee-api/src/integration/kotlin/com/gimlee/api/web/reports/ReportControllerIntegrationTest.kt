@@ -14,7 +14,7 @@ import com.gimlee.common.toMicros
 import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
 import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
-import com.gimlee.reports.persistence.ReportRepository
+import com.gimlee.support.report.persistence.ReportRepository
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.bson.types.ObjectId

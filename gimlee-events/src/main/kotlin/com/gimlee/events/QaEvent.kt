@@ -28,11 +28,4 @@ data class QuestionUpvoteMilestoneEvent(
     val timestamp: Instant = Instant.now()
 )
 
-data class ReportSubmittedEvent(
-    val targetId: String,
-    val targetType: String,
-    val contextId: String?,
-    val reporterId: String,
-    val reason: String,
-    val timestamp: Instant = Instant.now()
-)
+

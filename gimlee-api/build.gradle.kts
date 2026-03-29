@@ -13,7 +13,7 @@ dependencies {
     implementation(project(":gimlee-media-store"))
     implementation(project(":gimlee-payments"))
     implementation(project(":gimlee-ads"))
-    implementation(project(":gimlee-reports"))
+    implementation(project(":gimlee-support"))
     implementation(project(":gimlee-location"))
     implementation(project(":gimlee-purchases"))
     implementation(project(":gimlee-user"))

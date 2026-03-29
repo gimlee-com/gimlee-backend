@@ -4,7 +4,7 @@ import com.gimlee.ads.qa.persistence.AnswerRepository
 import com.gimlee.ads.qa.persistence.QuestionRepository
 import com.gimlee.ads.qa.persistence.QuestionUpvoteRepository
 import com.gimlee.events.AdStatusChangedEvent
-import com.gimlee.reports.persistence.ReportRepository
+import com.gimlee.support.report.persistence.ReportRepository
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener

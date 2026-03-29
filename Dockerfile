@@ -23,7 +23,7 @@ COPY gimlee-purchases gimlee-purchases
 COPY gimlee-user gimlee-user
 COPY gimlee-chat gimlee-chat
 COPY gimlee-analytics gimlee-analytics
-COPY gimlee-reports gimlee-reports
+COPY gimlee-support gimlee-support
 COPY gimlee-api gimlee-api
 
 # Build the application
