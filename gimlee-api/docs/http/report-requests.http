@@ -1,3 +1,7 @@
+### ===========================
+### Content Reporting
+### ===========================
+
 ### Submit a Report — Report a Question
 # Reports a question for violating platform guidelines.
 # One report per user per target; duplicate reports return 409 ALREADY_REPORTED.
@@ -10,7 +14,8 @@ Authorization: Bearer {{auth_token}}
 {
   "targetType": "QUESTION",
   "targetId": "{{questionId}}",
-  "reason": "This question contains spam and irrelevant promotional links."
+  "reason": "SPAM",
+  "description": "This question contains spam and irrelevant promotional links."
 }
 
 ###
@@ -27,5 +32,93 @@ Authorization: Bearer {{auth_token}}
 {
   "targetType": "ANSWER",
   "targetId": "{{answerId}}",
-  "reason": "This answer is misleading and contains false claims about the product."
+  "reason": "INAPPROPRIATE_CONTENT",
+  "description": "This answer is misleading and contains false claims about the product."
 }
+
+###
+
+### Submit a Report — Report an Ad
+# Reports an ad for violating platform guidelines.
+#
+# @name reportAd
+POST {{host}}/api/reports
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "targetType": "AD",
+  "targetId": "{{adId}}",
+  "reason": "FRAUD",
+  "description": "This listing appears to be a scam. The seller is requesting payment outside the platform."
+}
+
+###
+
+### Submit a Report — Report a Message
+# Reports a chat message for violating platform guidelines.
+#
+# @name reportMessage
+POST {{host}}/api/reports
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "targetType": "MESSAGE",
+  "targetId": "{{messageId}}",
+  "reason": "HARASSMENT",
+  "description": "This message contains threatening language directed at me."
+}
+
+###
+
+### Submit a Report — Report a User
+# Reports a user for violating platform guidelines.
+#
+# @name reportUser
+POST {{host}}/api/reports
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "targetType": "USER",
+  "targetId": "{{user_id}}",
+  "reason": "FRAUD",
+  "description": "This user has been creating multiple fake listings and scamming buyers."
+}
+
+###
+
+### Submit a Report — Minimal (no description)
+# Reports content with just the required fields.
+#
+# @name reportMinimal
+POST {{host}}/api/reports
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "targetType": "QUESTION",
+  "targetId": "{{questionId}}",
+  "reason": "OTHER"
+}
+
+###
+
+### My Reports (default)
+# Fetches the first page of reports submitted by the authenticated user.
+#
+# @name myReports
+GET {{host}}/api/reports/mine
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
+
+###
+
+### My Reports (paginated)
+# Fetches the second page of user's reports with a page size of 5.
+#
+# @name myReportsPaginated
+GET {{host}}/api/reports/mine?page=1&size=5
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}

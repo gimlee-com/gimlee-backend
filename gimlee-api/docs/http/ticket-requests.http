@@ -1,0 +1,151 @@
+### ===========================
+### Support Tickets (User-facing)
+### ===========================
+
+### Create ticket — Account Issue
+# Creates a new support ticket for an account issue.
+#
+# @name createTicketAccountIssue
+POST {{host}}/api/tickets
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
+
+{
+  "subject": "Cannot update my email address",
+  "category": "ACCOUNT_ISSUE",
+  "body": "I've been trying to update my email address in settings, but I keep getting an error message. The new email is valid and I've tried multiple browsers."
+}
+
+###
+
+### Create ticket — Payment Problem
+# Creates a new support ticket for a payment problem.
+#
+# @name createTicketPaymentProblem
+POST {{host}}/api/tickets
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
+
+{
+  "subject": "Payment not confirmed after 2 hours",
+  "category": "PAYMENT_PROBLEM",
+  "body": "I made a payment for order #12345 over 2 hours ago but the status still shows as pending. The blockchain transaction has been confirmed multiple times."
+}
+
+###
+
+### Create ticket — Order Dispute
+# Creates a new support ticket for an order dispute.
+#
+# @name createTicketOrderDispute
+POST {{host}}/api/tickets
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
+
+{
+  "subject": "Item received does not match description",
+  "category": "ORDER_DISPUTE",
+  "body": "The item I received from seller @user123 does not match the ad description at all. The ad showed a brand new item but I received a used one with visible scratches."
+}
+
+###
+
+### Create ticket — Technical Bug
+# Creates a new support ticket for a technical bug.
+#
+# @name createTicketTechnicalBug
+POST {{host}}/api/tickets
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
+
+{
+  "subject": "App crashes when uploading photos",
+  "category": "TECHNICAL_BUG",
+  "body": "Every time I try to upload more than 3 photos to my ad listing, the app crashes and I lose all my progress. This happens consistently on both Chrome and Firefox."
+}
+
+###
+
+### Create ticket — Feature Request
+# Creates a new support ticket for a feature request.
+#
+# @name createTicketFeatureRequest
+POST {{host}}/api/tickets
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
+
+{
+  "subject": "Add Monero (XMR) support",
+  "category": "FEATURE_REQUEST",
+  "body": "It would be great if Gimlee supported Monero (XMR) as a payment method in addition to PirateChain. Many users in the privacy community use XMR."
+}
+
+###
+
+### Create ticket — Safety Concern
+# Creates a new support ticket for a safety concern.
+#
+# @name createTicketSafetyConcern
+POST {{host}}/api/tickets
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
+
+{
+  "subject": "Suspicious user activity",
+  "category": "SAFETY_CONCERN",
+  "body": "A user has been sending me threatening messages and I'm concerned about my safety. I've already reported the messages but wanted to flag this directly."
+}
+
+###
+
+### My tickets (default)
+# Fetches the first page of tickets created by the authenticated user.
+#
+# @name myTickets
+GET {{host}}/api/tickets/mine
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
+
+###
+
+### My tickets (paginated)
+# Fetches the second page of user's tickets with a page size of 5.
+#
+# @name myTicketsPaginated
+GET {{host}}/api/tickets/mine?page=1&size=5
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Get ticket detail
+# Fetches full details and conversation for a specific ticket.
+# Returns 403 if the ticket doesn't belong to the authenticated user.
+#
+# @name getTicketDetail
+GET {{host}}/api/tickets/{{ticket_id}}
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Reply to ticket
+# Adds a reply to the user's own ticket.
+# Automatically transitions AWAITING_USER tickets back to IN_PROGRESS.
+# Returns 400 if the ticket is CLOSED.
+#
+# @name replyToTicket
+POST {{host}}/api/tickets/{{ticket_id}}/reply
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{auth_token}}
+
+{
+  "body": "Thank you for looking into this. Here's the additional information you requested:\n\n- Transaction ID: abc123def456\n- Date: 2025-01-15\n- Amount: 0.5 ARRR"
+}

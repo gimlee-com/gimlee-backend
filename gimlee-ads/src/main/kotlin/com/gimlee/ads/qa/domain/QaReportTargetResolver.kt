@@ -1,8 +1,8 @@
 package com.gimlee.ads.qa.domain
 
-import com.gimlee.reports.domain.model.ReportTargetInfo
-import com.gimlee.reports.domain.model.ReportTargetResolver
-import com.gimlee.reports.domain.model.ReportTargetType
+import com.gimlee.support.report.domain.model.ReportTargetInfo
+import com.gimlee.support.report.domain.model.ReportTargetResolver
+import com.gimlee.support.report.domain.model.ReportTargetType
 import org.springframework.stereotype.Component
 
 @Component
@@ -18,6 +18,7 @@ class QaReportTargetResolver(
         return when (targetType) {
             ReportTargetType.QUESTION -> resolveQuestion(targetId)
             ReportTargetType.ANSWER -> resolveAnswer(targetId)
+            else -> null
         }
     }
 
@@ -26,7 +27,14 @@ class QaReportTargetResolver(
         return ReportTargetInfo(
             targetId = question.id,
             targetType = ReportTargetType.QUESTION,
-            contextId = question.adId
+            contextId = question.adId,
+            targetTitle = question.text.take(100),
+            snapshot = mapOf(
+                "adId" to question.adId,
+                "authorId" to question.authorId,
+                "text" to question.text,
+                "status" to question.status.name
+            )
         )
     }
 
@@ -36,7 +44,15 @@ class QaReportTargetResolver(
         return ReportTargetInfo(
             targetId = answer.id,
             targetType = ReportTargetType.ANSWER,
-            contextId = question.adId
+            contextId = question.adId,
+            targetTitle = answer.text.take(100),
+            snapshot = mapOf(
+                "questionId" to answer.questionId,
+                "adId" to question.adId,
+                "authorId" to answer.authorId,
+                "text" to answer.text,
+                "type" to answer.type.name
+            )
         )
     }
 }

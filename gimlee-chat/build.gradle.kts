@@ -7,6 +7,7 @@ dependencies {
     implementation(project(":gimlee-common"))
     implementation(project(":gimlee-events"))
     implementation(project(":gimlee-auth"))
+    implementation(project(":gimlee-support"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)

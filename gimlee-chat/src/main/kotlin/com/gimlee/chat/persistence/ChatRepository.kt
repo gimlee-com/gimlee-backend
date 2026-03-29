@@ -50,6 +50,16 @@ class ChatRepository(mongoDatabase: MongoDatabase) {
             .toList()
     }
 
+    fun findMessageById(id: String): ArchivedMessage? {
+        return try {
+            collection.find(Filters.eq(ArchivedMessageDocument.FIELD_ID, ObjectId(id)))
+                .first()
+                ?.let { mapToArchivedMessageDocument(it).toDomain() }
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+    }
+
     fun clear() {
         collection.deleteMany(Document())
     }

@@ -1,0 +1,184 @@
+### ===========================
+### Admin Report Management
+### ===========================
+
+### List reports (default)
+# Fetches the first page of reports with default sorting (newest first).
+GET {{host}}/api/admin/reports
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List reports (paginated)
+# Fetches the second page of reports with a page size of 10.
+GET {{host}}/api/admin/reports?page=1&size=10
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List reports (filter by status)
+# Fetches only reports with OPEN status.
+GET {{host}}/api/admin/reports?status=OPEN
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List reports (filter by target type)
+# Fetches only reports targeting ads.
+GET {{host}}/api/admin/reports?targetType=AD
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List reports (filter by reason)
+# Fetches only reports with SPAM reason.
+GET {{host}}/api/admin/reports?reason=SPAM
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List reports (filter by assignee)
+# Fetches reports assigned to a specific support member.
+GET {{host}}/api/admin/reports?assigneeId={{support_user_id}}
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List reports (search by target title)
+# Searches reports whose target title contains the given query.
+GET {{host}}/api/admin/reports?search=crypto
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List reports (sorted by sibling count descending)
+# Fetches reports sorted by number of sibling reports (most reported first).
+GET {{host}}/api/admin/reports?sort=siblingCount&direction=DESC
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List reports (combined filters)
+# Searches for open SPAM reports targeting messages, sorted by creation date.
+GET {{host}}/api/admin/reports?status=OPEN&reason=SPAM&targetType=MESSAGE&sort=createdAt&direction=DESC&page=0&size=20
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### Get report detail
+# Fetches detailed information about a specific report including timeline, target snapshot, and resolution details.
+GET {{host}}/api/admin/reports/{{report_id}}
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List sibling reports
+# Fetches other reports for the same target content, excluding the current report.
+GET {{host}}/api/admin/reports/by-target?targetType=AD&targetId={{target_id}}&excludeReportId={{report_id}}
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List sibling reports (without exclusion)
+# Fetches all reports for a specific target.
+GET {{host}}/api/admin/reports/by-target?targetType=QUESTION&targetId={{target_id}}
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### Assign report
+# Assigns a report to a support team member. Automatically transitions OPEN reports to IN_REVIEW.
+PATCH {{host}}/api/admin/reports/{{report_id}}/assign
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "assigneeUserId": "{{support_user_id}}"
+}
+
+### Update report status (to IN_REVIEW)
+# Transitions a report from OPEN to IN_REVIEW.
+PATCH {{host}}/api/admin/reports/{{report_id}}/status
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "status": "IN_REVIEW"
+}
+
+### Update report status (back to OPEN)
+# Transitions a report from IN_REVIEW back to OPEN.
+PATCH {{host}}/api/admin/reports/{{report_id}}/status
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "status": "OPEN"
+}
+
+### Resolve report (content removed)
+# Resolves a report by removing the offending content.
+POST {{host}}/api/admin/reports/{{report_id}}/resolve
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "resolution": "CONTENT_REMOVED",
+  "internalNotes": "Listing contained prohibited items. Content removed and user warned."
+}
+
+### Resolve report (user warned)
+# Resolves a report by issuing a warning to the user.
+POST {{host}}/api/admin/reports/{{report_id}}/resolve
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "resolution": "USER_WARNED",
+  "internalNotes": "First offense — verbal warning issued via email."
+}
+
+### Resolve report (user banned)
+# Resolves a report by banning the offending user.
+POST {{host}}/api/admin/reports/{{report_id}}/resolve
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "resolution": "USER_BANNED",
+  "internalNotes": "Repeat offender. Account permanently banned."
+}
+
+### Dismiss report (no violation)
+# Dismisses a report as no violation found.
+POST {{host}}/api/admin/reports/{{report_id}}/resolve
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "resolution": "NO_VIOLATION",
+  "internalNotes": "Reviewed content — no policy violation found."
+}
+
+### Dismiss report (duplicate)
+# Dismisses a report as duplicate of another report.
+POST {{host}}/api/admin/reports/{{report_id}}/resolve
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "resolution": "DUPLICATE"
+}
+
+### Add internal note
+# Adds an internal note to the report's timeline. Visible only to support staff.
+POST {{host}}/api/admin/reports/{{report_id}}/notes
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "note": "Escalated to senior moderator for review. Potential legal implications."
+}
+
+### Get report statistics
+# Returns dashboard statistics: open reports, in-review, resolved today, and total unresolved.
+GET {{host}}/api/admin/reports/stats
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}

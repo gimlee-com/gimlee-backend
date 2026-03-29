@@ -1,0 +1,154 @@
+### ===========================
+### Admin Ticket Management
+### ===========================
+
+### List tickets (default)
+# Fetches the first page of tickets with default sorting (newest first).
+GET {{host}}/api/admin/tickets
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List tickets (paginated)
+# Fetches the second page of tickets with a page size of 10.
+GET {{host}}/api/admin/tickets?page=1&size=10
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List tickets (filter by status)
+# Fetches only tickets with OPEN status.
+GET {{host}}/api/admin/tickets?status=OPEN
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List tickets (filter by priority)
+# Fetches only URGENT priority tickets.
+GET {{host}}/api/admin/tickets?priority=URGENT
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List tickets (filter by category)
+# Fetches only tickets in the PAYMENT_PROBLEM category.
+GET {{host}}/api/admin/tickets?category=PAYMENT_PROBLEM
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List tickets (filter by assignee)
+# Fetches tickets assigned to a specific support member.
+GET {{host}}/api/admin/tickets?assigneeId={{support_user_id}}
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List tickets (search by subject)
+# Searches tickets whose subject contains the given query.
+GET {{host}}/api/admin/tickets?search=payment
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List tickets (sorted by priority descending)
+# Fetches tickets sorted by priority (most urgent first).
+GET {{host}}/api/admin/tickets?sort=priority&direction=DESC
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List tickets (sorted by last message)
+# Fetches tickets sorted by most recent message activity.
+GET {{host}}/api/admin/tickets?sort=lastMessageAt&direction=DESC
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List tickets (combined filters)
+# Searches for open high-priority payment problems, sorted by creation date.
+GET {{host}}/api/admin/tickets?status=OPEN&priority=HIGH&category=PAYMENT_PROBLEM&sort=createdAt&direction=DESC&page=0&size=20
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### Get ticket detail
+# Fetches detailed information about a specific ticket including its full conversation history.
+GET {{host}}/api/admin/tickets/{{ticket_id}}
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### Update ticket (change status)
+# Transitions a ticket to IN_PROGRESS status.
+PATCH {{host}}/api/admin/tickets/{{ticket_id}}
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "status": "IN_PROGRESS"
+}
+
+### Update ticket (change priority)
+# Escalates a ticket to URGENT priority.
+PATCH {{host}}/api/admin/tickets/{{ticket_id}}
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "priority": "URGENT"
+}
+
+### Update ticket (assign)
+# Assigns a ticket to a support team member.
+PATCH {{host}}/api/admin/tickets/{{ticket_id}}
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "assigneeUserId": "{{support_user_id}}"
+}
+
+### Update ticket (multiple fields)
+# Updates status, priority, and assigns a ticket in one request.
+PATCH {{host}}/api/admin/tickets/{{ticket_id}}
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "status": "IN_PROGRESS",
+  "priority": "HIGH",
+  "assigneeUserId": "{{support_user_id}}"
+}
+
+### Update ticket (resolve)
+# Resolves a ticket.
+PATCH {{host}}/api/admin/tickets/{{ticket_id}}
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "status": "RESOLVED"
+}
+
+### Update ticket (close)
+# Closes a ticket permanently.
+PATCH {{host}}/api/admin/tickets/{{ticket_id}}
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "status": "CLOSED"
+}
+
+### Reply to ticket as support
+# Adds a support reply to a ticket. Automatically transitions IN_PROGRESS/OPEN tickets to AWAITING_USER.
+POST {{host}}/api/admin/tickets/{{ticket_id}}/reply
+Content-Type: application/json
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+{
+  "body": "Thank you for reaching out. We've reviewed your issue and here's what we found:\n\n1. Your payment was processed successfully.\n2. The confirmation may take up to 30 minutes to appear.\n\nPlease let us know if you have any further questions."
+}
+
+### Get ticket statistics
+# Returns dashboard statistics: open tickets, in-progress, awaiting user, resolved today, and average resolution time.
+GET {{host}}/api/admin/tickets/stats
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
