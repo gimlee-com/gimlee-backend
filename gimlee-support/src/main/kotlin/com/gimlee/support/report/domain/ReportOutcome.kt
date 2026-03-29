@@ -13,6 +13,7 @@ enum class ReportOutcome(override val httpCode: Int) : Outcome {
     REPORT_NOTE_ADDED(200),
     REPORT_ALREADY_RESOLVED(409),
     REPORT_INVALID_STATUS_TRANSITION(400),
+    REPORT_REASON_NOT_APPLICABLE(400),
     REPORT_ASSIGNEE_NOT_FOUND(404);
 
     override val code: String get() = name

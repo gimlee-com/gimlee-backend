@@ -6,8 +6,11 @@ import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.web.dto.StatusResponseDto
 import com.gimlee.support.report.domain.ReportService
+import com.gimlee.support.report.domain.model.ReportReason
+import com.gimlee.support.report.domain.model.ReportTargetType
 import com.gimlee.support.report.web.dto.request.ReportRequestDto
 import com.gimlee.support.report.web.dto.response.ReportListItemDto
+import com.gimlee.support.report.web.dto.response.ReportReasonDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -60,6 +63,11 @@ class ReportController(
         description = "Already reported. Possible status codes: ALREADY_REPORTED",
         content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
     )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Reason not applicable for this target type. Possible status codes: REPORT_REASON_NOT_APPLICABLE",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
     @PostMapping
     @Privileged(role = "USER")
     fun submitReport(@Valid @RequestBody request: ReportRequestDto): ResponseEntity<Any> {
@@ -107,5 +115,20 @@ class ReportController(
                 description = report.description
             )
         }
+    }
+
+    @Operation(
+        summary = "Report Reasons",
+        description = "Returns available report reasons. Optionally filter by target type to get only applicable reasons."
+    )
+    @ApiResponse(responseCode = "200", description = "List of report reasons with their supported target types")
+    @GetMapping("/reasons")
+    @Privileged(role = "USER")
+    fun getReportReasons(
+        @Parameter(description = "Filter reasons applicable to this target type")
+        @RequestParam(required = false) targetType: ReportTargetType?
+    ): List<ReportReasonDto> {
+        val reasons = if (targetType != null) ReportReason.forTargetType(targetType) else ReportReason.entries.toList()
+        return reasons.map { ReportReasonDto.from(it) }
     }
 }

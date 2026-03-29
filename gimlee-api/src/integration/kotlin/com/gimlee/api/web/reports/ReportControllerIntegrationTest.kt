@@ -117,7 +117,8 @@ class ReportControllerIntegrationTest(
             val body = mapOf(
                 "targetType" to "QUESTION",
                 "targetId" to questionId,
-                "reason" to "This question contains spam."
+                "reason" to "SPAM",
+                "description" to "This question contains spam and irrelevant promotional links."
             )
             val response = restClient.post("/reports", body, reporterHeaders)
 
@@ -134,7 +135,8 @@ class ReportControllerIntegrationTest(
             val body = mapOf(
                 "targetType" to "QUESTION",
                 "targetId" to questionId,
-                "reason" to "Reporting again with a different reason."
+                "reason" to "HARASSMENT",
+                "description" to "Reporting again with a different reason."
             )
             val response = restClient.post("/reports", body, reporterHeaders)
 
@@ -152,7 +154,8 @@ class ReportControllerIntegrationTest(
             val body = mapOf(
                 "targetType" to "QUESTION",
                 "targetId" to questionId,
-                "reason" to "I also find this question inappropriate."
+                "reason" to "INAPPROPRIATE_CONTENT",
+                "description" to "I also find this question inappropriate."
             )
             val response = restClient.post("/reports", body, anotherHeaders)
 
@@ -183,7 +186,8 @@ class ReportControllerIntegrationTest(
             val body = mapOf(
                 "targetType" to "ANSWER",
                 "targetId" to answerId,
-                "reason" to "This answer is misleading."
+                "reason" to "SPAM",
+                "description" to "This answer is misleading."
             )
             val response = restClient.post("/reports", body, reporterHeaders)
 
@@ -199,7 +203,8 @@ class ReportControllerIntegrationTest(
             val body = mapOf(
                 "targetType" to "ANSWER",
                 "targetId" to answerId,
-                "reason" to "Trying to report again."
+                "reason" to "HARASSMENT",
+                "description" to "Trying to report again."
             )
             val response = restClient.post("/reports", body, reporterHeaders)
 
@@ -223,7 +228,8 @@ class ReportControllerIntegrationTest(
             val body = mapOf(
                 "targetType" to "QUESTION",
                 "targetId" to fakeId,
-                "reason" to "This question doesn't exist."
+                "reason" to "SPAM",
+                "description" to "This question doesn't exist."
             )
             val response = restClient.post("/reports", body, reporterHeaders)
 
@@ -239,7 +245,8 @@ class ReportControllerIntegrationTest(
             val body = mapOf(
                 "targetType" to "ANSWER",
                 "targetId" to fakeId,
-                "reason" to "This answer doesn't exist."
+                "reason" to "INAPPROPRIATE_CONTENT",
+                "description" to "This answer doesn't exist."
             )
             val response = restClient.post("/reports", body, reporterHeaders)
 
@@ -259,7 +266,7 @@ class ReportControllerIntegrationTest(
             val body = mapOf(
                 "targetType" to "QUESTION",
                 "targetId" to ObjectId.get().toHexString(),
-                "reason" to "Unauthenticated report attempt."
+                "reason" to "SPAM"
             )
             val response = restClient.post("/reports", body)
 
@@ -276,23 +283,10 @@ class ReportControllerIntegrationTest(
         val reporterId = createUser()
         val reporterHeaders = authHeaders(reporterId)
 
-        When("submitting a report with a blank reason") {
-            val body = mapOf(
-                "targetType" to "QUESTION",
-                "targetId" to ObjectId.get().toHexString(),
-                "reason" to ""
-            )
-            val response = restClient.post("/reports", body, reporterHeaders)
-
-            Then("it is rejected with 400") {
-                response.statusCode shouldBe 400
-            }
-        }
-
         When("submitting a report without targetType") {
             val body = mapOf(
                 "targetId" to ObjectId.get().toHexString(),
-                "reason" to "Missing target type."
+                "reason" to "SPAM"
             )
             val response = restClient.post("/reports", body, reporterHeaders)
 
@@ -304,7 +298,7 @@ class ReportControllerIntegrationTest(
         When("submitting a report without targetId") {
             val body = mapOf(
                 "targetType" to "QUESTION",
-                "reason" to "Missing target id."
+                "reason" to "SPAM"
             )
             val response = restClient.post("/reports", body, reporterHeaders)
 
@@ -313,16 +307,149 @@ class ReportControllerIntegrationTest(
             }
         }
 
-        When("submitting a report with a reason exceeding 500 characters") {
+        When("submitting a report without reason") {
             val body = mapOf(
                 "targetType" to "QUESTION",
-                "targetId" to ObjectId.get().toHexString(),
-                "reason" to "x".repeat(501)
+                "targetId" to ObjectId.get().toHexString()
             )
             val response = restClient.post("/reports", body, reporterHeaders)
 
             Then("it is rejected with 400") {
                 response.statusCode shouldBe 400
+            }
+        }
+
+        When("submitting a report with an invalid reason value") {
+            val body = mapOf(
+                "targetType" to "QUESTION",
+                "targetId" to ObjectId.get().toHexString(),
+                "reason" to "INVALID_REASON"
+            )
+            val response = restClient.post("/reports", body, reporterHeaders)
+
+            Then("it is rejected with 400") {
+                response.statusCode shouldBe 400
+            }
+        }
+
+        When("submitting a report with a description exceeding 2000 characters") {
+            val body = mapOf(
+                "targetType" to "QUESTION",
+                "targetId" to ObjectId.get().toHexString(),
+                "reason" to "SPAM",
+                "description" to "x".repeat(2001)
+            )
+            val response = restClient.post("/reports", body, reporterHeaders)
+
+            Then("it is rejected with 400") {
+                response.statusCode shouldBe 400
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // 5a. Reason-target type validation
+    // ---------------------------------------------------------------
+    Given("a reason that does not apply to a target type") {
+        val sellerId = setupSellerWithWallet()
+        val ad = createActiveAd(sellerId)
+        val buyerId = createUser()
+        val buyerHeaders = authHeaders(buyerId)
+        val reporterId = createUser()
+        val reporterHeaders = authHeaders(reporterId)
+
+        val questionId = askQuestion(ad.id, buyerHeaders)
+
+        When("reporting a question with COUNTERFEIT (AD-only reason)") {
+            val body = mapOf(
+                "targetType" to "QUESTION",
+                "targetId" to questionId,
+                "reason" to "COUNTERFEIT",
+                "description" to "Attempting counterfeit reason on a question."
+            )
+            val response = restClient.post("/reports", body, reporterHeaders)
+
+            Then("it is rejected with REPORT_REASON_NOT_APPLICABLE") {
+                response.statusCode shouldBe 400
+                val responseBody = response.bodyAs<Map<String, Any>>()!!
+                responseBody["success"] shouldBe false
+                responseBody["status"] shouldBe "REPORT_REASON_NOT_APPLICABLE"
+            }
+        }
+
+        When("reporting a question with WRONG_CATEGORY (AD-only reason)") {
+            val body = mapOf(
+                "targetType" to "QUESTION",
+                "targetId" to questionId,
+                "reason" to "WRONG_CATEGORY",
+                "description" to "Attempting wrong category reason on a question."
+            )
+            val response = restClient.post("/reports", body, reporterHeaders)
+
+            Then("it is rejected with REPORT_REASON_NOT_APPLICABLE") {
+                response.statusCode shouldBe 400
+                val responseBody = response.bodyAs<Map<String, Any>>()!!
+                responseBody["success"] shouldBe false
+                responseBody["status"] shouldBe "REPORT_REASON_NOT_APPLICABLE"
+            }
+        }
+
+        When("reporting a question with SPAM (applicable to QUESTION)") {
+            val body = mapOf(
+                "targetType" to "QUESTION",
+                "targetId" to questionId,
+                "reason" to "SPAM",
+                "description" to "This is spam."
+            )
+            val response = restClient.post("/reports", body, reporterHeaders)
+
+            Then("it is accepted") {
+                response.statusCode shouldBe 200
+                val responseBody = response.bodyAs<Map<String, Any>>()!!
+                responseBody["status"] shouldBe "REPORT_SUBMITTED"
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // 5b. Report reasons endpoint
+    // ---------------------------------------------------------------
+    Given("the report reasons endpoint") {
+        val userId = createUser()
+        val userHeaders = authHeaders(userId)
+
+        When("fetching all report reasons") {
+            val response = restClient.get("/reports/reasons", userHeaders)
+
+            Then("it returns all reasons with their supported targets") {
+                response.statusCode shouldBe 200
+                val reasons = response.bodyAs<List<Map<String, Any>>>()!!
+                reasons.size shouldBe 8
+            }
+        }
+
+        When("fetching reasons for AD target type") {
+            val response = restClient.get("/reports/reasons?targetType=AD", userHeaders)
+
+            Then("it returns all reasons applicable to ADs") {
+                response.statusCode shouldBe 200
+                val reasons = response.bodyAs<List<Map<String, Any>>>()!!
+                reasons.size shouldBe 7
+                val reasonNames = reasons.map { it["reason"] as String }.toSet()
+                reasonNames shouldBe setOf("SPAM", "FRAUD", "INAPPROPRIATE_CONTENT", "COUNTERFEIT", "COPYRIGHT", "WRONG_CATEGORY", "OTHER")
+            }
+        }
+
+        When("fetching reasons for MESSAGE target type") {
+            val response = restClient.get("/reports/reasons?targetType=MESSAGE", userHeaders)
+
+            Then("it returns only reasons applicable to messages (excludes COUNTERFEIT, WRONG_CATEGORY)") {
+                response.statusCode shouldBe 200
+                val reasons = response.bodyAs<List<Map<String, Any>>>()!!
+                val reasonNames = reasons.map { it["reason"] as String }.toSet()
+                reasonNames shouldNotBe null
+                ("COUNTERFEIT" in reasonNames) shouldBe false
+                ("WRONG_CATEGORY" in reasonNames) shouldBe false
             }
         }
     }
@@ -346,7 +473,8 @@ class ReportControllerIntegrationTest(
             val body = mapOf(
                 "targetType" to "QUESTION",
                 "targetId" to questionId,
-                "reason" to "Spam question."
+                "reason" to "SPAM",
+                "description" to "Spam question."
             )
             val response = restClient.post("/reports", body, reporterHeaders)
 
@@ -360,7 +488,8 @@ class ReportControllerIntegrationTest(
             val body = mapOf(
                 "targetType" to "ANSWER",
                 "targetId" to answerId,
-                "reason" to "Misleading answer."
+                "reason" to "INAPPROPRIATE_CONTENT",
+                "description" to "Misleading answer."
             )
             val response = restClient.post("/reports", body, reporterHeaders)
 

@@ -32,6 +32,11 @@ class ReportService(
         reason: ReportReason,
         description: String?
     ): ReportOutcome {
+        if (!reason.supportsTarget(targetType)) {
+            log.warn("Reason {} is not applicable for target type {}", reason, targetType)
+            return ReportOutcome.REPORT_REASON_NOT_APPLICABLE
+        }
+
         val resolver = resolvers.firstOrNull { it.supports(targetType) }
         if (resolver == null) {
             log.warn("No resolver registered for target type {}", targetType)

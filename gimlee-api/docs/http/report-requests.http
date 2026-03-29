@@ -122,3 +122,43 @@ Authorization: Bearer {{auth_token}}
 GET {{host}}/api/reports/mine?page=1&size=5
 Accept-Language: en-US
 Authorization: Bearer {{auth_token}}
+
+###
+
+### ===========================
+### Report Reasons
+### ===========================
+
+### Get All Report Reasons
+# Returns all available report reasons with their supported target types.
+#
+# @name allReportReasons
+GET {{host}}/api/reports/reasons
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Get Report Reasons for Ads
+# Returns only report reasons applicable to AD targets.
+#
+# @name adReportReasons
+GET {{host}}/api/reports/reasons?targetType=AD
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Get Report Reasons for Messages
+# Returns only report reasons applicable to MESSAGE targets.
+#
+# @name messageReportReasons
+GET {{host}}/api/reports/reasons?targetType=MESSAGE
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Get Report Reasons for Users
+# Returns only report reasons applicable to USER targets.
+#
+# @name userReportReasons
+GET {{host}}/api/reports/reasons?targetType=USER
+Authorization: Bearer {{auth_token}}
