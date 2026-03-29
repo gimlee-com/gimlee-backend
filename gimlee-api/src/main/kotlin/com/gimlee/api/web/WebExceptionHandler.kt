@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -27,6 +28,33 @@ class WebExceptionHandler(private val messageSource: MessageSource) : ResponseEn
 
     companion object {
         private val log = LogManager.getLogger()
+    }
+
+    override fun handleHttpMessageNotReadable(
+        ex: HttpMessageNotReadableException,
+        headers: HttpHeaders,
+        status: HttpStatusCode,
+        request: WebRequest
+    ): ResponseEntity<Any>? {
+        val rootCause = ex.rootCause
+        val fieldErrors = when {
+            rootCause is com.fasterxml.jackson.databind.exc.InvalidFormatException && rootCause.targetType.isEnum -> {
+                val field = rootCause.path.joinToString(".") { it.fieldName ?: "[${it.index}]" }
+                val accepted = rootCause.targetType.enumConstants.joinToString(", ") { (it as Enum<*>).name }
+                listOf(FieldErrorDto(field, "Invalid value '${rootCause.value}'. Accepted values: $accepted"))
+            }
+            else -> listOf(FieldErrorDto("body", "Malformed or unreadable request body."))
+        }
+        val locale = LocaleContextHolder.getLocale()
+        val message = messageSource.getMessage(CommonOutcome.BAD_REQUEST.messageKey, null, locale)
+        log.warn("Message not readable: {}", fieldErrors.joinToString("; ") { "${it.field}: ${it.message}" })
+        return handleExceptionInternal(
+            ex,
+            StatusResponseDto.fromOutcome(CommonOutcome.BAD_REQUEST, message, fieldErrors = fieldErrors),
+            headers,
+            HttpStatus.BAD_REQUEST,
+            request
+        )
     }
 
     override fun handleMethodArgumentNotValid(
