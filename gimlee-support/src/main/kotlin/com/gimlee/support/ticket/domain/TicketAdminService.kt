@@ -24,6 +24,14 @@ class TicketAdminService(
     private val eventPublisher: ApplicationEventPublisher
 ) {
 
+    private val validTransitions = mapOf(
+        TicketStatus.OPEN to setOf(TicketStatus.IN_PROGRESS, TicketStatus.AWAITING_USER, TicketStatus.RESOLVED, TicketStatus.CLOSED),
+        TicketStatus.IN_PROGRESS to setOf(TicketStatus.OPEN, TicketStatus.AWAITING_USER, TicketStatus.RESOLVED, TicketStatus.CLOSED),
+        TicketStatus.AWAITING_USER to setOf(TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED, TicketStatus.CLOSED),
+        TicketStatus.RESOLVED to setOf(TicketStatus.OPEN, TicketStatus.CLOSED),
+        TicketStatus.CLOSED to setOf(TicketStatus.OPEN)
+    )
+
     fun addSupportReply(
         ticketId: String,
         supportUserId: String,
@@ -83,6 +91,14 @@ class TicketAdminService(
     ): TicketOutcome {
         val ticket = ticketRepository.findById(ObjectId(ticketId))
             ?: return TicketOutcome.TICKET_NOT_FOUND
+
+        if (status != null) {
+            val currentStatus = TicketStatus.fromShortName(ticket.status)
+            val allowed = validTransitions[currentStatus] ?: emptySet()
+            if (status !in allowed) {
+                return TicketOutcome.TICKET_INVALID_STATUS_TRANSITION
+            }
+        }
 
         val now = Instant.now().toMicros()
         val resolvedAt = if (status == TicketStatus.RESOLVED) now else null

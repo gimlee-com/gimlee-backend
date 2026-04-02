@@ -914,4 +914,123 @@ class TicketIntegrationTest(
             }
         }
     }
+
+    // ---------------------------------------------------------------
+    // 19. Status transition validation - invalid transitions rejected
+    // ---------------------------------------------------------------
+    Given("tickets in terminal states for transition validation") {
+        val userId = createUser()
+        val supportUserId = createSupportUser()
+        val headers = supportHeaders(supportUserId)
+
+        fun createTicketInStatus(status: String): String {
+            val createResponse = restClient.post(
+                "/tickets",
+                mapOf("subject" to "Transition test", "category" to "ACCOUNT_ISSUE", "body" to "Testing transitions"),
+                userHeaders(userId)
+            )
+            val data = createResponse.bodyAs<Map<String, Any>>()!!["data"] as Map<*, *>
+            val ticketId = data["id"] as String
+
+            if (status != "OPEN") {
+                restClient.patch("/admin/tickets/$ticketId", mapOf("status" to status), headers)
+            }
+            return ticketId
+        }
+
+        When("trying to transition RESOLVED → IN_PROGRESS") {
+            val ticketId = createTicketInStatus("RESOLVED")
+            val response = restClient.patch(
+                "/admin/tickets/$ticketId",
+                mapOf("status" to "IN_PROGRESS"),
+                headers
+            )
+
+            Then("it is rejected as invalid") {
+                response.statusCode shouldBe 400
+                val body = response.bodyAs<Map<String, Any>>()!!
+                body["status"] shouldBe "SUPPORT_TICKET_INVALID_STATUS_TRANSITION"
+            }
+        }
+
+        When("trying to transition RESOLVED → AWAITING_USER") {
+            val ticketId = createTicketInStatus("RESOLVED")
+            val response = restClient.patch(
+                "/admin/tickets/$ticketId",
+                mapOf("status" to "AWAITING_USER"),
+                headers
+            )
+
+            Then("it is rejected as invalid") {
+                response.statusCode shouldBe 400
+            }
+        }
+
+        When("trying to transition CLOSED → IN_PROGRESS") {
+            val ticketId = createTicketInStatus("CLOSED")
+            val response = restClient.patch(
+                "/admin/tickets/$ticketId",
+                mapOf("status" to "IN_PROGRESS"),
+                headers
+            )
+
+            Then("it is rejected as invalid") {
+                response.statusCode shouldBe 400
+            }
+        }
+
+        When("trying to transition CLOSED → RESOLVED") {
+            val ticketId = createTicketInStatus("CLOSED")
+            val response = restClient.patch(
+                "/admin/tickets/$ticketId",
+                mapOf("status" to "RESOLVED"),
+                headers
+            )
+
+            Then("it is rejected as invalid") {
+                response.statusCode shouldBe 400
+            }
+        }
+
+        When("reopening a RESOLVED ticket (RESOLVED → OPEN)") {
+            val ticketId = createTicketInStatus("RESOLVED")
+            val response = restClient.patch(
+                "/admin/tickets/$ticketId",
+                mapOf("status" to "OPEN"),
+                headers
+            )
+
+            Then("it is allowed") {
+                response.statusCode shouldBe 200
+                val body = response.bodyAs<Map<String, Any>>()!!
+                body["status"] shouldBe "SUPPORT_TICKET_UPDATED"
+            }
+        }
+
+        When("reopening a CLOSED ticket (CLOSED → OPEN)") {
+            val ticketId = createTicketInStatus("CLOSED")
+            val response = restClient.patch(
+                "/admin/tickets/$ticketId",
+                mapOf("status" to "OPEN"),
+                headers
+            )
+
+            Then("it is allowed") {
+                response.statusCode shouldBe 200
+            }
+        }
+
+        When("updating only priority on a CLOSED ticket (no status change)") {
+            val ticketId = createTicketInStatus("CLOSED")
+            val response = restClient.patch(
+                "/admin/tickets/$ticketId",
+                mapOf("priority" to "URGENT"),
+                headers
+            )
+
+            Then("it is allowed because status validation is skipped") {
+                response.statusCode shouldBe 200
+            }
+        }
+    }
 })
