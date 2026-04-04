@@ -30,7 +30,8 @@ Authorization: Bearer {{auth_token}}
 
 {
   "language": "pl-PL",
-  "preferredCurrency": "PLN"
+  "preferredCurrency": "PLN",
+  "countryOfResidence": "PL"
 }
 
 ### Partially Update User Preferences
@@ -40,4 +41,13 @@ Authorization: Bearer {{auth_token}}
 
 {
   "preferredCurrency": "ARRR"
+}
+
+### Partially Update User Preferences - Set Country of Residence
+PATCH {{host}}/api/user/preferences
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "countryOfResidence": "US"
 }

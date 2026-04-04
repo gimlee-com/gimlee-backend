@@ -45,6 +45,15 @@ gimlee:
       currency-mappings:
         pl-PL: PLN
 
+  # gimlee-location properties
+  location:
+    geoip:
+      enabled: true
+      license-key: <fillme> # MaxMind GeoLite2 license key (register at https://dev.maxmind.com/geoip/geolite2-free-geolocation-data)
+      # database-path: /path/to/GeoLite2-Country.mmdb  # Optional: local file fallback (for dev/air-gapped environments)
+      connect-timeout-ms: 10000
+      read-timeout-ms: 60000
+
   # gimlee-purchases properties
   purchases:
     price-tolerance-pct: 0.01

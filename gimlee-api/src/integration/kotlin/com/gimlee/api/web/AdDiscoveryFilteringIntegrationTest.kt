@@ -107,7 +107,7 @@ class AdDiscoveryFilteringIntegrationTest(
         When("filtering by price range 90-110 ARRR (user prefers ARRR)") {
             Then("it should find both the 100 ARRR ad and the 100 YEC ad") {
                 val userId = ObjectId.get().toHexString()
-                userPreferencesService.updateUserPreferences(userId, "en-US", "ARRR")
+                userPreferencesService.updateUserPreferences(userId, "en-US", "ARRR", null)
                 val token = restClient.createAuthHeader(
                     subject = userId,
                     username = "arrruser",

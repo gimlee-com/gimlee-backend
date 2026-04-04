@@ -16,6 +16,18 @@ dependencies {
     implementation(libs.jakarta.validation)
     implementation(libs.jackson.dataformat.csv)
     implementation(libs.springdoc.openapi.starter.webmvc.api)
+    implementation(libs.maxmind.geoip2)
+
+    // Testing
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(platform(libs.kotest.bom))
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotest.extensions.spring)
+    testImplementation(platform(libs.testcontainers.bom))
+    testImplementation(libs.testcontainers.mongodb)
+    integrationImplementation(testFixtures(project(":gimlee-common")))
 }
 
 sourceSets {

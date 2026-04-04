@@ -20,6 +20,7 @@ shedlock = "5.13.0"
 wiremock = "3.2.0"
 lucene = "9.11.1"
 gatling = "3.13.1"
+maxmind-geoip2 = "5.0.2"
 openhft-zero-allocation-hashing = "0.16"
 
 # --- Testing ---
@@ -76,6 +77,7 @@ lucene-core = { module = "org.apache.lucene:lucene-core", version.ref = "lucene"
 lucene-queryparser = { module = "org.apache.lucene:lucene-queryparser", version.ref = "lucene" }
 lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", version.ref = "lucene" }
 xxhash = { module = "net.openhft:zero-allocation-hashing", version.ref = "openhft-zero-allocation-hashing" }
+maxmind-geoip2 = { module = "com.maxmind.geoip2:geoip2", version.ref = "maxmind-geoip2" }
 
 # --- Testing Libraries ---
 kotest-bom = { group = "io.kotest", name = "kotest-bom", version.ref = "kotest"}

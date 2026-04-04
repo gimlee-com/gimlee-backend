@@ -57,7 +57,8 @@ gimlee:
         /session/init,
         /media,
         /playground/**,
-        /qa/ads/**
+        /qa/ads/**,
+        /location/geoip/**
     ban:
       cache:
         ttl-seconds: 300

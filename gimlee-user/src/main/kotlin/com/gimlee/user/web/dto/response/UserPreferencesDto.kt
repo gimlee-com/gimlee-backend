@@ -4,12 +4,14 @@ import com.gimlee.user.domain.model.UserPreferences
 
 data class UserPreferencesDto(
     val language: String,
-    val preferredCurrency: String?
+    val preferredCurrency: String?,
+    val countryOfResidence: String?
 ) {
     companion object {
         fun fromDomain(domain: UserPreferences): UserPreferencesDto = UserPreferencesDto(
             language = domain.language,
-            preferredCurrency = domain.preferredCurrency
+            preferredCurrency = domain.preferredCurrency,
+            countryOfResidence = domain.countryOfResidence
         )
     }
 }

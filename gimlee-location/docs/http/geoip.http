@@ -1,0 +1,40 @@
+### Detect Country by IP
+# Detects the country of the requesting client based on their IP address.
+# Returns an ISO 3166-1 alpha-2 country code. Useful for pre-selecting country defaults in the UI.
+# This endpoint does not require authentication.
+# @name detectCountry
+GET {{host}}/api/location/geoip/country
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "success": true,
+#   "status": "LOCATION_GEOIP_COUNTRY_DETECTED",
+#   "message": "Country detected successfully.",
+#   "data": {
+#     "countryCode": "US"
+#   }
+# }
+
+### Expected Response (Not Found - 404):
+# When the country cannot be determined (e.g., localhost, private IP ranges).
+# Content-Type: application/json
+#
+# {
+#   "success": false,
+#   "status": "LOCATION_GEOIP_COUNTRY_UNKNOWN",
+#   "message": "Could not determine the country from the provided IP address.",
+#   "data": null
+# }
+
+### Expected Response (Service Unavailable - 503):
+# When the GeoIP database is not loaded (missing license key, download failure, etc.).
+# Content-Type: application/json
+#
+# {
+#   "success": false,
+#   "status": "LOCATION_GEOIP_UNAVAILABLE",
+#   "message": "GeoIP service is currently unavailable.",
+#   "data": null
+# }

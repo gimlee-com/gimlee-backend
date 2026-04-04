@@ -1,0 +1,8 @@
+spring:
+  messages:
+    basename: i18n/location/messages
+
+gimlee:
+  location:
+    geoip:
+      enabled: false

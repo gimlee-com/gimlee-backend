@@ -6,12 +6,14 @@ import org.bson.types.ObjectId
 data class UserPreferencesDocument(
     val userId: ObjectId,
     val language: String,
-    val preferredCurrency: String?
+    val preferredCurrency: String?,
+    val countryOfResidence: String?
 ) {
     fun toDomain(): UserPreferences = UserPreferences(
         userId = userId.toHexString(),
         language = language,
-        preferredCurrency = preferredCurrency
+        preferredCurrency = preferredCurrency,
+        countryOfResidence = countryOfResidence
     )
 
     companion object {
@@ -19,11 +21,13 @@ data class UserPreferencesDocument(
         const val FIELD_USER_ID = "_id"
         const val FIELD_LANGUAGE = "lng"
         const val FIELD_PREFERRED_CURRENCY = "pc"
+        const val FIELD_COUNTRY_OF_RESIDENCE = "cor"
 
         fun fromDomain(domain: UserPreferences): UserPreferencesDocument = UserPreferencesDocument(
             userId = ObjectId(domain.userId),
             language = domain.language,
-            preferredCurrency = domain.preferredCurrency
+            preferredCurrency = domain.preferredCurrency,
+            countryOfResidence = domain.countryOfResidence
         )
     }
 }

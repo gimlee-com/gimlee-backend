@@ -37,18 +37,19 @@ class UserPreferencesService(
         return properties.currencyMappings[languageTag] ?: properties.defaultCurrency
     }
 
-    fun updateUserPreferences(userId: String, language: String, preferredCurrency: String?): UserPreferences {
-        val preferences = UserPreferences(userId, language, preferredCurrency)
+    fun updateUserPreferences(userId: String, language: String, preferredCurrency: String?, countryOfResidence: String?): UserPreferences {
+        val preferences = UserPreferences(userId, language, preferredCurrency, countryOfResidence)
         userPreferencesRepository.save(UserPreferencesDocument.fromDomain(preferences))
         return preferences
     }
 
-    fun patchUserPreferences(userId: String, language: String?, preferredCurrency: String?): UserPreferences {
+    fun patchUserPreferences(userId: String, language: String?, preferredCurrency: String?, countryOfResidence: String?): UserPreferences {
         val existing = getUserPreferences(userId)
         val updatedLanguage = language ?: existing.language
         val updatedCurrency = preferredCurrency ?: existing.preferredCurrency
+        val updatedCountry = countryOfResidence ?: existing.countryOfResidence
 
-        val preferences = UserPreferences(userId, updatedLanguage, updatedCurrency)
+        val preferences = UserPreferences(userId, updatedLanguage, updatedCurrency, updatedCountry)
         userPreferencesRepository.save(UserPreferencesDocument.fromDomain(preferences))
         return preferences
     }

@@ -78,7 +78,7 @@ class AdDiscoveryIntegrationTest(
         When("fetching the ad as a user with preferred currency ARRR") {
             Then("it should include the price in ARRR") {
                 val userId = ObjectId.get().toHexString()
-                userPreferencesService.updateUserPreferences(userId, "en-US", "ARRR")
+                userPreferencesService.updateUserPreferences(userId, "en-US", "ARRR", null)
                 val token = restClient.createAuthHeader(
                     subject = userId,
                     username = "testuser",

@@ -1,6 +1,7 @@
 package com.gimlee.user.web.dto.request
 
 import com.gimlee.common.validation.IetfLanguageTag
+import com.gimlee.common.validation.IsoCountryCode
 import jakarta.validation.constraints.NotBlank
 
 data class UpdateUserPreferencesRequestDto(
@@ -8,5 +9,8 @@ data class UpdateUserPreferencesRequestDto(
     @field:IetfLanguageTag
     val language: String,
 
-    val preferredCurrency: String?
+    val preferredCurrency: String?,
+
+    @field:IsoCountryCode
+    val countryOfResidence: String? = null
 )

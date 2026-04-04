@@ -96,7 +96,8 @@ class UserController(
             val preferences = userPreferencesService.updateUserPreferences(
                 principal.userId,
                 request.language,
-                request.preferredCurrency
+                request.preferredCurrency,
+                request.countryOfResidence
             )
             ResponseEntity.ok(UserPreferencesDto.fromDomain(preferences))
         } catch (e: Exception) {
@@ -129,7 +130,8 @@ class UserController(
             val preferences = userPreferencesService.patchUserPreferences(
                 principal.userId,
                 request.language,
-                request.preferredCurrency
+                request.preferredCurrency,
+                request.countryOfResidence
             )
             ResponseEntity.ok(UserPreferencesDto.fromDomain(preferences))
         } catch (e: Exception) {

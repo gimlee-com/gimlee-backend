@@ -60,7 +60,7 @@ class UserPreferencesIntegrationTest(
         }
 
         When("updating user preferences with valid IETF tag and currency") {
-            val updated = userPreferencesService.updateUserPreferences(userId, "pl-PL", "EUR")
+            val updated = userPreferencesService.updateUserPreferences(userId, "pl-PL", "EUR", null)
             
             Then("the preferences should be updated") {
                 updated.language shouldBe "pl-PL"
@@ -72,7 +72,7 @@ class UserPreferencesIntegrationTest(
         }
 
         When("partially updating user preferences") {
-            val partiallyUpdated = userPreferencesService.patchUserPreferences(userId, null, "PLN")
+            val partiallyUpdated = userPreferencesService.patchUserPreferences(userId, null, "PLN", null)
 
             Then("only the provided fields should be updated") {
                 partiallyUpdated.language shouldBe "pl-PL" // kept from previous step
@@ -84,7 +84,7 @@ class UserPreferencesIntegrationTest(
         }
 
         When("partially updating user preferences with language only") {
-            val partiallyUpdated = userPreferencesService.patchUserPreferences(userId, "en-US", null)
+            val partiallyUpdated = userPreferencesService.patchUserPreferences(userId, "en-US", null, null)
 
             Then("only the language should be updated") {
                 partiallyUpdated.language shouldBe "en-US"
@@ -92,6 +92,35 @@ class UserPreferencesIntegrationTest(
                 val fetched = userPreferencesService.getUserPreferences(userId)
                 fetched.language shouldBe "en-US"
                 fetched.preferredCurrency shouldBe "PLN"
+            }
+        }
+
+        When("updating user preferences with country of residence") {
+            val updated = userPreferencesService.updateUserPreferences(userId, "en-US", "USD", "US")
+
+            Then("the country of residence should be stored") {
+                updated.countryOfResidence shouldBe "US"
+                val fetched = userPreferencesService.getUserPreferences(userId)
+                fetched.countryOfResidence shouldBe "US"
+            }
+        }
+
+        When("partially updating only the country of residence") {
+            val patched = userPreferencesService.patchUserPreferences(userId, null, null, "PL")
+
+            Then("only the country should change, other fields preserved") {
+                patched.language shouldBe "en-US"
+                patched.preferredCurrency shouldBe "USD"
+                patched.countryOfResidence shouldBe "PL"
+            }
+        }
+
+        When("partially updating language without affecting country of residence") {
+            val patched = userPreferencesService.patchUserPreferences(userId, "pl-PL", null, null)
+
+            Then("the country of residence should be preserved") {
+                patched.language shouldBe "pl-PL"
+                patched.countryOfResidence shouldBe "PL"
             }
         }
     }

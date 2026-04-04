@@ -23,6 +23,7 @@ class UserPreferencesRepository(private val mongoDatabase: MongoDatabase) {
             .append(FIELD_USER_ID, document.userId)
             .append(UserPreferencesDocument.FIELD_LANGUAGE, document.language)
             .append(UserPreferencesDocument.FIELD_PREFERRED_CURRENCY, document.preferredCurrency)
+            .append(UserPreferencesDocument.FIELD_COUNTRY_OF_RESIDENCE, document.countryOfResidence)
 
         val filter = Filters.eq(FIELD_USER_ID, document.userId)
         val options = ReplaceOptions().upsert(true)
@@ -36,7 +37,8 @@ class UserPreferencesRepository(private val mongoDatabase: MongoDatabase) {
         return UserPreferencesDocument(
             userId = doc.getObjectId(FIELD_USER_ID),
             language = doc.getString(UserPreferencesDocument.FIELD_LANGUAGE),
-            preferredCurrency = doc.getString(UserPreferencesDocument.FIELD_PREFERRED_CURRENCY)
+            preferredCurrency = doc.getString(UserPreferencesDocument.FIELD_PREFERRED_CURRENCY),
+            countryOfResidence = doc.getString(UserPreferencesDocument.FIELD_COUNTRY_OF_RESIDENCE)
         )
     }
 }
