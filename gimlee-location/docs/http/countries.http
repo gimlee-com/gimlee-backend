@@ -1,0 +1,42 @@
+### List All Countries
+# Returns a list of all countries with ISO 3166-1 alpha-2 codes and localized display names.
+# Country names are translated based on the Accept-Language header.
+# Results are sorted alphabetically by the localized country name.
+# This endpoint does not require authentication.
+# Response is cacheable for 24 hours (Cache-Control: max-age=86400, public).
+# @name listCountries
+GET {{host}}/api/location/countries/
+Accept-Language: en-US
+
+### Expected Response (200 OK - English):
+# Content-Type: application/json
+# Cache-Control: max-age=86400, public
+#
+# [
+#   { "code": "AF", "name": "Afghanistan" },
+#   { "code": "AL", "name": "Albania" },
+#   ...
+#   { "code": "PL", "name": "Poland" },
+#   ...
+#   { "code": "US", "name": "United States" },
+#   ...
+# ]
+
+### List All Countries (Polish)
+# @name listCountriesPolish
+GET {{host}}/api/location/countries/
+Accept-Language: pl-PL
+
+### Expected Response (200 OK - Polish):
+# Content-Type: application/json
+# Cache-Control: max-age=86400, public
+#
+# [
+#   { "code": "AF", "name": "Afganistan" },
+#   { "code": "AL", "name": "Albania" },
+#   ...
+#   { "code": "PL", "name": "Polska" },
+#   ...
+#   { "code": "US", "name": "Stany Zjednoczone" },
+#   ...
+# ]

@@ -58,7 +58,8 @@ gimlee:
         /media,
         /playground/**,
         /qa/ads/**,
-        /location/geoip/**
+        /location/geoip/**,
+        /location/countries/**
     ban:
       cache:
         ttl-seconds: 300
