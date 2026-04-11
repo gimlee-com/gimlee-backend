@@ -46,6 +46,18 @@ POST {{host}}/api/playground/createQa
 # { "status": "SUCCESS", "code": 0, "message": "Success" }
 
 
+### Create Playground Support Data
+# Populates the database with sample reports and support tickets in various statuses.
+# Creates test users (reporters + support agent) if needed.
+# Idempotent — skips if support data already exists.
+# Only available in local, dev, or test profiles.
+# @name createSupportData
+POST {{host}}/api/playground/createSupportData
+
+### Expected Response (Success - 200 OK):
+# { "success": true, "status": "SUCCESS", "message": "Success" }
+
+
 ### Clear Database
 # Empties all collections in the database (preserving indexes).
 # Only available in local, dev, or test profiles.
@@ -53,7 +65,7 @@ POST {{host}}/api/playground/createQa
 POST {{host}}/api/playground/clearDatabase
 
 ### Expected Response (Success - 200 OK):
-# { "status": "SUCCESS", "code": 0, "message": "Success" }
+# { "success": true, "status": "SUCCESS", "message": "Success" }
 
 
 ### Ycash Faucet

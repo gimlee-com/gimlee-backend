@@ -4,6 +4,7 @@ import com.gimlee.api.playground.ads.data.AdsPopulator
 import com.gimlee.api.playground.ads.data.QaPopulator
 import com.gimlee.api.playground.data.DatabaseCleaner
 import com.gimlee.api.playground.media.data.MediaPopulator
+import com.gimlee.api.playground.support.data.SupportPopulator
 import com.gimlee.api.playground.users.data.UsersPopulator
 import com.gimlee.api.playground.payments.service.YcashFaucetService
 import com.gimlee.api.playground.web.dto.CreateUsersRequest
@@ -29,6 +30,7 @@ class PlaygroundController(
     @Lazy private val mediaPopulator: MediaPopulator,
     @Lazy private val adsPopulator: AdsPopulator,
     @Lazy private val qaPopulator: QaPopulator,
+    @Lazy private val supportPopulator: SupportPopulator,
     @Lazy private val databaseCleaner: DatabaseCleaner,
     @Lazy private val ycashFaucetService: YcashFaucetService
 ) {
@@ -89,6 +91,18 @@ class PlaygroundController(
     @PostMapping("/playground/createQa")
     fun createQa(): StatusResponseDto {
         qaPopulator.populateQa()
+        return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS)
+    }
+
+    @Operation(summary = "Create Playground Support Data", description = "Populates the database with sample reports and support tickets in various statuses. Creates test users if needed. Idempotent — skips if support data already exists.")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Support data created successfully. Possible status codes: SUCCESS",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @PostMapping("/playground/createSupportData")
+    fun createSupportData(): StatusResponseDto {
+        supportPopulator.populateSupport()
         return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS)
     }
 
