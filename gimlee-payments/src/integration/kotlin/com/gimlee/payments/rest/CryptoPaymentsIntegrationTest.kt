@@ -144,7 +144,7 @@ class CryptoPaymentsIntegrationTest(
                     status { isBadRequest() }
                     jsonPath("$.status") { value("PAYMENT_UNSUPPORTED_VIEWING_KEY_ADDRESS_TYPE") }
                     jsonPath("$.message") {
-                        value("""Imported viewing key address type "sprout" is not supported for ARRR. Supported types: orchard, sapling.""")
+                        value("""Imported viewing key address type "sprout" is not supported for ARRR. Supported types: sapling, z-orchard.""")
                     }
                 }
             }
