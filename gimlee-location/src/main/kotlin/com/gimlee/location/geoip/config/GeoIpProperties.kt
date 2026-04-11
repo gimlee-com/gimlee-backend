@@ -7,6 +7,7 @@ data class GeoIpProperties(
     val enabled: Boolean = true,
     val licenseKey: String? = null,
     val databasePath: String? = null,
+    val classpathDatabase: String = "geoip/2026-04-11/GeoLite2-Country.mmdb",
     val downloadUrl: String = "https://download.maxmind.com/app/geoip_download",
     val editionId: String = "GeoLite2-Country",
     val connectTimeoutMs: Long = 10_000,

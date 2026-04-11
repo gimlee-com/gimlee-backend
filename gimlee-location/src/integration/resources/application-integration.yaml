@@ -5,4 +5,4 @@ spring:
 gimlee:
   location:
     geoip:
-      enabled: false
+      enabled: false # GeoIP tests override this per-class via @DynamicPropertySource

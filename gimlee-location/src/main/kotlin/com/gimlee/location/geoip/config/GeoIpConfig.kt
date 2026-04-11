@@ -55,8 +55,7 @@ class GeoIpConfig(private val properties: GeoIpProperties) {
         if (!properties.databasePath.isNullOrBlank()) {
             return loadLocalDatabase(properties.databasePath)
         }
-        log.warn("No GeoIP license key or database path configured")
-        return null
+        return loadClasspathDatabase()
     }
 
     private fun downloadDatabase(): InputStream? {
@@ -125,5 +124,16 @@ class GeoIpConfig(private val properties: GeoIpProperties) {
         }
         log.info("Loading GeoIP database from local file: {}", path)
         return Files.newInputStream(file)
+    }
+
+    private fun loadClasspathDatabase(): InputStream? {
+        val resource = properties.classpathDatabase
+        val stream = javaClass.classLoader.getResourceAsStream(resource)
+        if (stream == null) {
+            log.warn("GeoIP bundled database not found on classpath: {}", resource)
+            return null
+        }
+        log.info("Loading GeoIP database from bundled classpath resource: {}", resource)
+        return stream
     }
 }

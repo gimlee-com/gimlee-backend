@@ -4,10 +4,12 @@ import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.web.dto.StatusResponseDto
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.shouldBe
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 
 class GeoIpIntegrationTest : BaseIntegrationTest({
 
-    Given("the GeoIP endpoint") {
+    Given("the GeoIP endpoint with the bundled classpath database") {
 
         When("requesting country detection with a known US IP via X-Forwarded-For") {
             val response = restClient.get(
@@ -58,4 +60,12 @@ class GeoIpIntegrationTest : BaseIntegrationTest({
             }
         }
     }
-})
+}) {
+    companion object {
+        @JvmStatic
+        @DynamicPropertySource
+        fun enableGeoIp(registry: DynamicPropertyRegistry) {
+            registry.add("gimlee.location.geoip.enabled") { "true" }
+        }
+    }
+}
