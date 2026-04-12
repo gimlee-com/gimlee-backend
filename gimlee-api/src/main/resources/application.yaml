@@ -80,7 +80,7 @@ gimlee:
   location:
     geoip:
       enabled: true
-      license-key: <fillme> # MaxMind GeoLite2 license key (register at https://dev.maxmind.com/geoip/geolite2-free-geolocation-data)
+      # license-key: <fillme> # MaxMind GeoLite2 license key (register at https://dev.maxmind.com/geoip/geolite2-free-geolocation-data)
       # database-path: /path/to/GeoLite2-Country.mmdb  # Optional: filesystem path override (takes priority over bundled database)
       # classpath-database: geoip/2026-04-11/GeoLite2-Country.mmdb  # Bundled database used as fallback when no license-key or database-path is set
       connect-timeout-ms: 10000
