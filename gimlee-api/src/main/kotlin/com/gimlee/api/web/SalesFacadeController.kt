@@ -87,7 +87,18 @@ class SalesFacadeController(
                 buyer = BuyerInfoDto(
                     id = purchase.buyerId.toHexString(),
                     username = usernamesMap[purchase.buyerId.toHexString()] ?: "Unknown"
-                )
+                ),
+                deliveryAddress = purchase.deliveryAddress?.let {
+                    DeliveryAddressSnapshotDto(
+                        name = it.name,
+                        fullName = it.fullName,
+                        street = it.street,
+                        city = it.city,
+                        postalCode = it.postalCode,
+                        country = it.country,
+                        phoneNumber = it.phoneNumber
+                    )
+                }
             )
         }
     }
@@ -139,7 +150,18 @@ class SalesFacadeController(
             buyer = BuyerInfoDto(
                 id = purchase.buyerId.toHexString(),
                 username = buyer?.username ?: "Unknown"
-            )
+            ),
+            deliveryAddress = purchase.deliveryAddress?.let {
+                DeliveryAddressSnapshotDto(
+                    name = it.name,
+                    fullName = it.fullName,
+                    street = it.street,
+                    city = it.city,
+                    postalCode = it.postalCode,
+                    country = it.country,
+                    phoneNumber = it.phoneNumber
+                )
+            }
         )
         return ResponseEntity.ok(dto)
     }

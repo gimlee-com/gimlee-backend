@@ -13,6 +13,7 @@ data class PurchaseDocument(
     val items: List<PurchaseItemDocument>,
     val totalAmount: Decimal128,
     val status: Int,
+    val deliveryAddress: DeliveryAddressSnapshotDocument? = null,
     val createdAtMicros: Long
 ) {
     companion object {
@@ -22,6 +23,7 @@ data class PurchaseDocument(
         const val FIELD_ITEMS = "its"
         const val FIELD_TOTAL_AMOUNT = "tamt"
         const val FIELD_STATUS = "st"
+        const val FIELD_DELIVERY_ADDRESS = "da"
         const val FIELD_CREATED_AT = "ca"
     }
 }

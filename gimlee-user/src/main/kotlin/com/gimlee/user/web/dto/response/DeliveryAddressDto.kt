@@ -12,10 +12,11 @@ data class DeliveryAddressDto(
     val postalCode: String,
     val country: String,
     val phoneNumber: String,
-    val isDefault: Boolean
+    val isDefault: Boolean,
+    val active: Boolean
 ) {
     companion object {
-        fun fromDomain(domain: DeliveryAddress) = DeliveryAddressDto(
+        fun fromDomain(domain: DeliveryAddress, countryOfResidence: String? = null) = DeliveryAddressDto(
             id = domain.id,
             name = domain.name,
             fullName = domain.fullName,
@@ -24,7 +25,8 @@ data class DeliveryAddressDto(
             postalCode = domain.postalCode,
             country = domain.country,
             phoneNumber = domain.phoneNumber,
-            isDefault = domain.isDefault
+            isDefault = domain.isDefault,
+            active = countryOfResidence != null && domain.country == countryOfResidence
         )
     }
 }

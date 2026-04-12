@@ -14,9 +14,59 @@ Authorization: Bearer {{auth_token}}
   "isDefault": true
 }
 
+### Expected Response (Success - 201 Created):
+# The `active` field indicates whether the address matches the user's current country of residence.
+# Content-Type: application/json
+#
+# {
+#   "id": "0192e4a0-7b3a-7f00-8000-000000000001",
+#   "name": "Home",
+#   "fullName": "John Doe",
+#   "street": "123 Main St",
+#   "city": "New York",
+#   "postalCode": "10001",
+#   "country": "US",
+#   "phoneNumber": "+1234567890",
+#   "isDefault": true,
+#   "active": true
+# }
+
 ### Get Delivery Addresses
+# Returns all delivery addresses for the authenticated user.
+# Each address includes an `active` flag indicating whether it matches the user's current country of residence.
+# Only active addresses can be used for purchases.
 GET {{host}}/api/user/delivery-addresses/
 Authorization: Bearer {{auth_token}}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# [
+#   {
+#     "id": "0192e4a0-7b3a-7f00-8000-000000000001",
+#     "name": "Home",
+#     "fullName": "John Doe",
+#     "street": "123 Main St",
+#     "city": "New York",
+#     "postalCode": "10001",
+#     "country": "US",
+#     "phoneNumber": "+1234567890",
+#     "isDefault": true,
+#     "active": true
+#   },
+#   {
+#     "id": "0192e4a0-7b3a-7f00-8000-000000000002",
+#     "name": "Poland Home",
+#     "fullName": "Jan Kowalski",
+#     "street": "ul. Marszałkowska 1",
+#     "city": "Warsaw",
+#     "postalCode": "00-001",
+#     "country": "PL",
+#     "phoneNumber": "+48123456789",
+#     "isDefault": false,
+#     "active": false
+#   }
+# ]
 
 ### Get User Preferences
 GET {{host}}/api/user/preferences

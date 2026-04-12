@@ -6,6 +6,7 @@ import com.gimlee.api.web.dto.PurchaseResponseDto
 import com.gimlee.api.web.dto.PurchaseStatusResponseDto
 import com.gimlee.api.web.dto.SalesOrderItemDto
 import com.gimlee.api.web.dto.SellerInfoDto
+import com.gimlee.api.web.dto.DeliveryAddressSnapshotDto
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.service.UserService
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
@@ -15,7 +16,10 @@ import com.gimlee.common.web.dto.StatusResponseDto
 import com.gimlee.payments.domain.PaymentService
 import com.gimlee.purchases.domain.PurchaseOutcome
 import com.gimlee.purchases.domain.PurchaseService
+import com.gimlee.purchases.domain.model.DeliveryAddressSnapshot
 import com.gimlee.purchases.web.dto.request.PurchaseRequestDto
+import com.gimlee.user.domain.DeliveryAddressService
+import com.gimlee.user.domain.UserPreferencesService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -47,6 +51,8 @@ class PurchaseFacadeController(
     private val paymentService: PaymentService,
     private val userService: UserService,
     private val adService: com.gimlee.ads.domain.AdService,
+    private val deliveryAddressService: DeliveryAddressService,
+    private val userPreferencesService: UserPreferencesService,
     private val messageSource: MessageSource
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -71,7 +77,12 @@ class PurchaseFacadeController(
     )
     @ApiResponse(
         responseCode = "400",
-        description = "Invalid purchase request. Possible status codes: PURCHASE_ADS_NOT_FOUND, PURCHASE_ADS_NOT_ACTIVE, PURCHASE_CANNOT_PURCHASE_FROM_SELF, PURCHASE_STOCK_INSUFFICIENT, PURCHASE_INVALID_PURCHASE_REQUEST",
+        description = "Invalid purchase request. Possible status codes: PURCHASE_ADS_NOT_FOUND, PURCHASE_ADS_NOT_ACTIVE, PURCHASE_CANNOT_PURCHASE_FROM_SELF, PURCHASE_STOCK_INSUFFICIENT, PURCHASE_INVALID_PURCHASE_REQUEST, PURCHASE_DELIVERY_ADDRESS_COUNTRY_MISMATCH, PURCHASE_COUNTRY_OF_RESIDENCE_REQUIRED",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Delivery address not found. Possible status codes: PURCHASE_DELIVERY_ADDRESS_NOT_FOUND",
         content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
     )
     @ApiResponse(
@@ -90,11 +101,16 @@ class PurchaseFacadeController(
         val principal = HttpServletRequestAuthUtil.getPrincipal()
         log.info("User {} making a purchase via facade for {} items", principal.userId, request.items.size)
 
+        val validationResult = validateDeliveryAddress(principal.userId, request)
+        if (validationResult.isFailure) return validationResult.errorResponse!!
+        val deliverySnapshot = validationResult.snapshot!!
+
         return try {
             val purchase = purchaseService.purchase(
                 buyerId = ObjectId(principal.userId),
                 items = request.items,
-                currency = request.currency
+                currency = request.currency,
+                deliveryAddress = deliverySnapshot
             )
             
             val payment = paymentService.getPaymentByPurchaseId(purchase.id)
@@ -194,7 +210,18 @@ class PurchaseFacadeController(
                 seller = SellerInfoDto(
                     id = purchase.sellerId.toHexString(),
                     username = usernamesMap[purchase.sellerId.toHexString()] ?: "Unknown"
-                )
+                ),
+                deliveryAddress = purchase.deliveryAddress?.let {
+                    DeliveryAddressSnapshotDto(
+                        name = it.name,
+                        fullName = it.fullName,
+                        street = it.street,
+                        city = it.city,
+                        postalCode = it.postalCode,
+                        country = it.country,
+                        phoneNumber = it.phoneNumber
+                    )
+                }
             )
         }
     }
@@ -297,5 +324,50 @@ class PurchaseFacadeController(
             log.error("Error cancelling purchase {}: {}", purchaseId, e.message, e)
             handleOutcome(CommonOutcome.INTERNAL_ERROR)
         }
+    }
+
+    private data class DeliveryAddressValidation(
+        val snapshot: DeliveryAddressSnapshot? = null,
+        val errorResponse: ResponseEntity<Any>? = null
+    ) {
+        val isFailure: Boolean get() = errorResponse != null
+    }
+
+    private fun validateDeliveryAddress(userId: String, request: PurchaseRequestDto): DeliveryAddressValidation {
+        val preferences = userPreferencesService.getUserPreferences(userId)
+        val countryOfResidence = preferences.countryOfResidence
+        if (countryOfResidence == null) {
+            log.warn("User {} attempted purchase without country of residence set", userId)
+            return DeliveryAddressValidation(errorResponse = handleOutcome(PurchaseOutcome.COUNTRY_OF_RESIDENCE_REQUIRED))
+        }
+
+        val address = deliveryAddressService.getDeliveryAddress(request.deliveryAddressId)
+        if (address == null) {
+            log.warn("User {} attempted purchase with non-existent delivery address {}", userId, request.deliveryAddressId)
+            return DeliveryAddressValidation(errorResponse = handleOutcome(PurchaseOutcome.DELIVERY_ADDRESS_NOT_FOUND))
+        }
+
+        if (address.userId != userId) {
+            log.warn("User {} attempted purchase with delivery address {} owned by another user", userId, request.deliveryAddressId)
+            return DeliveryAddressValidation(errorResponse = handleOutcome(PurchaseOutcome.DELIVERY_ADDRESS_NOT_FOUND))
+        }
+
+        if (address.country != countryOfResidence) {
+            log.warn(
+                "User {} attempted purchase with delivery address {} in country {} but country of residence is {}",
+                userId, request.deliveryAddressId, address.country, countryOfResidence
+            )
+            return DeliveryAddressValidation(errorResponse = handleOutcome(PurchaseOutcome.DELIVERY_ADDRESS_COUNTRY_MISMATCH))
+        }
+
+        return DeliveryAddressValidation(snapshot = DeliveryAddressSnapshot(
+            name = address.name,
+            fullName = address.fullName,
+            street = address.street,
+            city = address.city,
+            postalCode = address.postalCode,
+            country = address.country,
+            phoneNumber = address.phoneNumber
+        ))
     }
 }

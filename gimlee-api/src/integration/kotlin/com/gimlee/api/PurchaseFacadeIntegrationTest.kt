@@ -20,6 +20,8 @@ import com.gimlee.purchases.domain.model.PurchaseStatus
 import com.gimlee.common.UUIDv7
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import com.gimlee.purchases.web.dto.request.PurchaseRequestDto
+import com.gimlee.user.domain.DeliveryAddressService
+import com.gimlee.user.domain.UserPreferencesService
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.bson.types.ObjectId
@@ -38,10 +40,10 @@ class PurchaseFacadeIntegrationTest(
     private val objectMapper: ObjectMapper,
     private val adService: AdService,
     private val userRoleRepository: UserRoleRepository,
-    private val userWalletAddressRepository: UserWalletAddressRepository
+    private val userWalletAddressRepository: UserWalletAddressRepository,
+    private val deliveryAddressService: DeliveryAddressService,
+    private val userPreferencesService: UserPreferencesService
 ) : BaseIntegrationTest({
-
-    val testDeliveryAddressId = UUIDv7.generate()
 
     Given("a seller and an active Ad") {
         val sellerId = ObjectId.get()
@@ -71,6 +73,20 @@ class PurchaseFacadeIntegrationTest(
         And("a buyer") {
             val buyerId = ObjectId.get()
             val principal = Principal(userId = buyerId.toHexString(), username = "buyer", roles = listOf(Role.USER))
+
+            userPreferencesService.updateUserPreferences(buyerId.toHexString(), "en-US", "ARRR", "PL")
+            val buyerAddress = deliveryAddressService.addDeliveryAddress(
+                userId = buyerId.toHexString(),
+                name = "Home",
+                fullName = "Test Buyer",
+                street = "123 Main St",
+                city = "Warsaw",
+                postalCode = "00-001",
+                country = "PL",
+                phoneNumber = "+48123456789",
+                isDefault = true
+            )
+            val testDeliveryAddressId = buyerAddress.id
 
             When("the buyer makes a purchase through the facade") {
                 val request = PurchaseRequestDto(
@@ -124,10 +140,22 @@ class PurchaseFacadeIntegrationTest(
 
             When("the seller attempts to purchase from self") {
                 val sellerPrincipal = Principal(userId = sellerId.toHexString(), username = "seller", roles = listOf(Role.USER))
+                userPreferencesService.updateUserPreferences(sellerId.toHexString(), "en-US", "ARRR", "PL")
+                val sellerAddress = deliveryAddressService.addDeliveryAddress(
+                    userId = sellerId.toHexString(),
+                    name = "Seller Home",
+                    fullName = "Test Seller",
+                    street = "456 Seller St",
+                    city = "Warsaw",
+                    postalCode = "00-002",
+                    country = "PL",
+                    phoneNumber = "+48111222333",
+                    isDefault = true
+                )
                 val request = PurchaseRequestDto(
                     items = listOf(PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("10.00"))),
                     currency = Currency.ARRR,
-                    deliveryAddressId = testDeliveryAddressId
+                    deliveryAddressId = sellerAddress.id
                 )
 
                 mockMvc.post("/purchases") {

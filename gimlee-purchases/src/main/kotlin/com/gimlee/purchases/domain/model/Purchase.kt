@@ -12,6 +12,7 @@ data class Purchase(
     val items: List<PurchaseItem>,
     val totalAmount: BigDecimal,
     val status: PurchaseStatus,
+    val deliveryAddress: DeliveryAddressSnapshot? = null,
     val createdAt: Instant
 )
 

@@ -11,7 +11,8 @@ data class SalesOrderDto(
     val totalAmount: BigDecimal,
     val currency: String,
     val items: List<SalesOrderItemDto>,
-    val buyer: BuyerInfoDto
+    val buyer: BuyerInfoDto,
+    val deliveryAddress: DeliveryAddressSnapshotDto?
 )
 
 data class SalesOrderItemDto(

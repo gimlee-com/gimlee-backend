@@ -6,6 +6,8 @@
 # 1. User must be authenticated (logged in).
 # 2. The Ad must exist and have enough stock.
 # 3. If it's a Pirate Chain (ARRR) purchase, the seller must have a wallet linked.
+# 4. User must have a country of residence set in their profile.
+# 5. A delivery address that matches the user's country of residence must be provided.
 #
 # @name placePurchase
 POST {{host}}/api/purchases
@@ -20,7 +22,8 @@ Authorization: Bearer {{auth_token}}
       "unitPrice": 1.5
     }
   ],
-  "currency": "ARRR"
+  "currency": "ARRR",
+  "deliveryAddressId": "0192e4a0-7b3a-7f00-8000-000000000001"
 }
 
 ### Expected Response (Success - 201 Created):
@@ -43,16 +46,26 @@ Authorization: Bearer {{auth_token}}
 ### Expected Response (Error - 400 Bad Request):
 # Occurs if the Ad is not found, stock is insufficient, seller lacks a wallet, or multiple sellers are involved.
 # Also occurs if the buyer attempts to purchase from themselves.
+# Also occurs if the delivery address does not match the user's country of residence (PURCHASE_DELIVERY_ADDRESS_COUNTRY_MISMATCH).
+# Also occurs if the user has not set a country of residence (PURCHASE_COUNTRY_OF_RESIDENCE_REQUIRED).
 # Content-Type: application/json
 #
 # {
-#   "error": "Ad not found: 60f8f9b3a9d9e8f8a8b8c8d8"
-# }
-# or
-# {
-#   "error": "Cannot purchase from self."
+#   "success": false,
+#   "status": "PURCHASE_DELIVERY_ADDRESS_COUNTRY_MISMATCH",
+#   "message": "The selected delivery address does not match your country of residence. Please update your country of residence in profile settings or choose a different address."
 # }
 #
+
+### Expected Response (Error - 404 Not Found):
+# Occurs if the delivery address does not exist or does not belong to the user (PURCHASE_DELIVERY_ADDRESS_NOT_FOUND).
+# Content-Type: application/json
+#
+# {
+#   "success": false,
+#   "status": "PURCHASE_DELIVERY_ADDRESS_NOT_FOUND",
+#   "message": "The selected delivery address was not found."
+# }
 
 ### Expected Response (Error - 409 Conflict):
 # Occurs if the provided price or currency does not match the actual Ad price for any item.

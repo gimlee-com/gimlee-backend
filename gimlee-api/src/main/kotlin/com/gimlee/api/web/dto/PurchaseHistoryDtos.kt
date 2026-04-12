@@ -11,7 +11,18 @@ data class PurchaseHistoryDto(
     val totalAmount: BigDecimal,
     val currency: String,
     val items: List<SalesOrderItemDto>,
-    val seller: SellerInfoDto
+    val seller: SellerInfoDto,
+    val deliveryAddress: DeliveryAddressSnapshotDto?
+)
+
+data class DeliveryAddressSnapshotDto(
+    val name: String,
+    val fullName: String,
+    val street: String,
+    val city: String,
+    val postalCode: String,
+    val country: String,
+    val phoneNumber: String
 )
 
 data class SellerInfoDto(

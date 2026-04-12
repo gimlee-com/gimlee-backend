@@ -60,6 +60,10 @@ class DeliveryAddressService(
         return deliveryAddressRepository.save(address)
     }
 
+    fun getDeliveryAddress(id: UUID): DeliveryAddress? {
+        return deliveryAddressRepository.findById(id)
+    }
+
     fun getDeliveryAddresses(userId: String): List<DeliveryAddress> {
         return deliveryAddressRepository.findAllByUserId(userId)
     }

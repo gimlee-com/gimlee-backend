@@ -177,7 +177,8 @@ class UserController(
                 phoneNumber = request.phoneNumber,
                 isDefault = request.isDefault
             )
-            ResponseEntity.status(HttpStatus.CREATED).body(DeliveryAddressDto.fromDomain(address))
+            val preferences = userPreferencesService.getUserPreferences(principal.userId)
+            ResponseEntity.status(HttpStatus.CREATED).body(DeliveryAddressDto.fromDomain(address, preferences.countryOfResidence))
         } catch (e: DeliveryAddressService.MaxAddressesReachedException) {
             log.warn("User {} reached maximum delivery addresses", principal.userId)
             handleOutcome(UserOutcome.MAX_ADDRESSES_REACHED)
@@ -209,7 +210,8 @@ class UserController(
 
         return try {
             val addresses = deliveryAddressService.getDeliveryAddresses(principal.userId)
-            ResponseEntity.ok(addresses.map { DeliveryAddressDto.fromDomain(it) })
+            val preferences = userPreferencesService.getUserPreferences(principal.userId)
+            ResponseEntity.ok(addresses.map { DeliveryAddressDto.fromDomain(it, preferences.countryOfResidence) })
         } catch (e: Exception) {
             log.error("Error retrieving delivery addresses for user {}: {}", principal.userId, e.message, e)
             handleOutcome(CommonOutcome.INTERNAL_ERROR)

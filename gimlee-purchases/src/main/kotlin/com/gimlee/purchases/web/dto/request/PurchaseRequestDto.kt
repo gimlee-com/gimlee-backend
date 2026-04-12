@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
 import java.math.BigDecimal
+import java.util.UUID
 
 data class PurchaseRequestDto(
     @field:NotEmpty(message = "Items list cannot be empty")
@@ -13,7 +14,10 @@ data class PurchaseRequestDto(
     val items: List<PurchaseItemRequestDto>,
 
     @field:NotNull(message = "Currency is mandatory")
-    val currency: Currency
+    val currency: Currency,
+
+    @field:NotNull(message = "Delivery address is mandatory")
+    val deliveryAddressId: UUID
 )
 
 data class PurchaseItemRequestDto(

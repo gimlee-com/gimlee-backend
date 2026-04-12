@@ -6,15 +6,18 @@ import com.gimlee.common.toMicros
 import com.gimlee.purchases.domain.model.Purchase
 import com.gimlee.purchases.domain.model.PurchaseItem
 import com.gimlee.purchases.domain.model.PurchaseStatus
+import com.gimlee.purchases.domain.model.DeliveryAddressSnapshot
 import com.gimlee.purchases.persistence.model.PurchaseDocument
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_BUYER_ID
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_CREATED_AT
+import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_DELIVERY_ADDRESS
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_ID
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_ITEMS
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_SELLER_ID
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_STATUS
 import com.gimlee.purchases.persistence.model.PurchaseDocument.Companion.FIELD_TOTAL_AMOUNT
 import com.gimlee.purchases.persistence.model.PurchaseItemDocument
+import com.gimlee.purchases.persistence.model.DeliveryAddressSnapshotDocument
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Filters
@@ -128,6 +131,17 @@ class PurchaseRepository(
             items = items.map { it.toDocument() },
             totalAmount = Decimal128(totalAmount),
             status = status.id,
+            deliveryAddress = deliveryAddress?.let {
+                DeliveryAddressSnapshotDocument(
+                    name = it.name,
+                    fullName = it.fullName,
+                    street = it.street,
+                    city = it.city,
+                    postalCode = it.postalCode,
+                    country = it.country,
+                    phoneNumber = it.phoneNumber
+                )
+            },
             createdAtMicros = createdAt.toMicros()
         )
 
@@ -140,7 +154,7 @@ class PurchaseRepository(
         )
 
     private fun mapToBsonDocument(doc: PurchaseDocument): Document {
-        return Document()
+        val bson = Document()
             .append(FIELD_ID, doc.id)
             .append(FIELD_BUYER_ID, doc.buyerId)
             .append(FIELD_SELLER_ID, doc.sellerId)
@@ -154,6 +168,20 @@ class PurchaseRepository(
             .append(FIELD_TOTAL_AMOUNT, doc.totalAmount)
             .append(FIELD_STATUS, doc.status)
             .append(FIELD_CREATED_AT, doc.createdAtMicros)
+
+        doc.deliveryAddress?.let { addr ->
+            bson.append(FIELD_DELIVERY_ADDRESS, Document()
+                .append(DeliveryAddressSnapshotDocument.FIELD_NAME, addr.name)
+                .append(DeliveryAddressSnapshotDocument.FIELD_FULL_NAME, addr.fullName)
+                .append(DeliveryAddressSnapshotDocument.FIELD_STREET, addr.street)
+                .append(DeliveryAddressSnapshotDocument.FIELD_CITY, addr.city)
+                .append(DeliveryAddressSnapshotDocument.FIELD_POSTAL_CODE, addr.postalCode)
+                .append(DeliveryAddressSnapshotDocument.FIELD_COUNTRY, addr.country)
+                .append(DeliveryAddressSnapshotDocument.FIELD_PHONE_NUMBER, addr.phoneNumber)
+            )
+        }
+
+        return bson
     }
 
     private fun Document.toPurchase(): Purchase = Purchase(
@@ -163,7 +191,18 @@ class PurchaseRepository(
         items = getList(FIELD_ITEMS, Document::class.java).map { it.toPurchaseItem() },
         totalAmount = get(FIELD_TOTAL_AMOUNT, Decimal128::class.java).bigDecimalValue(),
         status = PurchaseStatus.entries.first { it.id == getInteger(FIELD_STATUS) },
+        deliveryAddress = get(FIELD_DELIVERY_ADDRESS, Document::class.java)?.toDeliveryAddressSnapshot(),
         createdAt = fromMicros(getLong(FIELD_CREATED_AT))
+    )
+
+    private fun Document.toDeliveryAddressSnapshot(): DeliveryAddressSnapshot = DeliveryAddressSnapshot(
+        name = getString(DeliveryAddressSnapshotDocument.FIELD_NAME),
+        fullName = getString(DeliveryAddressSnapshotDocument.FIELD_FULL_NAME),
+        street = getString(DeliveryAddressSnapshotDocument.FIELD_STREET),
+        city = getString(DeliveryAddressSnapshotDocument.FIELD_CITY),
+        postalCode = getString(DeliveryAddressSnapshotDocument.FIELD_POSTAL_CODE),
+        country = getString(DeliveryAddressSnapshotDocument.FIELD_COUNTRY),
+        phoneNumber = getString(DeliveryAddressSnapshotDocument.FIELD_PHONE_NUMBER)
     )
 
     private fun Document.toPurchaseItem(): PurchaseItem = PurchaseItem(

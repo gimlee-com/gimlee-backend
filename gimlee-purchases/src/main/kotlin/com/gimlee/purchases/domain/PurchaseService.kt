@@ -14,6 +14,7 @@ import com.gimlee.payments.domain.service.VolatilityStateService
 import com.gimlee.purchases.domain.model.Purchase
 import com.gimlee.purchases.domain.model.PurchaseItem
 import com.gimlee.purchases.domain.model.PurchaseStatus
+import com.gimlee.purchases.domain.model.DeliveryAddressSnapshot
 import com.gimlee.purchases.persistence.PurchaseRepository
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import org.bson.types.ObjectId
@@ -43,7 +44,8 @@ class PurchaseService(
     fun purchase(
         buyerId: ObjectId,
         items: List<PurchaseItemRequestDto>,
-        currency: Currency
+        currency: Currency,
+        deliveryAddress: DeliveryAddressSnapshot
     ): Purchase {
         val ads = adService.getAds(items.map { it.adId }).associateBy { it.id }
 
@@ -76,7 +78,8 @@ class PurchaseService(
                 )
             },
             totalAmount = totalAmount,
-            paymentMethod = getPaymentMethod(currency)
+            paymentMethod = getPaymentMethod(currency),
+            deliveryAddress = deliveryAddress
         )
     }
 
@@ -233,7 +236,8 @@ class PurchaseService(
         sellerId: ObjectId,
         items: List<PurchaseItem>,
         totalAmount: BigDecimal,
-        paymentMethod: PaymentMethod
+        paymentMethod: PaymentMethod,
+        deliveryAddress: DeliveryAddressSnapshot
     ): Purchase {
         val purchaseId = ObjectId.get()
         val now = Instant.now()
@@ -245,6 +249,7 @@ class PurchaseService(
             items = items,
             totalAmount = totalAmount,
             status = PurchaseStatus.CREATED,
+            deliveryAddress = deliveryAddress,
             createdAt = now
         )
         
