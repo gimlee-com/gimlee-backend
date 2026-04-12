@@ -44,4 +44,18 @@ class SessionInitIntegrationTest(
             }
         }
     }
+
+    Given("the countryOfResidence decorator") {
+        val url = "/session/init?decorators=countryOfResidence"
+
+        When("requesting countryOfResidence as a guest") {
+            val response = restTemplate.getForEntity(url, Map::class.java)
+
+            Then("it should return null for guests") {
+                response.statusCode shouldBe HttpStatus.OK
+                val body = response.body!!
+                body["countryOfResidence"] shouldBe null
+            }
+        }
+    }
 })

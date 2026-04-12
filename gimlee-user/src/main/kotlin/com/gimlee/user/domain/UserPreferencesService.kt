@@ -53,4 +53,8 @@ class UserPreferencesService(
         userPreferencesRepository.save(UserPreferencesDocument.fromDomain(preferences))
         return preferences
     }
+
+    fun setCountryOfResidence(userId: String, countryOfResidence: String) {
+        userPreferencesRepository.setCountryOfResidence(ObjectId(userId), countryOfResidence)
+    }
 }

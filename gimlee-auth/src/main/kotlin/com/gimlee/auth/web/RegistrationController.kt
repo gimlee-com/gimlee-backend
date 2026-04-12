@@ -34,7 +34,7 @@ class RegistrationController(
 
     @Operation(
         summary = "Register User",
-        description = "Creates a new user account. The account will initially be unverified. Registration requires a unique username and email."
+        description = "Creates a new user account. The account will initially be unverified. Registration requires a unique username and email. An optional country of residence (ISO 3166-1 alpha-2) can be provided."
     )
     @ApiResponse(
         responseCode = "201",
@@ -43,7 +43,7 @@ class RegistrationController(
     )
     @PostMapping(path = ["/auth/register"])
     fun register(@Valid @RequestBody registrationData: RegisterRequestDto): ResponseEntity<StatusResponseDto> {
-        registrationService.register(registrationData.toUser())
+        registrationService.register(registrationData.toUser(), registrationData.countryOfResidence)
         val outcome = CommonOutcome.SUCCESS
         val message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale())
         return ResponseEntity.status(HttpStatus.CREATED).body(StatusResponseDto.fromOutcome(outcome, message))

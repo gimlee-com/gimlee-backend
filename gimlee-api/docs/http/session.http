@@ -1,5 +1,5 @@
 ### Initialize Session with all decorators
-GET {{host}}/api/session/init?decorators=accessToken,userProfile,preferredCurrency,publicChatId
+GET {{host}}/api/session/init?decorators=accessToken,userProfile,preferredCurrency,countryOfResidence,publicChatId
 Accept: application/json
 Accept-Language: pl-PL
 
@@ -11,6 +11,27 @@ Accept: application/json
 GET {{host}}/api/session/init?decorators=preferredCurrency
 Accept: application/json
 Accept-Language: pl-PL
+
+### Initialize Session with only countryOfResidence
+# Returns the authenticated user's country of residence (ISO 3166-1 alpha-2).
+# Returns null for guest users or if not set.
+GET {{host}}/api/session/init?decorators=countryOfResidence
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+
+### Expected Response (Success - 200 OK, authenticated user with country set):
+# Content-Type: application/json
+#
+# {
+#   "countryOfResidence": "US"
+# }
+
+### Expected Response (Success - 200 OK, guest or no country set):
+# Content-Type: application/json
+#
+# {
+#   "countryOfResidence": null
+# }
 
 ### Initialize Session with only accessToken
 GET {{host}}/api/session/init?decorators=accessToken

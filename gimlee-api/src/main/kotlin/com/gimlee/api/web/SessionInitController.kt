@@ -32,6 +32,7 @@ class SessionInitController(
             * `accessToken`: Adds `accessToken` (String?) with the current JWT token.
             * `userProfile`: Adds `userProfile` (UserProfileDto?) with the user's profile details.
             * `preferredCurrency`: Adds `preferredCurrency` (String?) with the user's preferred currency (e.g., USD, PLN).
+            * `countryOfResidence`: Adds `countryOfResidence` (String?) with the user's country of residence as ISO 3166-1 alpha-2 code (e.g., US, PL). Null for guests or if not set.
             * `publicChatId`: Adds `publicChatId` (String?) with the hardcoded public chat ID.
             * `banStatus`: Adds `banned` (Boolean), `banReason` (String?), `bannedAt` (Long?), and `bannedUntil` (Long?) with ban details if the user is currently banned.
         """
@@ -45,7 +46,7 @@ class SessionInitController(
     fun init(
         @Parameter(
             description = "List of decorators to include in the response",
-            array = ArraySchema(schema = Schema(allowableValues = ["accessToken", "userProfile", "preferredCurrency", "publicChatId", "banStatus"]))
+            array = ArraySchema(schema = Schema(allowableValues = ["accessToken", "userProfile", "preferredCurrency", "countryOfResidence", "publicChatId", "banStatus"]))
         )
         @RequestParam(required = false) decorators: List<String>?,
         request: HttpServletRequest

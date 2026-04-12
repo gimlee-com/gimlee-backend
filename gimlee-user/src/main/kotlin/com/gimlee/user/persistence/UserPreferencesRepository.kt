@@ -7,6 +7,8 @@ import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.model.Updates
 import org.bson.Document
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Repository
@@ -40,5 +42,14 @@ class UserPreferencesRepository(private val mongoDatabase: MongoDatabase) {
             preferredCurrency = doc.getString(UserPreferencesDocument.FIELD_PREFERRED_CURRENCY),
             countryOfResidence = doc.getString(UserPreferencesDocument.FIELD_COUNTRY_OF_RESIDENCE)
         )
+    }
+
+    fun setCountryOfResidence(userId: ObjectId, countryOfResidence: String) {
+        val filter = Filters.eq(FIELD_USER_ID, userId)
+        val update = Updates.combine(
+            Updates.set(UserPreferencesDocument.FIELD_COUNTRY_OF_RESIDENCE, countryOfResidence),
+            Updates.setOnInsert(UserPreferencesDocument.FIELD_LANGUAGE, "en-US")
+        )
+        collection.updateOne(filter, update, UpdateOptions().upsert(true))
     }
 }
