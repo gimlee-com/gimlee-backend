@@ -16,6 +16,7 @@ import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.purchases.domain.PurchaseService
+import com.gimlee.purchases.domain.model.DeliveryAddressSnapshot
 import com.gimlee.purchases.domain.model.PurchaseStatus
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import io.kotest.matchers.shouldBe
@@ -31,6 +32,16 @@ class PurchaseFlowIntegrationTest(
     private val userWalletAddressRepository: UserWalletAddressRepository,
     private val eventPublisher: ApplicationEventPublisher
 ) : BaseIntegrationTest({
+
+    val testDeliveryAddress = DeliveryAddressSnapshot(
+        name = "Home",
+        fullName = "John Doe",
+        street = "123 Main St",
+        city = "Warsaw",
+        postalCode = "00-001",
+        country = "PL",
+        phoneNumber = "+48123456789"
+    )
 
     Given("a seller with PIRATE role and an active Ad") {
         val sellerId = ObjectId.get()
@@ -65,7 +76,8 @@ class PurchaseFlowIntegrationTest(
                 val purchase = purchaseService.purchase(
                     buyerId,
                     listOf(PurchaseItemRequestDto(ad.id, 1, BigDecimal("10.00"))),
-                    Currency.ARRR
+                    Currency.ARRR,
+                    testDeliveryAddress
                 )
 
                 Then("the purchase status should be AWAITING_PAYMENT") {
@@ -113,7 +125,8 @@ class PurchaseFlowIntegrationTest(
                 val purchase = purchaseService.purchase(
                     buyerId,
                     listOf(PurchaseItemRequestDto(ad.id, remainingStock, BigDecimal("10.00"))),
-                    Currency.ARRR
+                    Currency.ARRR,
+                    testDeliveryAddress
                 )
 
                 And("the payment is complete") {

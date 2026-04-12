@@ -14,6 +14,7 @@ import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
 import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
 import com.gimlee.purchases.domain.PurchaseService
+import com.gimlee.purchases.domain.model.DeliveryAddressSnapshot
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -29,6 +30,16 @@ class AdManagementIntegrationTest(
     private val userRoleRepository: UserRoleRepository,
     private val userWalletAddressRepository: UserWalletAddressRepository
 ) : BaseIntegrationTest({
+
+    val testDeliveryAddress = DeliveryAddressSnapshot(
+        name = "Home",
+        fullName = "John Doe",
+        street = "123 Main St",
+        city = "Warsaw",
+        postalCode = "00-001",
+        country = "PL",
+        phoneNumber = "+48123456789"
+    )
 
     fun setupSellerWithWallet(): ObjectId {
         val sellerId = ObjectId.get()
@@ -225,7 +236,8 @@ class AdManagementIntegrationTest(
         purchaseService.purchase(
             buyerId,
             listOf(PurchaseItemRequestDto(ad.id, 3, BigDecimal.TEN)),
-            Currency.ARRR
+            Currency.ARRR,
+            testDeliveryAddress
         )
 
         val adAfterPurchase = adService.getAd(ad.id)!!

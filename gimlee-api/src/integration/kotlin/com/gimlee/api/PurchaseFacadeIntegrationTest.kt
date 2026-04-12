@@ -17,6 +17,7 @@ import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
 import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
 import com.gimlee.purchases.domain.model.PurchaseStatus
+import com.gimlee.common.UUIDv7
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import com.gimlee.purchases.web.dto.request.PurchaseRequestDto
 import io.kotest.matchers.shouldBe
@@ -39,6 +40,8 @@ class PurchaseFacadeIntegrationTest(
     private val userRoleRepository: UserRoleRepository,
     private val userWalletAddressRepository: UserWalletAddressRepository
 ) : BaseIntegrationTest({
+
+    val testDeliveryAddressId = UUIDv7.generate()
 
     Given("a seller and an active Ad") {
         val sellerId = ObjectId.get()
@@ -72,7 +75,8 @@ class PurchaseFacadeIntegrationTest(
             When("the buyer makes a purchase through the facade") {
                 val request = PurchaseRequestDto(
                     items = listOf(PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("10.00"))),
-                    currency = Currency.ARRR
+                    currency = Currency.ARRR,
+                    deliveryAddressId = testDeliveryAddressId
                 )
                 
                 val result = mockMvc.post("/purchases") {
@@ -122,7 +126,8 @@ class PurchaseFacadeIntegrationTest(
                 val sellerPrincipal = Principal(userId = sellerId.toHexString(), username = "seller", roles = listOf(Role.USER))
                 val request = PurchaseRequestDto(
                     items = listOf(PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("10.00"))),
-                    currency = Currency.ARRR
+                    currency = Currency.ARRR,
+                    deliveryAddressId = testDeliveryAddressId
                 )
 
                 mockMvc.post("/purchases") {
@@ -138,7 +143,8 @@ class PurchaseFacadeIntegrationTest(
             When("the buyer cancels the purchase") {
                 val request = PurchaseRequestDto(
                     items = listOf(PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("10.00"))),
-                    currency = Currency.ARRR
+                    currency = Currency.ARRR,
+                    deliveryAddressId = testDeliveryAddressId
                 )
 
                 val result = mockMvc.post("/purchases") {
@@ -171,7 +177,8 @@ class PurchaseFacadeIntegrationTest(
             When("the buyer attempts to make a purchase with a mismatched targetAmount") {
                 val maliciousRequest = PurchaseRequestDto(
                     items = listOf(PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("1.00"))),
-                    currency = Currency.ARRR
+                    currency = Currency.ARRR,
+                    deliveryAddressId = testDeliveryAddressId
                 )
 
                 mockMvc.post("/purchases") {
@@ -205,7 +212,8 @@ class PurchaseFacadeIntegrationTest(
                         PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("10.00")),
                         PurchaseItemRequestDto(adId = ad2.id, quantity = 1, unitPrice = BigDecimal("5.00"))
                     ),
-                    currency = Currency.ARRR
+                    currency = Currency.ARRR,
+                    deliveryAddressId = testDeliveryAddressId
                 )
 
                 mockMvc.post("/purchases") {
@@ -236,7 +244,8 @@ class PurchaseFacadeIntegrationTest(
                         PurchaseItemRequestDto(adId = ad.id, quantity = 1, unitPrice = BigDecimal("15.00")),
                         PurchaseItemRequestDto(adId = ad2.id, quantity = 1, unitPrice = BigDecimal("15.00"))
                     ),
-                    currency = Currency.ARRR
+                    currency = Currency.ARRR,
+                    deliveryAddressId = testDeliveryAddressId
                 )
 
                 mockMvc.post("/purchases") {
@@ -257,7 +266,8 @@ class PurchaseFacadeIntegrationTest(
 
                 val request = PurchaseRequestDto(
                     items = listOf(PurchaseItemRequestDto(adId = inactiveAd.id, quantity = 1, unitPrice = BigDecimal("10.00"))),
-                    currency = Currency.ARRR
+                    currency = Currency.ARRR,
+                    deliveryAddressId = testDeliveryAddressId
                 )
 
                 mockMvc.post("/purchases") {

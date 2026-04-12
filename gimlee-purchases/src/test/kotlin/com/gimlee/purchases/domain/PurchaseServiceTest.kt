@@ -14,6 +14,7 @@ import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.payments.domain.service.CurrencyConverterService
 import com.gimlee.payments.domain.service.VolatilityStateService
+import com.gimlee.purchases.domain.model.DeliveryAddressSnapshot
 import com.gimlee.purchases.domain.model.Purchase
 import com.gimlee.purchases.domain.model.PurchaseItem
 import com.gimlee.purchases.domain.model.PurchaseStatus
@@ -48,6 +49,16 @@ class PurchaseServiceTest : StringSpec({
         volatilityStateService,
         currencyConverterService,
         BigDecimal("0.01")
+    )
+
+    val testDeliveryAddress = DeliveryAddressSnapshot(
+        name = "Home",
+        fullName = "John Doe",
+        street = "123 Main St",
+        city = "Warsaw",
+        postalCode = "00-001",
+        country = "PL",
+        phoneNumber = "+48123456789"
     )
 
     "should init purchase and payment and publish events" {
@@ -86,7 +97,7 @@ class PurchaseServiceTest : StringSpec({
             ConversionResult(amt, from, to, emptyList(), Instant.now(), false)
         }
 
-        service.purchase(buyerId, listOf(PurchaseItemRequestDto(adId.toHexString(), 1, amount)), Currency.ARRR)
+        service.purchase(buyerId, listOf(PurchaseItemRequestDto(adId.toHexString(), 1, amount)), Currency.ARRR, testDeliveryAddress)
 
         verify { paymentService.initPayment(any(), buyerId, sellerId, amount, PaymentMethod.PIRATE_CHAIN) }
         verify(exactly = 2) { purchaseRepository.save(any()) } 
@@ -122,7 +133,8 @@ class PurchaseServiceTest : StringSpec({
             service.purchase(
                 buyerId,
                 listOf(PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.TEN)),
-                Currency.ARRR
+                Currency.ARRR,
+                testDeliveryAddress
             )
         }
         exception.message shouldContain "Purchase temporarily suspended"
@@ -162,7 +174,8 @@ class PurchaseServiceTest : StringSpec({
         service.purchase(
             buyerId,
             listOf(PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.TEN)),
-            Currency.ARRR
+            Currency.ARRR,
+            testDeliveryAddress
         )
 
         verify { purchaseRepository.save(any()) }
@@ -198,7 +211,7 @@ class PurchaseServiceTest : StringSpec({
             ConversionResult(amt, from, to, emptyList(), Instant.now(), false)
         }
 
-        service.purchase(buyerId, listOf(PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.TEN)), Currency.ARRR)
+        service.purchase(buyerId, listOf(PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.TEN)), Currency.ARRR, testDeliveryAddress)
 
         verify { purchaseRepository.save(match { it.status == PurchaseStatus.CREATED }) }
     }
@@ -234,7 +247,7 @@ class PurchaseServiceTest : StringSpec({
         }
         
         val exception = shouldThrow<PurchaseService.AdPriceMismatchException> {
-            service.purchase(buyerId, listOf(PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.ONE)), Currency.ARRR)
+            service.purchase(buyerId, listOf(PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.ONE)), Currency.ARRR, testDeliveryAddress)
         }
         exception.currentPrices[adId.toHexString()] shouldBe CurrencyAmount(BigDecimal.TEN, Currency.ARRR)
     }
@@ -293,7 +306,7 @@ class PurchaseServiceTest : StringSpec({
         )
 
         val exception = shouldThrow<IllegalArgumentException> {
-            service.purchase(buyerId, items, Currency.ARRR)
+            service.purchase(buyerId, items, Currency.ARRR, testDeliveryAddress)
         }
         exception.message shouldBe "All items in a purchase must belong to the same seller."
     }
@@ -352,7 +365,7 @@ class PurchaseServiceTest : StringSpec({
         )
 
         val exception = shouldThrow<PurchaseService.AdPriceMismatchException> {
-            service.purchase(buyerId, items, Currency.ARRR)
+            service.purchase(buyerId, items, Currency.ARRR, testDeliveryAddress)
         }
         exception.currentPrices[adId1.toHexString()] shouldBe CurrencyAmount(BigDecimal.TEN, Currency.ARRR)
         exception.currentPrices[adId2.toHexString()] shouldBe CurrencyAmount(BigDecimal("20.0"), Currency.ARRR)
@@ -381,7 +394,7 @@ class PurchaseServiceTest : StringSpec({
         every { adService.getAds(listOf(adId.toHexString())) } returns listOf(ad)
 
         val exception = shouldThrow<IllegalStateException> {
-            service.purchase(buyerId, listOf(PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.TEN)), Currency.ARRR)
+            service.purchase(buyerId, listOf(PurchaseItemRequestDto(adId.toHexString(), 1, BigDecimal.TEN)), Currency.ARRR, testDeliveryAddress)
         }
         exception.message shouldBe "One or more ads are not active: ${adId.toHexString()}"
     }

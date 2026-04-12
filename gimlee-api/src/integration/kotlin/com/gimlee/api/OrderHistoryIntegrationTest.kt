@@ -16,6 +16,7 @@ import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
 import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
 import com.gimlee.purchases.domain.PurchaseService
+import com.gimlee.purchases.domain.model.DeliveryAddressSnapshot
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
@@ -35,6 +36,16 @@ class OrderHistoryIntegrationTest(
     private val userRepository: UserRepository,
     private val userWalletAddressRepository: UserWalletAddressRepository
 ) : BaseIntegrationTest({
+
+    val testDeliveryAddress = DeliveryAddressSnapshot(
+        name = "Home",
+        fullName = "John Doe",
+        street = "123 Main St",
+        city = "Warsaw",
+        postalCode = "00-001",
+        country = "PL",
+        phoneNumber = "+48123456789"
+    )
 
     Given("a seller and a buyer") {
         val sellerId = ObjectId.get()
@@ -69,7 +80,8 @@ class OrderHistoryIntegrationTest(
             val purchase = purchaseService.purchase(
                 buyerId,
                 listOf(PurchaseItemRequestDto(ad.id, 2, BigDecimal("50.00"))),
-                Currency.ARRR
+                Currency.ARRR,
+                testDeliveryAddress
             )
 
             When("the seller fetches their sales orders") {
