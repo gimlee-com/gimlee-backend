@@ -32,6 +32,7 @@ class AdStockService(
             log.info("Ad {} became INACTIVE due to stock depletion", adId)
             eventPublisher.publishEvent(AdStatusChangedEvent(
                 adId = adId.toHexString(),
+                sellerId = oldAd.userId.toHexString(),
                 oldStatus = AdStatus.ACTIVE.name,
                 newStatus = AdStatus.INACTIVE.name,
                 categoryIds = oldAd.categoryIds ?: emptyList(),
