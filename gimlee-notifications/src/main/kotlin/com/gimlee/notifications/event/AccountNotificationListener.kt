@@ -1,5 +1,6 @@
 package com.gimlee.notifications.event
 
+import com.gimlee.events.BanExpiryApproachingEvent
 import com.gimlee.events.UserBannedEvent
 import com.gimlee.events.UserRegisteredEvent
 import com.gimlee.events.UserUnbannedEvent
@@ -61,6 +62,22 @@ class AccountNotificationListener(
             )
         } catch (e: Exception) {
             log.error("Failed to process welcome notification: userId={}", event.userId, e)
+        }
+    }
+
+    // U3: Ban expiring soon
+    @Async
+    @EventListener
+    fun handleBanExpiryApproaching(event: BanExpiryApproachingEvent) {
+        try {
+            notificationService.createNotification(
+                userId = event.userId,
+                type = NotificationType.ACCOUNT_BAN_EXPIRING,
+                language = languageProvider.getLanguage(event.userId),
+                metadata = mapOf("bannedUntil" to event.bannedUntil.toString())
+            )
+        } catch (e: Exception) {
+            log.error("Failed to process ban expiry approaching notification: userId={}", event.userId, e)
         }
     }
 }

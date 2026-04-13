@@ -49,7 +49,12 @@ enum class NotificationType(
     MODERATION_WARNING("moderation.warning", ACCOUNT, WARNING, "gimlee.notifications.moderation.warning"),
     MODERATION_CONTENT_REMOVED("moderation.content_removed", ACCOUNT, WARNING, "gimlee.notifications.moderation.content-removed"),
     SYSTEM_VIEWING_KEY_VERIFIED("system.viewing_key_verified", ACCOUNT, SUCCESS, "gimlee.notifications.system.viewing-key-verified"),
-    ACCOUNT_WELCOME("account.welcome", ACCOUNT, SUCCESS, "gimlee.notifications.account.welcome");
+    ACCOUNT_WELCOME("account.welcome", ACCOUNT, SUCCESS, "gimlee.notifications.account.welcome"),
+
+    // Admin
+    ADMIN_NEW_REPORT("admin.new_report", SUPPORT, INFO, "gimlee.notifications.admin.new-report"),
+    ADMIN_REPORT_ASSIGNED("admin.report_assigned", SUPPORT, INFO, "gimlee.notifications.admin.report-assigned"),
+    ADMIN_NEW_TICKET("admin.new_ticket", SUPPORT, INFO, "gimlee.notifications.admin.new-ticket");
 
     val titleKey: String get() = "$baseKey.title"
     val messageKeyTemplate: String get() = "$baseKey.message"

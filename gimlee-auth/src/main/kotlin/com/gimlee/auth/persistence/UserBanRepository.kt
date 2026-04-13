@@ -7,6 +7,7 @@ import com.gimlee.auth.domain.UserBan.Companion.FIELD_BANNED_BY
 import com.gimlee.auth.domain.UserBan.Companion.FIELD_BANNED_UNTIL
 import com.gimlee.auth.domain.UserBan.Companion.FIELD_ID
 import com.gimlee.auth.domain.UserBan.Companion.FIELD_REASON
+import com.gimlee.auth.domain.UserBan.Companion.FIELD_REMINDER_SENT
 import com.gimlee.auth.domain.UserBan.Companion.FIELD_UNBANNED_AT
 import com.gimlee.auth.domain.UserBan.Companion.FIELD_UNBANNED_BY
 import com.gimlee.auth.domain.UserBan.Companion.FIELD_USER_ID
@@ -80,6 +81,26 @@ class UserBanRepository(
         )
         return mongoTemplate.find(query, Document::class.java, COLLECTION_NAME)
             .map { fromDocument(it) }
+    }
+
+    fun findBansExpiringSoon(ceilingMicros: Long): List<UserBan> {
+        val nowMicros = Instant.now().toMicros()
+        val query = Query(
+            Criteria.where(FIELD_ACTIVE).`is`(true)
+                .and(FIELD_BANNED_UNTIL).ne(null).gt(nowMicros).lte(ceilingMicros)
+                .and(FIELD_REMINDER_SENT).ne(true)
+        )
+        return mongoTemplate.find(query, Document::class.java, COLLECTION_NAME)
+            .map { fromDocument(it) }
+    }
+
+    fun markReminderSent(banId: String): Boolean {
+        val query = Query(
+            Criteria.where(FIELD_ID).`is`(banId)
+                .and(FIELD_REMINDER_SENT).ne(true)
+        )
+        val update = Update().set(FIELD_REMINDER_SENT, true)
+        return mongoTemplate.updateFirst(query, update, COLLECTION_NAME).modifiedCount > 0
     }
 
     private fun fromDocument(doc: Document): UserBan = UserBan(

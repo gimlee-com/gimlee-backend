@@ -21,5 +21,6 @@ data class UserBan(
         const val FIELD_UNBANNED_BY = "ub"
         const val FIELD_UNBANNED_AT = "ua"
         const val FIELD_ACTIVE = "act"
+        const val FIELD_REMINDER_SENT = "rs"
     }
 }

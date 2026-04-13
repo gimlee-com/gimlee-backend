@@ -17,3 +17,9 @@ data class UserUnbannedEvent(
     val unbannedBy: String,
     val timestamp: Instant = Instant.now()
 )
+
+data class BanExpiryApproachingEvent(
+    val userId: String,
+    val bannedUntil: Long,
+    val timestamp: Instant = Instant.now()
+)

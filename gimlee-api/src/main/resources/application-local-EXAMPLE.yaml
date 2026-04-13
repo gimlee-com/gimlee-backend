@@ -37,6 +37,9 @@ gimlee:
         ttl-seconds: 300          # How long banned user status is cached (seconds)
         max-size: 10000           # Maximum number of cached ban statuses
       expiry-check-interval-ms: 60000  # How often to check for expired temporary bans (ms)
+      expiry-reminder:
+        check-interval-ms: 300000  # How often to check for bans expiring soon (ms, default: 5 min)
+        window-hours: 24           # How far ahead to look for expiring bans (hours)
 
   # gimlee-user properties
   user:
