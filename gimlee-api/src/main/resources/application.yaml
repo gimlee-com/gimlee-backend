@@ -141,6 +141,15 @@ gimlee:
   purchases:
     price-tolerance-pct: 0.05
 
+  # gimlee-notifications properties
+  notifications:
+    sse:
+      timeout-ms: 0
+      heartbeat-ms: 30000
+    retention-days: 90
+    cleanup:
+      cron: "0 0 3 * * ?"
+
   # gimlee-payments properties
   payments:
     pirate-chain:

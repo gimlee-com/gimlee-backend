@@ -1,0 +1,142 @@
+### List Notifications
+# Retrieves paginated notifications for the authenticated user.
+# Supports cursor-based pagination via beforeId and optional category filtering.
+# @name listNotifications
+GET {{host}}/api/notifications?limit=20
+Authorization: Bearer {{auth_token}}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "success": true,
+#   "status": "SUCCESS",
+#   "message": "Operation completed successfully.",
+#   "data": {
+#     "notifications": [
+#       {
+#         "id": "019724ab-...",
+#         "type": "order.new",
+#         "category": "orders",
+#         "severity": "info",
+#         "title": "New Order",
+#         "message": "You have received a new order for 2x Widget.",
+#         "read": false,
+#         "createdAt": 1744566780000000,
+#         "actionUrl": "/sales/orders/6801...",
+#         "metadata": { "purchaseId": "6801..." }
+#       }
+#     ],
+#     "hasMore": false,
+#     "unreadCount": 3
+#   }
+# }
+
+
+### List Notifications by Category
+# Filters notifications by category (orders, messages, ads, qa, support, account).
+# @name listNotificationsByCategory
+GET {{host}}/api/notifications?category=orders&limit=10
+Authorization: Bearer {{auth_token}}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "success": true,
+#   "status": "SUCCESS",
+#   "message": "Operation completed successfully.",
+#   "data": {
+#     "notifications": [...],
+#     "hasMore": false,
+#     "unreadCount": 3
+#   }
+# }
+
+
+### List Notifications with Cursor Pagination
+# Fetches notifications before the specified notification ID for pagination.
+# @name listNotificationsPaginated
+GET {{host}}/api/notifications?limit=20&beforeId=019724ab-...
+Authorization: Bearer {{auth_token}}
+
+
+### Get Unread Count
+# Returns the total number of unread notifications.
+# @name getUnreadCount
+GET {{host}}/api/notifications/unread-count
+Authorization: Bearer {{auth_token}}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "success": true,
+#   "status": "SUCCESS",
+#   "message": "Operation completed successfully.",
+#   "data": {
+#     "count": 5
+#   }
+# }
+
+
+### Mark Single Notification as Read
+# Marks a specific notification as read. Only the owner can mark it.
+# @name markAsRead
+PATCH {{host}}/api/notifications/019724ab-.../read
+Authorization: Bearer {{auth_token}}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "success": true,
+#   "status": "NOTIFICATION_MARKED_READ",
+#   "message": "Notification marked as read."
+# }
+
+
+### Mark All Notifications as Read
+# Marks all unread notifications as read.
+# @name markAllAsRead
+PATCH {{host}}/api/notifications/read-all
+Authorization: Bearer {{auth_token}}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "success": true,
+#   "status": "NOTIFICATIONS_MARKED_READ",
+#   "message": "Notifications marked as read."
+# }
+
+
+### Mark All Notifications as Read (by Category)
+# Marks all unread notifications in a specific category as read.
+# @name markAllAsReadByCategory
+PATCH {{host}}/api/notifications/read-all?category=orders
+Authorization: Bearer {{auth_token}}
+
+
+### Notification Stream (SSE)
+# Opens a Server-Sent Events stream for real-time notification delivery.
+# Events: 'notification' (new), 'notification-read', 'notifications-all-read', 'unread-count'.
+# @name notificationStream
+GET {{host}}/api/notifications/stream
+Authorization: Bearer {{auth_token}}
+Accept: text/event-stream
+
+### Expected SSE Events:
+#
+# event: notification
+# data: {"id":"019724ab-...","type":"order.new","category":"orders","severity":"info","title":"New Order",...}
+#
+# event: notification-read
+# data: {"id":"019724ab-..."}
+#
+# event: notifications-all-read
+# data: {"category":null}
+#
+# event: unread-count
+# data: {"count":2}

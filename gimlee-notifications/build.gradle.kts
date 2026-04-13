@@ -5,6 +5,7 @@ dependencies {
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter.mail)
+    implementation(libs.spring.boot.starter.data.mongodb)
 
     // Common Kotlin dependencies
     implementation(libs.kotlin.stdlib)
@@ -13,6 +14,8 @@ dependencies {
     // Dependencies
     implementation(libs.spring.boot.starter.web)
     implementation(libs.mustache.java)
+    implementation(libs.springdoc.openapi.starter.webmvc.api)
+    implementation(libs.jakarta.validation)
 }
 
 sourceSets {
