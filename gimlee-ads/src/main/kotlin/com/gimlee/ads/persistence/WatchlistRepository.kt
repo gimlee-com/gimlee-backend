@@ -75,6 +75,13 @@ class WatchlistRepository(private val mongoDatabase: MongoDatabase) {
         return collection.countDocuments(filter)
     }
 
+    fun findUserIdsByAdId(adId: ObjectId): List<String> {
+        val filter = Filters.eq(WatchlistDocument.FIELD_AD_ID, adId)
+        return collection.find(filter)
+            .map { it.getObjectId(WatchlistDocument.FIELD_USER_ID).toHexString() }
+            .toList()
+    }
+
     private fun mapToWatchlistDocument(doc: Document): WatchlistDocument {
         return WatchlistDocument(
             id = doc.getObjectId(WatchlistDocument.FIELD_ID),

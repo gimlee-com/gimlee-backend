@@ -21,3 +21,21 @@ data class AdStatusChangedEvent(
         USER_BANNED
     }
 }
+
+data class AdPriceChangedEvent(
+    val adId: String,
+    val sellerId: String,
+    val adTitle: String,
+    val oldPrice: String,
+    val newPrice: String,
+    val currency: String,
+    val timestamp: Instant = Instant.now()
+)
+
+data class AdRestockedEvent(
+    val adId: String,
+    val sellerId: String,
+    val adTitle: String,
+    val newStock: Int,
+    val timestamp: Instant = Instant.now()
+)

@@ -2,6 +2,7 @@ package com.gimlee.notifications.event
 
 import com.gimlee.events.QuestionAnsweredEvent
 import com.gimlee.events.QuestionAskedEvent
+import com.gimlee.events.QuestionUpvoteMilestoneEvent
 import com.gimlee.notifications.domain.NotificationService
 import com.gimlee.notifications.domain.UserLanguageProvider
 import com.gimlee.notifications.domain.model.NotificationType
@@ -55,6 +56,28 @@ class QaNotificationListener(
             )
         } catch (e: Exception) {
             log.error("Failed to process question answered notification: questionId={}", event.questionId, e)
+        }
+    }
+
+    @Async
+    @EventListener
+    fun handleUpvoteMilestone(event: QuestionUpvoteMilestoneEvent) {
+        try {
+            val sellerId = event.sellerId
+            notificationService.createNotification(
+                userId = sellerId,
+                type = NotificationType.QA_UPVOTE_MILESTONE,
+                language = languageProvider.getLanguage(sellerId),
+                messageArgs = arrayOf(event.upvoteCount.toString()),
+                actionUrl = "/seller/ads/${event.adId}#qa",
+                metadata = mapOf(
+                    "adId" to event.adId,
+                    "questionId" to event.questionId,
+                    "upvoteCount" to event.upvoteCount.toString()
+                )
+            )
+        } catch (e: Exception) {
+            log.error("Failed to process upvote milestone notification: questionId={}", event.questionId, e)
         }
     }
 }

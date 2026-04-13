@@ -17,6 +17,8 @@ import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.model.Range
 import com.gimlee.common.toMicros
 import com.gimlee.events.AdStatusChangedEvent
+import com.gimlee.events.AdPriceChangedEvent
+import com.gimlee.events.AdRestockedEvent
 import com.gimlee.location.cities.data.cityDataById
 import com.gimlee.payments.domain.service.CurrencyConverterService
 import org.bson.types.ObjectId
@@ -130,6 +132,9 @@ class AdService(
         } catch (e: IllegalStateException) {
             throw AdOperationException(AdOutcome.UPDATE_FAILED)
         }
+
+        publishAdChangeEvents(existingAdDoc, updatedFields, adId, userId)
+
         return savedDocument.toDomain()
     }
 
@@ -273,6 +278,37 @@ class AdService(
             volatilityProtection = fields.volatilityProtection,
             updatedAtMicros = Instant.now().toMicros()
         )
+    }
+
+    private fun publishAdChangeEvents(existing: AdDocument, updated: AdUpdateFields, adId: String, userId: String) {
+        val oldPrice = existing.price
+        val oldCurrency = existing.currency
+        val newPrice = updated.price
+        val newCurrency = updated.currency
+
+        if (newPrice != null && newCurrency != null && oldPrice != null && oldCurrency != null) {
+            if (newPrice.compareTo(oldPrice) != 0 || newCurrency != oldCurrency) {
+                eventPublisher.publishEvent(AdPriceChangedEvent(
+                    adId = adId,
+                    sellerId = userId,
+                    adTitle = updated.title,
+                    oldPrice = "$oldPrice ${oldCurrency.name}",
+                    newPrice = "$newPrice ${newCurrency.name}",
+                    currency = newCurrency.name
+                ))
+            }
+        }
+
+        val oldStock = existing.stock
+        val newStock = updated.stock
+        if (oldStock <= 0 && newStock > 0) {
+            eventPublisher.publishEvent(AdRestockedEvent(
+                adId = adId,
+                sellerId = userId,
+                adTitle = updated.title,
+                newStock = newStock
+            ))
+        }
     }
 
     /**

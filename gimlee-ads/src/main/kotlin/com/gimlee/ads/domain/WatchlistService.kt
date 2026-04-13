@@ -51,4 +51,8 @@ class WatchlistService(
     fun getWatchersCount(adId: String): Long {
         return watchlistRepository.countByAdId(ObjectId(adId))
     }
+
+    fun getWatcherUserIds(adId: String): List<String> {
+        return watchlistRepository.findUserIdsByAdId(ObjectId(adId))
+    }
 }

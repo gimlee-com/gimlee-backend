@@ -1,6 +1,7 @@
 package com.gimlee.notifications.event
 
 import com.gimlee.events.UserBannedEvent
+import com.gimlee.events.UserRegisteredEvent
 import com.gimlee.events.UserUnbannedEvent
 import com.gimlee.notifications.domain.NotificationService
 import com.gimlee.notifications.domain.UserLanguageProvider
@@ -45,6 +46,21 @@ class AccountNotificationListener(
             )
         } catch (e: Exception) {
             log.error("Failed to process unban notification: userId={}", event.userId, e)
+        }
+    }
+
+    @Async
+    @EventListener
+    fun handleUserRegistered(event: UserRegisteredEvent) {
+        try {
+            notificationService.createNotification(
+                userId = event.userId,
+                type = NotificationType.ACCOUNT_WELCOME,
+                language = languageProvider.getLanguage(event.userId),
+                actionUrl = "/getting-started"
+            )
+        } catch (e: Exception) {
+            log.error("Failed to process welcome notification: userId={}", event.userId, e)
         }
     }
 }
