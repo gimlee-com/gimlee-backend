@@ -16,6 +16,7 @@ data class ReportSubmittedEvent(
 
 data class ReportResolvedEvent(
     val reportId: String,
+    val reporterId: String,
     val targetId: String,
     val targetType: String,
     val resolution: String,
@@ -41,6 +42,7 @@ data class TicketCreatedEvent(
 
 data class TicketReplyEvent(
     val ticketId: String,
+    val ticketCreatorId: String,
     val messageId: String,
     val authorId: String,
     val authorRole: String,
@@ -49,6 +51,7 @@ data class TicketReplyEvent(
 
 data class TicketUpdatedEvent(
     val ticketId: String,
+    val ticketCreatorId: String,
     val updatedBy: String,
     val changes: Map<String, String>,
     val timestamp: Instant = Instant.now()

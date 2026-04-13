@@ -1,0 +1,50 @@
+package com.gimlee.notifications.event
+
+import com.gimlee.events.UserBannedEvent
+import com.gimlee.events.UserUnbannedEvent
+import com.gimlee.notifications.domain.NotificationService
+import com.gimlee.notifications.domain.UserLanguageProvider
+import com.gimlee.notifications.domain.model.NotificationType
+import org.slf4j.LoggerFactory
+import org.springframework.context.event.EventListener
+import org.springframework.scheduling.annotation.Async
+import org.springframework.stereotype.Component
+
+@Component
+class AccountNotificationListener(
+    private val notificationService: NotificationService,
+    private val languageProvider: UserLanguageProvider
+) {
+
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    @Async
+    @EventListener
+    fun handleUserBanned(event: UserBannedEvent) {
+        try {
+            notificationService.createNotification(
+                userId = event.userId,
+                type = NotificationType.ACCOUNT_BAN,
+                language = languageProvider.getLanguage(event.userId),
+                messageArgs = arrayOf(event.reason),
+                metadata = mapOf("reason" to event.reason)
+            )
+        } catch (e: Exception) {
+            log.error("Failed to process ban notification: userId={}", event.userId, e)
+        }
+    }
+
+    @Async
+    @EventListener
+    fun handleUserUnbanned(event: UserUnbannedEvent) {
+        try {
+            notificationService.createNotification(
+                userId = event.userId,
+                type = NotificationType.ACCOUNT_UNBAN,
+                language = languageProvider.getLanguage(event.userId)
+            )
+        } catch (e: Exception) {
+            log.error("Failed to process unban notification: userId={}", event.userId, e)
+        }
+    }
+}

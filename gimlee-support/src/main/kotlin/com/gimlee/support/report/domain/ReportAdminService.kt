@@ -132,6 +132,7 @@ class ReportAdminService(
 
         eventPublisher.publishEvent(ReportResolvedEvent(
             reportId = doc.id.toHexString(),
+            reporterId = doc.reporterId.toHexString(),
             targetId = doc.targetId.toHexString(),
             targetType = doc.targetType,
             resolution = resolution.name,

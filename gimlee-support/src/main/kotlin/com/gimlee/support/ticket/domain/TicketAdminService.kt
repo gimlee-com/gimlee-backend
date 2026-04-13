@@ -73,6 +73,7 @@ class TicketAdminService(
         eventPublisher.publishEvent(
             TicketReplyEvent(
                 ticketId = ticketId,
+                ticketCreatorId = ticket.creatorId.toHexString(),
                 messageId = msgDoc.id!!.toHexString(),
                 authorId = supportUserId,
                 authorRole = TicketMessageRole.SUPPORT.name
@@ -121,6 +122,7 @@ class TicketAdminService(
         eventPublisher.publishEvent(
             TicketUpdatedEvent(
                 ticketId = ticketId,
+                ticketCreatorId = ticket.creatorId.toHexString(),
                 updatedBy = performedBy,
                 changes = changes
             )
