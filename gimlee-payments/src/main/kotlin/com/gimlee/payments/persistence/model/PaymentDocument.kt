@@ -33,5 +33,6 @@ data class PaymentDocument(
         const val FIELD_DEADLINE = "dl"
         const val FIELD_RECEIVING_ADDRESS = "ra"
         const val FIELD_CREATED_AT = "ca"
+        const val FIELD_REMINDER_SENT = "rs"
     }
 }

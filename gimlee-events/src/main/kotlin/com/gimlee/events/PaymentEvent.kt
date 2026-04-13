@@ -13,3 +13,11 @@ data class PaymentEvent(
     val amount: BigDecimal,
     val timestamp: Instant,
 )
+
+data class PaymentDeadlineApproachingEvent(
+    val purchaseId: ObjectId,
+    val buyerId: ObjectId,
+    val sellerId: ObjectId,
+    val amount: BigDecimal,
+    val deadline: Instant,
+)

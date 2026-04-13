@@ -11,7 +11,15 @@ data class PaymentProperties @ConstructorBinding constructor(
     val pirateChain: PirateChainProperties = PirateChainProperties(),
     val ycash: YcashProperties = YcashProperties(),
     val exchange: ExchangeProperties = ExchangeProperties(),
-    val volatility: VolatilityProperties
+    val volatility: VolatilityProperties,
+    val deadlineReminder: DeadlineReminderProperties = DeadlineReminderProperties()
+)
+
+data class DeadlineReminderProperties(
+    @DefaultValue("15")
+    val windowMinutes: Long = 15,
+    @DefaultValue("60000")
+    val checkIntervalMs: Long = 60000
 )
 
 data class VolatilityProperties(

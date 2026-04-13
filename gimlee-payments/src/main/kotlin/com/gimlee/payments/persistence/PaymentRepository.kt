@@ -18,6 +18,7 @@ import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_PAY
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_RECEIVING_ADDRESS
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_SELLER_ID
 import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_STATUS
+import com.gimlee.payments.persistence.model.PaymentDocument.Companion.FIELD_REMINDER_SENT
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Filters
@@ -62,6 +63,25 @@ class PaymentRepository(
     fun findAllByStatus(status: PaymentStatus): List<Payment> {
         val filter = Filters.eq(FIELD_STATUS, status.id)
         return collection.find(filter).map { it.toPayment() }.toList()
+    }
+
+    fun findApproachingDeadlines(nowMicros: Long, deadlineCeilingMicros: Long): List<Payment> {
+        val filter = Filters.and(
+            Filters.eq(FIELD_STATUS, PaymentStatus.AWAITING_CONFIRMATION.id),
+            Filters.gt(FIELD_DEADLINE, nowMicros),
+            Filters.lte(FIELD_DEADLINE, deadlineCeilingMicros),
+            Filters.ne(FIELD_REMINDER_SENT, true)
+        )
+        return collection.find(filter).map { it.toPayment() }.toList()
+    }
+
+    fun markReminderSent(paymentId: ObjectId): Boolean {
+        val filter = Filters.and(
+            Filters.eq(FIELD_ID, paymentId),
+            Filters.ne(FIELD_REMINDER_SENT, true)
+        )
+        val update = com.mongodb.client.model.Updates.set(FIELD_REMINDER_SENT, true)
+        return collection.updateOne(filter, update).modifiedCount > 0
     }
 
     private fun Payment.toDocument(): PaymentDocument =

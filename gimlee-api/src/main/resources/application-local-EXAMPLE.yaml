@@ -102,6 +102,17 @@ gimlee:
       open-exchange-rates:
         app-id: <fillme>
         update-interval-ms: 21600000
+    deadline-reminder:
+      window-minutes: 15
+      check-interval-ms: 60000
+
+  # gimlee-notifications properties
+  notifications:
+    sse:
+      timeout-ms: 0
+      heartbeat-interval-ms: 30000
+    retention-days: 90
+    cleanup-cron: "0 0 2 * * ?"
 
 # Metrics related configurations
 management:
