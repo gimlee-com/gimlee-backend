@@ -9,7 +9,10 @@ import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.domain.model.Currency
 import com.gimlee.common.toMicros
+import com.gimlee.api.notifications.NotificationTestConfig
 import com.gimlee.events.PaymentEvent
+import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.persistence.NotificationRepository
 import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
 import com.gimlee.payments.crypto.persistence.model.WalletAddressInfo
 import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
@@ -19,18 +22,22 @@ import com.gimlee.purchases.domain.PurchaseService
 import com.gimlee.purchases.domain.model.DeliveryAddressSnapshot
 import com.gimlee.purchases.domain.model.PurchaseStatus
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import org.bson.types.ObjectId
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.context.annotation.Import
 import java.math.BigDecimal
 import java.time.Instant
 
+@Import(NotificationTestConfig::class)
 class PurchaseFlowIntegrationTest(
     private val adService: AdService,
     private val purchaseService: PurchaseService,
     private val userRoleRepository: UserRoleRepository,
     private val userWalletAddressRepository: UserWalletAddressRepository,
-    private val eventPublisher: ApplicationEventPublisher
+    private val eventPublisher: ApplicationEventPublisher,
+    private val notificationRepository: NotificationRepository
 ) : BaseIntegrationTest({
 
     val testDeliveryAddress = DeliveryAddressSnapshot(
@@ -85,6 +92,11 @@ class PurchaseFlowIntegrationTest(
                     savedPurchase?.status shouldBe PurchaseStatus.AWAITING_PAYMENT
                 }
 
+                Then("the seller should have received an ORDER_NEW notification") {
+                    val sellerNotifications = notificationRepository.findByUserId(sellerId, null, 100, null)
+                    sellerNotifications.filter { it.type == NotificationType.ORDER_NEW.slug }.shouldNotBeEmpty()
+                }
+
                 Then("the Ad stock should have 1 item locked") {
                     val updatedAd = adService.getAd(ad.id)
                     updatedAd?.lockedStock shouldBe 1
@@ -107,6 +119,13 @@ class PurchaseFlowIntegrationTest(
                     Then("the purchase status should be COMPLETE") {
                         val finalPurchase = purchaseService.getPurchase(purchase.id)
                         finalPurchase?.status shouldBe PurchaseStatus.COMPLETE
+                    }
+
+                    Then("both buyer and seller should have ORDER_COMPLETE notifications") {
+                        val buyerNotifications = notificationRepository.findByUserId(buyerId, null, 100, null)
+                        buyerNotifications.filter { it.type == NotificationType.ORDER_COMPLETE.slug }.shouldNotBeEmpty()
+                        val sellerNotifications = notificationRepository.findByUserId(sellerId, null, 100, null)
+                        sellerNotifications.filter { it.type == NotificationType.ORDER_COMPLETE.slug }.shouldNotBeEmpty()
                     }
 
                     Then("the Ad stock should be reduced and locked stock cleared") {
