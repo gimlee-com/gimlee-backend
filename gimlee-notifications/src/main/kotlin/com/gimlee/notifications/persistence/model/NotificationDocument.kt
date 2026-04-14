@@ -26,7 +26,7 @@ data class NotificationDocument(
         const val FIELD_TYPE = "t"
         const val FIELD_CATEGORY = "cat"
         const val FIELD_SEVERITY = "sev"
-        const val FIELD_TITLE = "ttl"
+        const val FIELD_TITLE = "ti"
         const val FIELD_MESSAGE = "msg"
         const val FIELD_READ = "r"
         const val FIELD_ACTION_URL = "url"
