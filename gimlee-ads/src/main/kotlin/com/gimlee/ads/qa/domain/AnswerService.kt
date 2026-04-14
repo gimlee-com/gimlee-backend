@@ -24,7 +24,7 @@ class AnswerService(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun submitSellerAnswer(questionId: String, authorId: String, text: String): Pair<QaOutcome, Answer?> {
+    fun submitSellerAnswer(questionId: String, authorId: String, adTitle: String, text: String): Pair<QaOutcome, Answer?> {
         if (text.length > qaProperties.answerMaxLength) {
             return QaOutcome.ANSWER_TOO_LONG to null
         }
@@ -66,6 +66,7 @@ class AnswerService(
                 questionId = questionId,
                 answerId = answer.id,
                 adId = question.adId.toHexString(),
+                adTitle = adTitle,
                 questionAuthorId = question.authorId.toHexString(),
                 answerAuthorId = authorId,
                 answerType = AnswerType.SELLER.name
@@ -75,7 +76,7 @@ class AnswerService(
         return QaOutcome.ANSWER_CREATED to answer
     }
 
-    fun submitCommunityAnswer(questionId: String, authorId: String, text: String): Pair<QaOutcome, Answer?> {
+    fun submitCommunityAnswer(questionId: String, authorId: String, adTitle: String, text: String): Pair<QaOutcome, Answer?> {
         if (text.length > qaProperties.answerMaxLength) {
             return QaOutcome.ANSWER_TOO_LONG to null
         }
@@ -113,6 +114,7 @@ class AnswerService(
                 questionId = questionId,
                 answerId = answer.id,
                 adId = question.adId.toHexString(),
+                adTitle = adTitle,
                 questionAuthorId = question.authorId.toHexString(),
                 answerAuthorId = authorId,
                 answerType = AnswerType.COMMUNITY.name

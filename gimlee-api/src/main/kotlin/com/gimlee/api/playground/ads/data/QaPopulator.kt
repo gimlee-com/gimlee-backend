@@ -169,13 +169,13 @@ class QaPopulator(
                 val asker = nonOwnerUsers[index % nonOwnerUsers.size]
                 val askerId = asker.id?.toHexString() ?: continue
 
-                val (_, question) = questionService.askQuestion(ad.id, askerId, ad.userId, questionText)
+                val (_, question) = questionService.askQuestion(ad.id, askerId, ad.userId, ad.title, questionText)
                 if (question == null) continue
                 questions++
 
                 if (Random.nextDouble() < SELLER_ANSWER_CHANCE) {
                     val answerText = SAMPLE_SELLER_ANSWERS[index % SAMPLE_SELLER_ANSWERS.size]
-                    val (_, answer) = answerService.submitSellerAnswer(question.id, ad.userId, answerText)
+                    val (_, answer) = answerService.submitSellerAnswer(question.id, ad.userId, ad.title, answerText)
                     if (answer != null) {
                         sellerAnswers++
                         if (Random.nextDouble() < PIN_CHANCE) {
@@ -189,12 +189,12 @@ class QaPopulator(
                     val communityUserId = communityUser?.id?.toHexString()
                     if (communityUserId != null) {
                         val communityText = SAMPLE_COMMUNITY_ANSWERS.random()
-                        val (_, communityAnswer) = answerService.submitCommunityAnswer(question.id, communityUserId, communityText)
+                        val (_, communityAnswer) = answerService.submitCommunityAnswer(question.id, communityUserId, ad.title, communityText)
                         if (communityAnswer != null) communityAnswers++
                     }
                 }
 
-                addRandomUpvotes(question.id, ad.userId, nonOwnerUsers)
+                addRandomUpvotes(question.id, ad.userId, ad.title, nonOwnerUsers)
             }
         } catch (e: Exception) {
             log.warn("Error populating Q&A for ad {}: {}", ad.id, e.message)
@@ -203,12 +203,12 @@ class QaPopulator(
         return PopulationStats(questions, sellerAnswers, communityAnswers)
     }
 
-    private fun addRandomUpvotes(questionId: String, sellerId: String, nonOwnerUsers: List<User>) {
+    private fun addRandomUpvotes(questionId: String, sellerId: String, adTitle: String, nonOwnerUsers: List<User>) {
         nonOwnerUsers
             .filter { Random.nextDouble() < UPVOTE_CHANCE }
             .forEach { voter ->
                 val voterId = voter.id?.toHexString() ?: return@forEach
-                upvoteService.toggleUpvote(questionId, voterId, sellerId)
+                upvoteService.toggleUpvote(questionId, voterId, sellerId, adTitle)
             }
     }
 

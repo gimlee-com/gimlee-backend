@@ -28,6 +28,7 @@ class QaNotificationListener(
                 userId = sellerId,
                 type = NotificationType.QA_NEW_QUESTION,
                 language = languageProvider.getLanguage(sellerId),
+                messageArgs = arrayOf(event.adTitle),
                 actionUrl = "/seller/ads/${event.adId}#qa",
                 metadata = mapOf(
                     "adId" to event.adId,
@@ -48,6 +49,7 @@ class QaNotificationListener(
                 userId = questionAuthorId,
                 type = NotificationType.QA_NEW_ANSWER,
                 language = languageProvider.getLanguage(questionAuthorId),
+                messageArgs = arrayOf(event.adTitle),
                 actionUrl = "/ads/${event.adId}#qa",
                 metadata = mapOf(
                     "adId" to event.adId,
@@ -68,7 +70,7 @@ class QaNotificationListener(
                 userId = sellerId,
                 type = NotificationType.QA_UPVOTE_MILESTONE,
                 language = languageProvider.getLanguage(sellerId),
-                messageArgs = arrayOf(event.upvoteCount.toString()),
+                messageArgs = arrayOf(event.adTitle, event.upvoteCount.toString()),
                 actionUrl = "/seller/ads/${event.adId}#qa",
                 metadata = mapOf(
                     "adId" to event.adId,

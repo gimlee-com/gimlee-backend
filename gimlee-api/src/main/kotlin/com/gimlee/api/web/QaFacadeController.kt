@@ -134,7 +134,7 @@ class QaFacadeController(
             return handleOutcome(QaOutcome.QUESTION_OWN_AD)
         }
 
-        val (outcome, question) = questionService.askQuestion(adId, principal.userId, ad.userId, request.text)
+        val (outcome, question) = questionService.askQuestion(adId, principal.userId, ad.userId, ad.title, request.text)
         if (question == null) return handleOutcome(outcome)
 
         val usernames = userService.findUsernamesByIds(listOf(principal.userId))
@@ -176,7 +176,7 @@ class QaFacadeController(
 
         val isSeller = ad.userId == principal.userId
         val (outcome, answer) = if (isSeller) {
-            answerService.submitSellerAnswer(questionId, principal.userId, request.text)
+            answerService.submitSellerAnswer(questionId, principal.userId, ad.title, request.text)
         } else {
             val isPreviousBuyer = purchaseService.hasCompletedPurchaseForAd(
                 ObjectId(principal.userId), ObjectId(question.adId)
@@ -184,7 +184,7 @@ class QaFacadeController(
             if (!isPreviousBuyer) {
                 return handleOutcome(QaOutcome.ANSWER_NOT_PREVIOUS_BUYER)
             }
-            answerService.submitCommunityAnswer(questionId, principal.userId, request.text)
+            answerService.submitCommunityAnswer(questionId, principal.userId, ad.title, request.text)
         }
 
         if (answer == null) return handleOutcome(outcome)
@@ -236,7 +236,7 @@ class QaFacadeController(
         val ad = adService.getAd(question.adId)
             ?: return handleOutcome(QaOutcome.QUESTION_AD_NOT_FOUND)
 
-        val outcome = upvoteService.toggleUpvote(questionId, principal.userId, ad.userId)
+        val outcome = upvoteService.toggleUpvote(questionId, principal.userId, ad.userId, ad.title)
         return handleOutcome(outcome)
     }
 

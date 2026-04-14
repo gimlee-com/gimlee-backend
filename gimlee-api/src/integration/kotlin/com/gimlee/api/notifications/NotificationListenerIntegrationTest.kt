@@ -12,6 +12,7 @@ import com.gimlee.notifications.persistence.model.NotificationDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.string.shouldNotContain
 import org.bson.types.ObjectId
@@ -453,6 +454,7 @@ class NotificationListenerIntegrationTest(
                 QuestionAskedEvent(
                     questionId = questionId,
                     adId = adId,
+                    adTitle = "Test Ad",
                     authorId = authorId,
                     sellerId = sellerId
                 )
@@ -463,6 +465,7 @@ class NotificationListenerIntegrationTest(
                 notifications shouldHaveSize 1
                 notifications[0].metadata?.get("adId") shouldBe adId
                 notifications[0].metadata?.get("questionId") shouldBe questionId
+                notifications[0].message shouldContain "Test Ad"
             }
         }
 
@@ -478,6 +481,7 @@ class NotificationListenerIntegrationTest(
                     questionId = questionId,
                     answerId = ObjectId.get().toHexString(),
                     adId = adId,
+                    adTitle = "Answered Ad",
                     questionAuthorId = questionAuthorId,
                     answerAuthorId = answerAuthorId,
                     answerType = "SELLER"
@@ -489,6 +493,7 @@ class NotificationListenerIntegrationTest(
                 notifications shouldHaveSize 1
                 notifications[0].metadata?.get("adId") shouldBe adId
                 notifications[0].metadata?.get("questionId") shouldBe questionId
+                notifications[0].message shouldContain "Answered Ad"
             }
         }
 
@@ -502,6 +507,7 @@ class NotificationListenerIntegrationTest(
                 QuestionUpvoteMilestoneEvent(
                     questionId = questionId,
                     adId = adId,
+                    adTitle = "Popular Ad",
                     sellerId = sellerId,
                     upvoteCount = 10
                 )
@@ -511,6 +517,8 @@ class NotificationListenerIntegrationTest(
                 val notifications = findNotificationsByType(sellerId, NotificationType.QA_UPVOTE_MILESTONE)
                 notifications shouldHaveSize 1
                 notifications[0].metadata?.get("upvoteCount") shouldBe "10"
+                notifications[0].message shouldContain "Popular Ad"
+                notifications[0].message shouldContain "10"
             }
         }
     }

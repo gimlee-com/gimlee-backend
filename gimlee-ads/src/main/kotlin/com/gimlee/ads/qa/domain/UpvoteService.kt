@@ -18,7 +18,7 @@ class UpvoteService(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun toggleUpvote(questionId: String, userId: String, sellerId: String): QaOutcome {
+    fun toggleUpvote(questionId: String, userId: String, sellerId: String, adTitle: String): QaOutcome {
         val questionObjectId = ObjectId(questionId)
         val userObjectId = ObjectId(userId)
 
@@ -29,7 +29,7 @@ class UpvoteService(
         if (isNew) {
             questionRepository.incrementUpvoteCount(questionObjectId, 1)
             val newCount = question.upvoteCount + 1
-            checkMilestone(questionId, question.adId.toHexString(), sellerId, newCount)
+            checkMilestone(questionId, question.adId.toHexString(), sellerId, adTitle, newCount)
         } else {
             questionUpvoteRepository.delete(questionObjectId, userObjectId)
             questionRepository.incrementUpvoteCount(questionObjectId, -1)
@@ -46,13 +46,14 @@ class UpvoteService(
             .toSet()
     }
 
-    private fun checkMilestone(questionId: String, adId: String, sellerId: String, newCount: Int) {
+    private fun checkMilestone(questionId: String, adId: String, sellerId: String, adTitle: String, newCount: Int) {
         if (newCount in qaProperties.upvoteMilestones) {
             log.info("Question {} reached upvote milestone: {}", questionId, newCount)
             eventPublisher.publishEvent(
                 QuestionUpvoteMilestoneEvent(
                     questionId = questionId,
                     adId = adId,
+                    adTitle = adTitle,
                     sellerId = sellerId,
                     upvoteCount = newCount
                 )

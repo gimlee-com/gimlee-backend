@@ -25,7 +25,7 @@ class QuestionService(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun askQuestion(adId: String, authorId: String, sellerId: String, text: String): Pair<QaOutcome, Question?> {
+    fun askQuestion(adId: String, authorId: String, sellerId: String, adTitle: String, text: String): Pair<QaOutcome, Question?> {
         if (text.length > qaProperties.questionMaxLength) {
             return QaOutcome.QUESTION_TOO_LONG to null
         }
@@ -72,6 +72,7 @@ class QuestionService(
             QuestionAskedEvent(
                 questionId = question.id,
                 adId = adId,
+                adTitle = adTitle,
                 authorId = authorId,
                 sellerId = sellerId
             )
