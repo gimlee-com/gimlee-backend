@@ -1,6 +1,8 @@
 package com.gimlee.ads.web
 
 import com.gimlee.ads.domain.AdService
+import com.gimlee.ads.domain.CategoryService
+import com.gimlee.ads.domain.model.Ad
 import com.gimlee.ads.domain.model.AdFilters
 import com.gimlee.ads.domain.model.AdSorting
 import com.gimlee.ads.domain.model.AdStatus
@@ -9,6 +11,7 @@ import com.gimlee.ads.web.dto.request.SalesAdsRequestDto
 import com.gimlee.ads.web.dto.request.UpdateAdRequestDto
 import com.gimlee.ads.web.dto.response.AdDto
 import com.gimlee.ads.web.dto.response.AllowedCurrenciesDto
+import com.gimlee.ads.web.dto.response.CategoryPathElementDto
 import com.gimlee.ads.web.dto.response.CurrencyInfoDto
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
@@ -43,6 +46,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/sales/ads")
 class ManageAdController(
     private val adService: AdService,
+    private val categoryService: CategoryService,
     private val messageSource: MessageSource,
     private val volatilityStateService: VolatilityStateService
 ) {
@@ -71,7 +75,12 @@ class ManageAdController(
             sorting = AdSorting(by = request.by, direction = request.dir),
             pageRequest = PageRequest.of(request.p, PAGE_SIZE)
         )
-        return pageOfMyAds.map { ad -> AdDto.fromDomain(ad, computeFrozenCurrencies(ad)) }
+        val language = LocaleContextHolder.getLocale().toLanguageTag()
+        val categoryIds = pageOfMyAds.content.mapNotNull { it.categoryId }.toSet()
+        val categoryPaths = categoryService.getFullCategoryPaths(categoryIds, language)
+        return pageOfMyAds.map { ad ->
+            AdDto.fromDomain(ad, computeFrozenCurrencies(ad), ad.categoryId?.let { categoryPaths[it] })
+        }
     }
 
     @Operation(
@@ -127,8 +136,9 @@ class ManageAdController(
         }
 
         val frozenCurrencies = computeFrozenCurrencies(ad)
+        val categoryPath = resolveCategoryPath(ad)
 
-        return ResponseEntity.ok(AdDto.fromDomain(ad, frozenCurrencies))
+        return ResponseEntity.ok(AdDto.fromDomain(ad, frozenCurrencies, categoryPath))
     }
 
     @Operation(
@@ -152,7 +162,7 @@ class ManageAdController(
         log.info("User {} attempting to create ad with title '{}'", principal.userId, request.title)
         val createdAdDomain = adService.createAd(principal.userId, request.title, request.categoryId)
         // Newly created ad has no price/currency, so cannot be frozen
-        return ResponseEntity.status(HttpStatus.CREATED).body(AdDto.fromDomain(createdAdDomain))
+        return ResponseEntity.status(HttpStatus.CREATED).body(AdDto.fromDomain(createdAdDomain, categoryPath = resolveCategoryPath(createdAdDomain)))
     }
 
     @Operation(
@@ -205,7 +215,7 @@ class ManageAdController(
             updateData = request.toDomain()
         )
         val frozenCurrencies = computeFrozenCurrencies(updatedAdDomain)
-        return ResponseEntity.ok(AdDto.fromDomain(updatedAdDomain, frozenCurrencies))
+        return ResponseEntity.ok(AdDto.fromDomain(updatedAdDomain, frozenCurrencies, resolveCategoryPath(updatedAdDomain)))
     }
 
     @Operation(
@@ -242,7 +252,7 @@ class ManageAdController(
         log.info("User {} attempting to activate ad {}", principal.userId, adId)
         val activatedAdDomain = adService.activateAd(adId, principal.userId)
         val frozenCurrencies = computeFrozenCurrencies(activatedAdDomain)
-        return ResponseEntity.ok(AdDto.fromDomain(activatedAdDomain, frozenCurrencies))
+        return ResponseEntity.ok(AdDto.fromDomain(activatedAdDomain, frozenCurrencies, resolveCategoryPath(activatedAdDomain)))
     }
 
     @Operation(
@@ -279,11 +289,17 @@ class ManageAdController(
         log.info("User {} attempting to deactivate ad {}", principal.userId, adId)
         val deactivatedAdDomain = adService.deactivateAd(adId, principal.userId)
         val frozenCurrencies = computeFrozenCurrencies(deactivatedAdDomain)
-        return ResponseEntity.ok(AdDto.fromDomain(deactivatedAdDomain, frozenCurrencies))
+        return ResponseEntity.ok(AdDto.fromDomain(deactivatedAdDomain, frozenCurrencies, resolveCategoryPath(deactivatedAdDomain)))
     }
 
     private fun computeFrozenCurrencies(ad: com.gimlee.ads.domain.model.Ad): List<Currency> {
         if (!ad.volatilityProtection) return emptyList()
         return ad.settlementCurrencies.filter { volatilityStateService.isFrozen(it) }
+    }
+
+    private fun resolveCategoryPath(ad: Ad): List<CategoryPathElementDto>? {
+        return ad.categoryId?.let {
+            categoryService.getFullCategoryPath(it, LocaleContextHolder.getLocale().toLanguageTag())
+        }
     }
 }

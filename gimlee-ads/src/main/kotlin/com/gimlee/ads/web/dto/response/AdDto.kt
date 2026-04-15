@@ -22,6 +22,7 @@ data class AdDto(
     val updatedAt: Instant,
     val location: LocationWithCityDetailsDto?,
     val categoryId: Int?,
+    val categoryPath: List<CategoryPathElementDto>? = null,
     val mediaPaths: List<String>?,
     val mainPhotoPath: String?,
     val stock: Int,
@@ -32,7 +33,11 @@ data class AdDto(
     val isBuyable: Boolean = true
 ) {
     companion object {
-        fun fromDomain(ad: Ad, frozenCurrencies: List<Currency> = emptyList()): AdDto = with(ad) {
+        fun fromDomain(
+            ad: Ad,
+            frozenCurrencies: List<Currency> = emptyList(),
+            categoryPath: List<CategoryPathElementDto>? = null
+        ): AdDto = with(ad) {
             val buyable = frozenCurrencies.size < settlementCurrencies.size || !volatilityProtection
             AdDto(
                 id = id,
@@ -47,6 +52,7 @@ data class AdDto(
                 updatedAt = updatedAt,
                 location = LocationWithCityDetailsDto.fromDomain(ad.location),
                 categoryId = categoryId,
+                categoryPath = categoryPath,
                 mediaPaths = mediaPaths,
                 mainPhotoPath = mainPhotoPath,
                 stock = stock,

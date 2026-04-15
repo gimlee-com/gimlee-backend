@@ -1,6 +1,7 @@
 package com.gimlee.ads.web
 
 import com.gimlee.ads.domain.AdService
+import com.gimlee.ads.domain.CategoryService
 import com.gimlee.ads.web.dto.request.UpdateAdRequestDto
 import com.gimlee.ads.web.dto.response.AdDto
 import com.gimlee.auth.model.Principal
@@ -23,9 +24,10 @@ import java.math.BigDecimal
 class ManageAdControllerTest : StringSpec({
 
     val adService = mockk<AdService>()
+    val categoryService = mockk<CategoryService>(relaxed = true)
     val messageSource = mockk<MessageSource>()
     val volatilityStateService = mockk<VolatilityStateService>(relaxed = true)
-    val controller = ManageAdController(adService, messageSource, volatilityStateService)
+    val controller = ManageAdController(adService, categoryService, messageSource, volatilityStateService)
 
     beforeTest {
         mockkStatic(RequestContextHolder::class)
@@ -73,7 +75,7 @@ class ManageAdControllerTest : StringSpec({
         
         val updatedAd = mockk<com.gimlee.ads.domain.model.Ad>(relaxed = true)
         every { adService.updateAd(any(), any(), any()) } returns updatedAd
-        every { AdDto.fromDomain(any(), any<List<Currency>>()) } returns mockk()
+        every { AdDto.fromDomain(any(), any<List<Currency>>(), any()) } returns mockk()
 
         val request = UpdateAdRequestDto(
             title = "Test",
