@@ -380,7 +380,7 @@ class NotificationControllerIntegrationTest(
             type = NotificationType.ORDER_NEW,
             read = false,
             createdAt = now,
-            suggestedAction = SuggestedAction(SuggestedActionType.ORDER_DETAILS, "abc123"),
+            suggestedAction = SuggestedAction(SuggestedActionType.SALE_DETAILS, "abc123"),
             metadata = mapOf("purchaseId" to "abc123")
         )
 
@@ -401,7 +401,7 @@ class NotificationControllerIntegrationTest(
                 notif["message"] shouldBe "Test Message"
                 notif["read"] shouldBe false
                 val sa = notif["suggestedAction"] as Map<*, *>
-                sa["type"] shouldBe "ORDER_DETAILS"
+                sa["type"] shouldBe "SALE_DETAILS"
                 sa["target"] shouldBe "abc123"
                 (notif["metadata"] as Map<*, *>)["purchaseId"] shouldBe "abc123"
                 (notif["createdAt"] as Number).toLong() shouldBe now

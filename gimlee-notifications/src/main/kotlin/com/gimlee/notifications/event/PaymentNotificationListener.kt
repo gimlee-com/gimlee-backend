@@ -39,7 +39,7 @@ class PaymentNotificationListener(
             type = NotificationType.ORDER_AWAITING_PAYMENT,
             language = languageProvider.getLanguage(buyerId),
             messageArgs = arrayOf(event.amount.toPlainString()),
-            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
+            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_DETAILS, event.purchaseId.toHexString()),
             metadata = mapOf("purchaseId" to event.purchaseId.toHexString())
         )
     }
@@ -54,7 +54,7 @@ class PaymentNotificationListener(
             type = NotificationType.ORDER_OVERPAID,
             language = languageProvider.getLanguage(buyerId),
             messageArgs = arrayOf(event.amount.toPlainString()),
-            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
+            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_DETAILS, purchaseId),
             metadata = mapOf("purchaseId" to purchaseId)
         )
         notificationService.createNotification(
@@ -62,7 +62,7 @@ class PaymentNotificationListener(
             type = NotificationType.ORDER_OVERPAID,
             language = languageProvider.getLanguage(sellerId),
             messageArgs = arrayOf(event.amount.toPlainString()),
-            suggestedAction = SuggestedAction(SuggestedActionType.ORDER_DETAILS, purchaseId),
+            suggestedAction = SuggestedAction(SuggestedActionType.SALE_DETAILS, purchaseId),
             metadata = mapOf("purchaseId" to purchaseId)
         )
     }
@@ -73,7 +73,7 @@ class PaymentNotificationListener(
             userId = buyerId,
             type = NotificationType.ORDER_PAYMENT_TIMEOUT,
             language = languageProvider.getLanguage(buyerId),
-            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
+            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_DETAILS, event.purchaseId.toHexString()),
             metadata = mapOf("purchaseId" to event.purchaseId.toHexString())
         )
     }
@@ -95,7 +95,7 @@ class PaymentNotificationListener(
                 type = NotificationType.ORDER_PAYMENT_DEADLINE,
                 language = languageProvider.getLanguage(buyerId),
                 messageArgs = arrayOf(event.amount.toPlainString()),
-                suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
+                suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_DETAILS, event.purchaseId.toHexString()),
                 metadata = mapOf("purchaseId" to event.purchaseId.toHexString())
             )
         } catch (e: Exception) {
