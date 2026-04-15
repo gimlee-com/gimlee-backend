@@ -4,7 +4,7 @@
 **Gimlee** is a decentralized, peer-to-peer (P2P) cryptocurrency marketplace.
 - **Goal**: Connect buyers and sellers directly for exchanging goods and services using crypto.
 - **Core Innovation**: Trustless, non-custodial payment verification. Sellers provide a **viewing key** (read-only), allowing the platform to verify payments on the blockchain without ever taking custody of funds.
-- **Current Focus**: Integration with **PirateChain (ARRR)**, with plans for Monero (XMR) and Firo (FIRO).
+- **Current Focus**: Integration with **PirateChain (ARRR)** and **YCash (YEC)**, with plans for Monero (XMR) and Firo (FIRO).
 - **Vision**: A community-driven, secure, and transparent economy that eliminates financial intermediaries.
 - **Ambition**: Gimlee is not a small-scale project; it is built to compete with global tech giants by providing a superior, privacy-centric, and decentralized alternative.
 
@@ -18,23 +18,25 @@
 ## Project Modules
 *   `gimlee-api`: Main API application entry point.
 *   `gimlee-ads`: Marketplace listings and advertisements.
+*   `gimlee-analytics`: Analytics and data tracking.
 *   `gimlee-auth`: Authentication, authorization, and user identity.
-*   `gimlee-payments`: Blockchain integration (PirateChain) and payment verification.
+*   `gimlee-chat`: Real-time messaging and chat history.
+*   `gimlee-common`: Shared utilities and extensions.
+*   `gimlee-events`: Internal event definitions.
+*   `gimlee-location`: Location-based services.
 *   `gimlee-media-store`: Media storage handling (Local Filesystem or S3).
 *   `gimlee-notifications`: Email and notification services.
-*   `gimlee-location`: Location-based services.
+*   `gimlee-payments`: Blockchain integration (PirateChain, YCash) and payment verification.
 *   `gimlee-purchases`: Purchase management.
+*   `gimlee-support`: Customer support and management.
 *   `gimlee-user`: User preferences and user profile settings.
-*   `gimlee-chat`: Real-time messaging and chat history.
-*   `gimlee-events`: Internal event definitions.
-*   `gimlee-common`: Shared utilities and extensions.
 
 ## Critical Development Guidelines
 
 ### 1. MongoDB Design (`docs/development/mongodb-design-guidelines.md`)
 *   **Plain Data Classes:** Model classes must be plain Kotlin data classes. **Do NOT** use Spring Data annotations (e.g., `@Document`, `@Id`, `@Indexed`).
 *   **No Abstractions:** The use of Spring Data MongoDB abstractions (like `MongoRepository`) is **forbidden**.
-*   **Migrations:** Indexes must be managed via Flyway migrations, never in code.
+*   **Migrations:** Indexes must be managed via Flyway migrations (using module-specific `flyway.conf`), never in code. Run locally using `scripts/run_migrations_local.sh`.
 *   **Timestamps:** All timestamps must be stored as **epoch microseconds** (Long). Use `Instant.toMicros` extension from `gimlee-common`.
 *   **Field Names:** Use abbreviations for all field names to minimize storage size.
 *   **Index Optimization:** Only index fields used in queries. Use partial indexes for low-cardinality statuses.
@@ -77,6 +79,7 @@
 *   **Component Precedence:** When multiple implementations of an interface are used (e.g., multiple price providers), use Spring's `@Order` annotation to define their precedence (lowest value = highest priority). Ensure the consuming service implements a robust fallback mechanism if a high-priority provider fails.
 *   **Sticky Chat:** For modules involving real-time state (like `gimlee-chat`), horizontal scaling requires "Sticky Chat" load balancing (consistent hashing based on `chatId`) to ensure event consistency across participants when using in-memory buffering.
 *   **Configurable Enrichment Services:** When implementing services that transform raw domain objects into rich DTOs (e.g., `AdEnrichmentService`), design them to be configurable via a set of "Enrichment Type" enums (e.g., `AdEnrichmentType`). This allows consumers to request only the specific expensive operations they need (e.g., currency conversion, user details, recursive fetching) in a single method call, avoiding code duplication and over-fetching.
+*   **Ad Pricing & Volatility Strategy:** Ads use a dual-mode pricing logic (`FIXED_CRYPTO` or `PEGGED`) allowing multi-currency settlement per ad. Volatility tracking runs globally per **settlement currency** (not per isolated ad), calculating `frozenCurrencies` on the fly to partially disable specific payment options without taking down the entire ad.
 
 ### 5. Configuration (`docs/development/configuration-guidelines.md`)
 *   **Externalize Everything:** Timeouts, prefixes, retention periods, and monitoring delays must be configurable via `application.yaml`.
