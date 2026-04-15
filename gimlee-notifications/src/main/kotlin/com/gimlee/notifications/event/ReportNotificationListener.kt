@@ -3,7 +3,7 @@ package com.gimlee.notifications.event
 import com.gimlee.events.ReportResolvedEvent
 import com.gimlee.notifications.domain.NotificationService
 import com.gimlee.notifications.domain.UserLanguageProvider
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -34,7 +34,7 @@ class ReportNotificationListener(
             userId = reporterId,
             type = NotificationType.REPORT_RESOLVED,
             language = languageProvider.getLanguage(reporterId),
-            actionUrl = "/support",
+            suggestedAction = SuggestedAction(SuggestedActionType.SUPPORT_CENTER),
             metadata = mapOf("reportId" to event.reportId)
         )
     }

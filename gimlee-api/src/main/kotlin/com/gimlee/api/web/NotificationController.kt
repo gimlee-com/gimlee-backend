@@ -1,5 +1,6 @@
 package com.gimlee.api.web
 
+import com.gimlee.api.web.dto.*
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.common.domain.model.CommonOutcome
@@ -7,7 +8,7 @@ import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.web.dto.StatusResponseDto
 import com.gimlee.notifications.domain.NotificationService
 import com.gimlee.notifications.sse.NotificationSseBroadcaster
-import com.gimlee.notifications.web.dto.NotificationListDto
+import com.gimlee.notifications.web.dto.*
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -47,7 +48,7 @@ class NotificationController(
     @ApiResponse(
         responseCode = "200",
         description = "Notifications retrieved successfully",
-        content = [Content(schema = Schema(implementation = NotificationListDto::class))]
+        content = [Content(schema = Schema(implementation = NotificationListStatusResponseDto::class))]
     )
     @GetMapping
     @Privileged(role = "USER")
@@ -69,20 +70,33 @@ class NotificationController(
         summary = "Get unread count",
         description = "Returns the total number of unread notifications for the authenticated user."
     )
-    @ApiResponse(responseCode = "200", description = "Unread count retrieved successfully")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Unread count retrieved successfully",
+        content = [Content(schema = Schema(implementation = UnreadCountStatusResponseDto::class))]
+    )
     @GetMapping("/unread-count")
     @Privileged(role = "USER")
     fun getUnreadCount(): ResponseEntity<Any> {
         val userId = HttpServletRequestAuthUtil.getPrincipal().userId
         val count = notificationService.getUnreadCount(userId)
-        return handleOutcome(CommonOutcome.SUCCESS, mapOf("count" to count))
+        return handleOutcome(CommonOutcome.SUCCESS, UnreadCountDataDto(count))
     }
 
     @Operation(
         summary = "Mark notification as read",
         description = "Marks a single notification as read. Only the notification owner can mark it."
     )
-    @ApiResponse(responseCode = "200", description = "Notification marked as read")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Notification marked as read",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Notification not found",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
     @PatchMapping("/{id}/read")
     @Privileged(role = "USER")
     fun markAsRead(
@@ -97,7 +111,11 @@ class NotificationController(
         summary = "Mark all notifications as read",
         description = "Marks all unread notifications as read. Optionally filter by category."
     )
-    @ApiResponse(responseCode = "200", description = "All notifications marked as read")
+    @ApiResponse(
+        responseCode = "200",
+        description = "All notifications marked as read",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
     @PatchMapping("/read-all")
     @Privileged(role = "USER")
     fun markAllAsRead(

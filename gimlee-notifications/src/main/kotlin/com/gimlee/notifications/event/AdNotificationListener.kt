@@ -6,7 +6,7 @@ import com.gimlee.events.AdStatusChangedEvent
 import com.gimlee.notifications.domain.AdWatcherProvider
 import com.gimlee.notifications.domain.NotificationService
 import com.gimlee.notifications.domain.UserLanguageProvider
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -64,7 +64,7 @@ class AdNotificationListener(
             userId = sellerId,
             type = NotificationType.AD_STOCK_DEPLETED,
             language = languageProvider.getLanguage(sellerId),
-            actionUrl = "/seller/ads/${event.adId}",
+            suggestedAction = SuggestedAction(SuggestedActionType.SELLER_AD_DETAILS, event.adId),
             metadata = mapOf("adId" to event.adId)
         )
     }
@@ -74,7 +74,7 @@ class AdNotificationListener(
             userId = sellerId,
             type = NotificationType.AD_CATEGORY_HIDDEN,
             language = languageProvider.getLanguage(sellerId),
-            actionUrl = "/seller/ads/${event.adId}/edit",
+            suggestedAction = SuggestedAction(SuggestedActionType.AD_EDIT, event.adId),
             metadata = mapOf("adId" to event.adId)
         )
     }
@@ -87,7 +87,7 @@ class AdNotificationListener(
                 userId = watcherId,
                 type = NotificationType.AD_WATCHLIST_DEACTIVATED,
                 language = languageProvider.getLanguage(watcherId),
-                actionUrl = "/ads/${event.adId}",
+                suggestedAction = SuggestedAction(SuggestedActionType.AD_DETAILS, event.adId),
                 metadata = mapOf("adId" to event.adId)
             )
         }
@@ -102,7 +102,7 @@ class AdNotificationListener(
                 type = NotificationType.AD_WATCHLIST_PRICE_CHANGE,
                 language = languageProvider.getLanguage(watcherId),
                 messageArgs = arrayOf(event.adTitle, event.newPrice),
-                actionUrl = "/ads/${event.adId}",
+                suggestedAction = SuggestedAction(SuggestedActionType.AD_DETAILS, event.adId),
                 metadata = mapOf("adId" to event.adId)
             )
         }
@@ -117,7 +117,7 @@ class AdNotificationListener(
                 type = NotificationType.AD_WATCHLIST_BACK_IN_STOCK,
                 language = languageProvider.getLanguage(watcherId),
                 messageArgs = arrayOf(event.adTitle),
-                actionUrl = "/ads/${event.adId}",
+                suggestedAction = SuggestedAction(SuggestedActionType.AD_DETAILS, event.adId),
                 metadata = mapOf("adId" to event.adId)
             )
         }

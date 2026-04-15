@@ -4,7 +4,7 @@ import com.gimlee.events.TicketReplyEvent
 import com.gimlee.events.TicketUpdatedEvent
 import com.gimlee.notifications.domain.NotificationService
 import com.gimlee.notifications.domain.UserLanguageProvider
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -29,7 +29,7 @@ class TicketNotificationListener(
                 userId = creatorId,
                 type = NotificationType.TICKET_REPLY,
                 language = languageProvider.getLanguage(creatorId),
-                actionUrl = "/support/tickets/${event.ticketId}",
+                suggestedAction = SuggestedAction(SuggestedActionType.TICKET_DETAILS, event.ticketId),
                 metadata = mapOf("ticketId" to event.ticketId)
             )
         } catch (e: Exception) {
@@ -49,7 +49,7 @@ class TicketNotificationListener(
                     userId = creatorId,
                     type = NotificationType.TICKET_AWAITING_USER,
                     language = languageProvider.getLanguage(creatorId),
-                    actionUrl = "/support/tickets/${event.ticketId}",
+                    suggestedAction = SuggestedAction(SuggestedActionType.TICKET_DETAILS, event.ticketId),
                     metadata = mapOf("ticketId" to event.ticketId)
                 )
                 else -> notificationService.createNotification(
@@ -57,7 +57,7 @@ class TicketNotificationListener(
                     type = NotificationType.TICKET_STATUS_CHANGE,
                     language = languageProvider.getLanguage(creatorId),
                     messageArgs = arrayOf(newStatus.lowercase().replace('_', ' ')),
-                    actionUrl = "/support/tickets/${event.ticketId}",
+                    suggestedAction = SuggestedAction(SuggestedActionType.TICKET_DETAILS, event.ticketId),
                     metadata = mapOf("ticketId" to event.ticketId, "status" to newStatus)
                 )
             }

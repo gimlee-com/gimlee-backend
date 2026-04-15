@@ -23,7 +23,7 @@ Authorization: Bearer {{auth_token}}
 #         "message": "You have received a new order for 2x Widget.",
 #         "read": false,
 #         "createdAt": 1744566780000000,
-#         "actionUrl": "/sales/orders/6801...",
+#         "suggestedAction": { "type": "ORDER_DETAILS", "target": "6801..." },
 #         "metadata": { "purchaseId": "6801..." }
 #       }
 #     ],

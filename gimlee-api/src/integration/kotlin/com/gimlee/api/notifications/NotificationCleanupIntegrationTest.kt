@@ -30,7 +30,7 @@ class NotificationCleanupIntegrationTest(
             title = "Test",
             message = "Test message",
             read = false,
-            actionUrl = null,
+            suggestedAction = null,
             metadata = null,
             createdAt = createdAt
         )

@@ -6,7 +6,7 @@ import com.gimlee.events.TicketCreatedEvent
 import com.gimlee.notifications.domain.AdminUserProvider
 import com.gimlee.notifications.domain.NotificationService
 import com.gimlee.notifications.domain.UserLanguageProvider
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -33,7 +33,7 @@ class AdminNotificationListener(
                     type = NotificationType.ADMIN_NEW_REPORT,
                     language = languageProvider.getLanguage(adminId),
                     messageArgs = arrayOf(event.targetType, event.reason),
-                    actionUrl = "/admin/reports/${event.reportId}",
+                    suggestedAction = SuggestedAction(SuggestedActionType.ADMIN_REPORT_DETAILS, event.reportId),
                     metadata = mapOf(
                         "reportId" to event.reportId,
                         "targetType" to event.targetType,
@@ -55,7 +55,7 @@ class AdminNotificationListener(
                 userId = event.assigneeId,
                 type = NotificationType.ADMIN_REPORT_ASSIGNED,
                 language = languageProvider.getLanguage(event.assigneeId),
-                actionUrl = "/admin/reports/${event.reportId}",
+                suggestedAction = SuggestedAction(SuggestedActionType.ADMIN_REPORT_DETAILS, event.reportId),
                 metadata = mapOf("reportId" to event.reportId)
             )
         } catch (e: Exception) {
@@ -75,7 +75,7 @@ class AdminNotificationListener(
                     type = NotificationType.ADMIN_NEW_TICKET,
                     language = languageProvider.getLanguage(adminId),
                     messageArgs = arrayOf(event.category),
-                    actionUrl = "/admin/tickets/${event.ticketId}",
+                    suggestedAction = SuggestedAction(SuggestedActionType.ADMIN_TICKET_DETAILS, event.ticketId),
                     metadata = mapOf(
                         "ticketId" to event.ticketId,
                         "category" to event.category

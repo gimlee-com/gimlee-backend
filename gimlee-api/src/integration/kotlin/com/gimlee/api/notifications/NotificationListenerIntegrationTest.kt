@@ -5,8 +5,7 @@ import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.events.*
-import com.gimlee.notifications.domain.model.NotificationCategory
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import com.gimlee.notifications.persistence.NotificationRepository
 import com.gimlee.notifications.persistence.model.NotificationDocument
 import io.kotest.matchers.collections.shouldHaveSize
@@ -264,7 +263,7 @@ class NotificationListenerIntegrationTest(
             Then("user should receive ACCOUNT_WELCOME notification") {
                 val notifications = findNotificationsByType(userId, NotificationType.ACCOUNT_WELCOME)
                 notifications shouldHaveSize 1
-                notifications[0].actionUrl shouldBe "/getting-started"
+                notifications[0].suggestedAction?.type shouldBe SuggestedActionType.GETTING_STARTED
             }
         }
 

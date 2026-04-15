@@ -9,7 +9,7 @@ data class Notification(
     val title: String,
     val message: String,
     val read: Boolean = false,
-    val actionUrl: String? = null,
+    val suggestedAction: SuggestedAction? = null,
     val metadata: Map<String, String>? = null,
     val createdAt: Long
 )

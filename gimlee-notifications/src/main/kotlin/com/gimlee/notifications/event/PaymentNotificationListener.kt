@@ -4,7 +4,7 @@ import com.gimlee.events.PaymentDeadlineApproachingEvent
 import com.gimlee.events.PaymentEvent
 import com.gimlee.notifications.domain.NotificationService
 import com.gimlee.notifications.domain.UserLanguageProvider
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -39,7 +39,7 @@ class PaymentNotificationListener(
             type = NotificationType.ORDER_AWAITING_PAYMENT,
             language = languageProvider.getLanguage(buyerId),
             messageArgs = arrayOf(event.amount.toPlainString()),
-            actionUrl = "/purchases",
+            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
             metadata = mapOf("purchaseId" to event.purchaseId.toHexString())
         )
     }
@@ -54,7 +54,7 @@ class PaymentNotificationListener(
             type = NotificationType.ORDER_OVERPAID,
             language = languageProvider.getLanguage(buyerId),
             messageArgs = arrayOf(event.amount.toPlainString()),
-            actionUrl = "/purchases",
+            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
             metadata = mapOf("purchaseId" to purchaseId)
         )
         notificationService.createNotification(
@@ -62,7 +62,7 @@ class PaymentNotificationListener(
             type = NotificationType.ORDER_OVERPAID,
             language = languageProvider.getLanguage(sellerId),
             messageArgs = arrayOf(event.amount.toPlainString()),
-            actionUrl = "/sales/orders/$purchaseId",
+            suggestedAction = SuggestedAction(SuggestedActionType.ORDER_DETAILS, purchaseId),
             metadata = mapOf("purchaseId" to purchaseId)
         )
     }
@@ -73,7 +73,7 @@ class PaymentNotificationListener(
             userId = buyerId,
             type = NotificationType.ORDER_PAYMENT_TIMEOUT,
             language = languageProvider.getLanguage(buyerId),
-            actionUrl = "/purchases",
+            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
             metadata = mapOf("purchaseId" to event.purchaseId.toHexString())
         )
     }
@@ -95,7 +95,7 @@ class PaymentNotificationListener(
                 type = NotificationType.ORDER_PAYMENT_DEADLINE,
                 language = languageProvider.getLanguage(buyerId),
                 messageArgs = arrayOf(event.amount.toPlainString()),
-                actionUrl = "/purchases",
+                suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
                 metadata = mapOf("purchaseId" to event.purchaseId.toHexString())
             )
         } catch (e: Exception) {

@@ -6,7 +6,7 @@ import com.gimlee.events.UserRegisteredEvent
 import com.gimlee.events.UserUnbannedEvent
 import com.gimlee.notifications.domain.NotificationService
 import com.gimlee.notifications.domain.UserLanguageProvider
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -58,7 +58,7 @@ class AccountNotificationListener(
                 userId = event.userId,
                 type = NotificationType.ACCOUNT_WELCOME,
                 language = languageProvider.getLanguage(event.userId),
-                actionUrl = "/getting-started"
+                suggestedAction = SuggestedAction(SuggestedActionType.GETTING_STARTED)
             )
         } catch (e: Exception) {
             log.error("Failed to process welcome notification: userId={}", event.userId, e)

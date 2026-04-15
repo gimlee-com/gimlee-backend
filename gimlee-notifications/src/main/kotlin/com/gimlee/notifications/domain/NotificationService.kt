@@ -2,9 +2,7 @@ package com.gimlee.notifications.domain
 
 import com.gimlee.common.UUIDv7
 import com.gimlee.common.toMicros
-import com.gimlee.notifications.domain.model.Notification
-import com.gimlee.notifications.domain.model.NotificationCategory
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import com.gimlee.notifications.persistence.NotificationRepository
 import com.gimlee.notifications.persistence.model.NotificationDocument
 import com.gimlee.notifications.sse.NotificationSseBroadcaster
@@ -33,7 +31,7 @@ class NotificationService(
         language: String,
         titleArgs: Array<Any>? = null,
         messageArgs: Array<Any>? = null,
-        actionUrl: String? = null,
+        suggestedAction: SuggestedAction? = null,
         metadata: Map<String, String>? = null
     ): Notification {
         val locale = Locale.forLanguageTag(language)
@@ -51,7 +49,7 @@ class NotificationService(
             title = title,
             message = message,
             read = false,
-            actionUrl = actionUrl,
+            suggestedAction = suggestedAction,
             metadata = metadata,
             createdAt = now
         )

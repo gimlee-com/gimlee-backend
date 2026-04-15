@@ -5,7 +5,7 @@ import com.gimlee.events.QuestionAskedEvent
 import com.gimlee.events.QuestionUpvoteMilestoneEvent
 import com.gimlee.notifications.domain.NotificationService
 import com.gimlee.notifications.domain.UserLanguageProvider
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -29,7 +29,7 @@ class QaNotificationListener(
                 type = NotificationType.QA_NEW_QUESTION,
                 language = languageProvider.getLanguage(sellerId),
                 messageArgs = arrayOf(event.adTitle),
-                actionUrl = "/seller/ads/${event.adId}#qa",
+                suggestedAction = SuggestedAction(SuggestedActionType.QA_DETAILS, event.adId),
                 metadata = mapOf(
                     "adId" to event.adId,
                     "questionId" to event.questionId
@@ -50,7 +50,7 @@ class QaNotificationListener(
                 type = NotificationType.QA_NEW_ANSWER,
                 language = languageProvider.getLanguage(questionAuthorId),
                 messageArgs = arrayOf(event.adTitle),
-                actionUrl = "/ads/${event.adId}#qa",
+                suggestedAction = SuggestedAction(SuggestedActionType.QA_DETAILS, event.adId),
                 metadata = mapOf(
                     "adId" to event.adId,
                     "questionId" to event.questionId
@@ -71,7 +71,7 @@ class QaNotificationListener(
                 type = NotificationType.QA_UPVOTE_MILESTONE,
                 language = languageProvider.getLanguage(sellerId),
                 messageArgs = arrayOf(event.adTitle, event.upvoteCount.toString()),
-                actionUrl = "/seller/ads/${event.adId}#qa",
+                suggestedAction = SuggestedAction(SuggestedActionType.QA_DETAILS, event.adId),
                 metadata = mapOf(
                     "adId" to event.adId,
                     "questionId" to event.questionId,

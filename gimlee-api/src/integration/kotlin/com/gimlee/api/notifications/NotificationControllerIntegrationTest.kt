@@ -3,9 +3,7 @@ package com.gimlee.api.notifications
 import com.gimlee.common.BaseIntegrationTest
 import com.gimlee.common.UUIDv7
 import com.gimlee.common.toMicros
-import com.gimlee.notifications.domain.model.NotificationCategory
-import com.gimlee.notifications.domain.model.NotificationSeverity
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import com.gimlee.notifications.persistence.NotificationRepository
 import com.gimlee.notifications.persistence.model.NotificationDocument
 import io.kotest.matchers.collections.shouldHaveSize
@@ -33,7 +31,7 @@ class NotificationControllerIntegrationTest(
         type: NotificationType = NotificationType.ORDER_NEW,
         read: Boolean = false,
         createdAt: Long = Instant.now().toMicros(),
-        actionUrl: String? = null,
+        suggestedAction: SuggestedAction? = null,
         metadata: Map<String, String>? = null
     ): NotificationDocument {
         val doc = NotificationDocument(
@@ -45,7 +43,7 @@ class NotificationControllerIntegrationTest(
             title = "Test Title",
             message = "Test Message",
             read = read,
-            actionUrl = actionUrl,
+            suggestedAction = suggestedAction,
             metadata = metadata,
             createdAt = createdAt
         )
@@ -382,7 +380,7 @@ class NotificationControllerIntegrationTest(
             type = NotificationType.ORDER_NEW,
             read = false,
             createdAt = now,
-            actionUrl = "/sales/orders/abc123",
+            suggestedAction = SuggestedAction(SuggestedActionType.ORDER_DETAILS, "abc123"),
             metadata = mapOf("purchaseId" to "abc123")
         )
 
@@ -402,7 +400,9 @@ class NotificationControllerIntegrationTest(
                 notif["title"] shouldBe "Test Title"
                 notif["message"] shouldBe "Test Message"
                 notif["read"] shouldBe false
-                notif["actionUrl"] shouldBe "/sales/orders/abc123"
+                val sa = notif["suggestedAction"] as Map<*, *>
+                sa["type"] shouldBe "ORDER_DETAILS"
+                sa["target"] shouldBe "abc123"
                 (notif["metadata"] as Map<*, *>)["purchaseId"] shouldBe "abc123"
                 (notif["createdAt"] as Number).toLong() shouldBe now
             }

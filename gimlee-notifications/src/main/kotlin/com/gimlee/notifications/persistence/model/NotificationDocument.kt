@@ -1,9 +1,6 @@
 package com.gimlee.notifications.persistence.model
 
-import com.gimlee.notifications.domain.model.Notification
-import com.gimlee.notifications.domain.model.NotificationCategory
-import com.gimlee.notifications.domain.model.NotificationSeverity
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import org.bson.Document
 import org.bson.types.ObjectId
 
@@ -16,7 +13,7 @@ data class NotificationDocument(
     val title: String,
     val message: String,
     val read: Boolean,
-    val actionUrl: String?,
+    val suggestedAction: SuggestedAction?,
     val metadata: Map<String, String>?,
     val createdAt: Long
 ) {
@@ -29,7 +26,9 @@ data class NotificationDocument(
         const val FIELD_TITLE = "ti"
         const val FIELD_MESSAGE = "msg"
         const val FIELD_READ = "r"
-        const val FIELD_ACTION_URL = "url"
+        const val FIELD_SUGGESTED_ACTION = "sa"
+        const val FIELD_SA_TYPE = "t"
+        const val FIELD_SA_TARGET = "tg"
         const val FIELD_METADATA = "md"
         const val FIELD_CREATED_AT = "ca"
 
@@ -43,7 +42,12 @@ data class NotificationDocument(
             title = doc.getString(FIELD_TITLE),
             message = doc.getString(FIELD_MESSAGE),
             read = doc.getBoolean(FIELD_READ, false),
-            actionUrl = doc.getString(FIELD_ACTION_URL),
+            suggestedAction = doc.get(FIELD_SUGGESTED_ACTION, Document::class.java)?.let { sa ->
+                SuggestedAction(
+                    type = SuggestedActionType.fromShortName(sa.getString(FIELD_SA_TYPE)),
+                    target = sa.getString(FIELD_SA_TARGET)
+                )
+            },
             metadata = doc.get(FIELD_METADATA, Document::class.java)?.let { md ->
                 md.entries.associate { it.key to it.value.toString() }
             },
@@ -62,7 +66,13 @@ data class NotificationDocument(
             .append(FIELD_MESSAGE, message)
             .append(FIELD_READ, read)
             .append(FIELD_CREATED_AT, createdAt)
-        actionUrl?.let { bson.append(FIELD_ACTION_URL, it) }
+        suggestedAction?.let { sa ->
+            bson.append(
+                FIELD_SUGGESTED_ACTION, Document()
+                    .append(FIELD_SA_TYPE, sa.type.shortName)
+                    .append(FIELD_SA_TARGET, sa.target)
+            )
+        }
         metadata?.let { bson.append(FIELD_METADATA, Document(it)) }
         return bson
     }
@@ -76,7 +86,7 @@ data class NotificationDocument(
         title = title,
         message = message,
         read = read,
-        actionUrl = actionUrl,
+        suggestedAction = suggestedAction,
         metadata = metadata,
         createdAt = createdAt
     )

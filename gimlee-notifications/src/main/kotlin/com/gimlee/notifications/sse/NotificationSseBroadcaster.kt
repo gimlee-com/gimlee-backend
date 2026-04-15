@@ -1,6 +1,6 @@
 package com.gimlee.notifications.sse
 
-import com.gimlee.notifications.web.dto.NotificationDto
+import com.gimlee.notifications.web.dto.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
@@ -102,6 +102,6 @@ class NotificationSseBroadcaster(
         is NotificationSseEvent.Created -> "notification" to NotificationDto.from(event.notification)
         is NotificationSseEvent.Read -> "notification-read" to mapOf("id" to event.notificationId)
         is NotificationSseEvent.AllRead -> "notifications-all-read" to mapOf("category" to event.category)
-        is NotificationSseEvent.UnreadCountChanged -> "unread-count" to mapOf("count" to event.count)
+        is NotificationSseEvent.UnreadCountChanged -> "unread-count" to UnreadCountDataDto(event.count)
     }
 }

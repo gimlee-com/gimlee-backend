@@ -3,7 +3,7 @@ package com.gimlee.notifications.event
 import com.gimlee.events.PurchaseEvent
 import com.gimlee.notifications.domain.NotificationService
 import com.gimlee.notifications.domain.UserLanguageProvider
-import com.gimlee.notifications.domain.model.NotificationType
+import com.gimlee.notifications.domain.model.*
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -41,7 +41,7 @@ class PurchaseNotificationListener(
             type = NotificationType.ORDER_NEW,
             language = languageProvider.getLanguage(sellerId),
             messageArgs = arrayOf("$totalQuantity item(s)"),
-            actionUrl = "/sales/orders/${event.purchaseId.toHexString()}",
+            suggestedAction = SuggestedAction(SuggestedActionType.ORDER_DETAILS, event.purchaseId.toHexString()),
             metadata = mapOf("purchaseId" to event.purchaseId.toHexString())
         )
     }
@@ -55,14 +55,14 @@ class PurchaseNotificationListener(
             userId = buyerId,
             type = NotificationType.ORDER_COMPLETE,
             language = languageProvider.getLanguage(buyerId),
-            actionUrl = "/purchases",
+            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
             metadata = mapOf("purchaseId" to purchaseId)
         )
         notificationService.createNotification(
             userId = sellerId,
             type = NotificationType.ORDER_COMPLETE,
             language = languageProvider.getLanguage(sellerId),
-            actionUrl = "/sales/orders/$purchaseId",
+            suggestedAction = SuggestedAction(SuggestedActionType.ORDER_DETAILS, purchaseId),
             metadata = mapOf("purchaseId" to purchaseId)
         )
     }
@@ -73,7 +73,7 @@ class PurchaseNotificationListener(
             userId = buyerId,
             type = NotificationType.ORDER_PAYMENT_TIMEOUT,
             language = languageProvider.getLanguage(buyerId),
-            actionUrl = "/purchases",
+            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
             metadata = mapOf("purchaseId" to event.purchaseId.toHexString())
         )
     }
@@ -85,7 +85,7 @@ class PurchaseNotificationListener(
             type = NotificationType.ORDER_UNDERPAID,
             language = languageProvider.getLanguage(buyerId),
             messageArgs = arrayOf(event.totalAmount.toPlainString(), "—"),
-            actionUrl = "/purchases",
+            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
             metadata = mapOf("purchaseId" to event.purchaseId.toHexString())
         )
     }
@@ -99,14 +99,14 @@ class PurchaseNotificationListener(
             userId = buyerId,
             type = NotificationType.ORDER_CANCELLED,
             language = languageProvider.getLanguage(buyerId),
-            actionUrl = "/purchases",
+            suggestedAction = SuggestedAction(SuggestedActionType.PURCHASE_LIST),
             metadata = mapOf("purchaseId" to purchaseId)
         )
         notificationService.createNotification(
             userId = sellerId,
             type = NotificationType.ORDER_CANCELLED,
             language = languageProvider.getLanguage(sellerId),
-            actionUrl = "/sales/orders/$purchaseId",
+            suggestedAction = SuggestedAction(SuggestedActionType.ORDER_DETAILS, purchaseId),
             metadata = mapOf("purchaseId" to purchaseId)
         )
     }
