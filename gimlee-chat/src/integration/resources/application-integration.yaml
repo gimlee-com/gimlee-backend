@@ -12,3 +12,8 @@ gimlee:
       jwt:
         issuer: gimlee
         key: testkey
+  chat:
+    sse:
+      buffer-ms: 100
+    conversation:
+      default-max-participants: 50

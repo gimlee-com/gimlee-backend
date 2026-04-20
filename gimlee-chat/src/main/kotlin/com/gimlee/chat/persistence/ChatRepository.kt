@@ -68,17 +68,32 @@ class ChatRepository(mongoDatabase: MongoDatabase) {
         return Document()
             .append(ArchivedMessageDocument.FIELD_ID, doc.id)
             .append(ArchivedMessageDocument.FIELD_CHAT_ID, doc.chatId)
-            .append(ArchivedMessageDocument.FIELD_TEXT, doc.text)
+            .append(ArchivedMessageDocument.FIELD_AUTHOR_ID, doc.authorId)
             .append(ArchivedMessageDocument.FIELD_AUTHOR, doc.author)
+            .append(ArchivedMessageDocument.FIELD_MESSAGE_TYPE, doc.messageType)
             .append(ArchivedMessageDocument.FIELD_TIMESTAMP, doc.timestampMicros)
+            .apply {
+                if (doc.text != null) append(ArchivedMessageDocument.FIELD_TEXT, doc.text)
+                if (doc.systemCode != null) append(ArchivedMessageDocument.FIELD_SYSTEM_CODE, doc.systemCode)
+                if (doc.systemArgs != null) append(ArchivedMessageDocument.FIELD_SYSTEM_ARGS, Document(doc.systemArgs as Map<String, Any>))
+            }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun mapToArchivedMessageDocument(doc: Document): ArchivedMessageDocument {
+        val systemArgs = doc.get(ArchivedMessageDocument.FIELD_SYSTEM_ARGS)?.let { raw ->
+            (raw as Document).entries.associate { it.key to it.value.toString() }
+        }
+
         return ArchivedMessageDocument(
             id = doc.getObjectId(ArchivedMessageDocument.FIELD_ID),
             chatId = doc.getString(ArchivedMessageDocument.FIELD_CHAT_ID),
             text = doc.getString(ArchivedMessageDocument.FIELD_TEXT),
+            authorId = doc.getString(ArchivedMessageDocument.FIELD_AUTHOR_ID) ?: "",
             author = doc.getString(ArchivedMessageDocument.FIELD_AUTHOR),
+            messageType = doc.getString(ArchivedMessageDocument.FIELD_MESSAGE_TYPE) ?: "R",
+            systemCode = doc.getString(ArchivedMessageDocument.FIELD_SYSTEM_CODE),
+            systemArgs = systemArgs,
             timestampMicros = doc.getLong(ArchivedMessageDocument.FIELD_TIMESTAMP)
         )
     }

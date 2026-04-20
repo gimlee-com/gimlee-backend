@@ -1,9 +1,10 @@
 package com.gimlee.chat.web
 
 import com.gimlee.auth.annotation.Privileged
-import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.chat.domain.ChatService
 import com.gimlee.chat.domain.ChatOutcome
+import com.gimlee.chat.domain.ConversationService
+import com.gimlee.chat.domain.model.ChatPrincipalProvider
 import com.gimlee.chat.web.dto.request.NewMessageRequestDto
 import com.gimlee.chat.web.dto.response.ArchivedMessagesResponseDto
 import com.gimlee.common.domain.model.CommonOutcome
@@ -26,6 +27,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 @RequestMapping("/chat")
 class ChatController(
     private val chatService: ChatService,
+    private val conversationService: ConversationService,
+    private val principalProvider: ChatPrincipalProvider,
     private val messageSource: MessageSource,
     private val chatEventBroadcaster: ChatEventBroadcaster
 ) {
@@ -37,17 +40,25 @@ class ChatController(
 
     @Operation(
         summary = "Send Message",
-        description = "Sends a new message to the specified chat. Requires USER role."
+        description = "Sends a new message to the specified conversation. Requires USER role."
     )
     @ApiResponse(responseCode = "200", description = "Message sent successfully")
-    @PostMapping("/{chatId}/messages")
+    @ApiResponse(responseCode = "403", description = "Not a participant or conversation is locked")
+    @ApiResponse(responseCode = "404", description = "Conversation not found")
+    @PostMapping("/{conversationId}/messages")
     @Privileged(role = "USER")
     fun sendMessage(
-        @PathVariable chatId: String,
+        @PathVariable conversationId: String,
         @Valid @RequestBody request: NewMessageRequestDto
     ): ResponseEntity<Any> {
-        val username = HttpServletRequestAuthUtil.getPrincipal().username
-        chatService.sendMessage(chatId, username, request.message)
+        val userId = principalProvider.getUserId()
+        val username = principalProvider.getUsername()
+
+        val accessOutcome = conversationService.verifyWriteAccess(conversationId, userId)
+        if (accessOutcome != null) return handleOutcome(accessOutcome)
+
+        chatService.sendMessage(conversationId, userId, username, request.message)
+        conversationService.updateLastActivity(conversationId)
         return handleOutcome(CommonOutcome.SUCCESS)
     }
 
@@ -56,39 +67,39 @@ class ChatController(
         description = "Broadcasts a typing indicator to other participants. Requires USER role."
     )
     @ApiResponse(responseCode = "200", description = "Typing indicator broadcasted")
-    @PostMapping("/{chatId}/typing")
+    @PostMapping("/{conversationId}/typing")
     @Privileged(role = "USER")
-    fun indicateTyping(@PathVariable chatId: String): ResponseEntity<Any> {
-        val username = HttpServletRequestAuthUtil.getPrincipal().username
-        chatService.indicateTyping(chatId, username)
-        return handleOutcome(CommonOutcome.SUCCESS)
-    }
+    fun indicateTyping(@PathVariable conversationId: String): ResponseEntity<Any> {
+        val userId = principalProvider.getUserId()
+        val username = principalProvider.getUsername()
 
-    @Operation(
-        summary = "Touch Chat",
-        description = "Ensures the chat is initialized. Primarily used for performance testing. Requires USER role."
-    )
-    @ApiResponse(responseCode = "200", description = "Chat touched")
-    @PostMapping("/{chatId}/touch")
-    @Privileged(role = "USER")
-    fun touchChat(@PathVariable chatId: String): ResponseEntity<Any> {
-        // In this implementation, we don't need to do anything specific to initialize a chat
+        val accessOutcome = conversationService.verifyWriteAccess(conversationId, userId)
+        if (accessOutcome != null) return handleOutcome(accessOutcome)
+
+        chatService.indicateTyping(conversationId, userId, username)
         return handleOutcome(CommonOutcome.SUCCESS)
     }
 
     @Operation(
         summary = "Get History",
-        description = "Retrieves archived messages for the specified chat. Requires USER role."
+        description = "Retrieves archived messages for the specified conversation. Requires USER role."
     )
     @ApiResponse(responseCode = "200", description = "History retrieved successfully")
-    @GetMapping("/{chatId}/messages")
+    @ApiResponse(responseCode = "403", description = "Not a participant or conversation is archived")
+    @ApiResponse(responseCode = "404", description = "Conversation not found")
+    @GetMapping("/{conversationId}/messages")
     @Privileged(role = "USER")
     fun getHistory(
-        @PathVariable chatId: String,
+        @PathVariable conversationId: String,
         @RequestParam(defaultValue = "20") limit: Int,
         @RequestParam(required = false) beforeId: String?
     ): ResponseEntity<Any> {
-        val messages = chatService.getHistory(chatId, limit, beforeId)
+        val userId = principalProvider.getUserId()
+
+        val accessOutcome = conversationService.verifyReadAccess(conversationId, userId)
+        if (accessOutcome != null) return handleOutcome(accessOutcome)
+
+        val messages = chatService.getHistory(conversationId, limit, beforeId)
         val response = ArchivedMessagesResponseDto(
             hasMore = messages.size >= limit,
             messages = messages
@@ -100,9 +111,18 @@ class ChatController(
         summary = "Chat Events Stream",
         description = "Exposes a Server-Sent Events (SSE) stream for real-time chat updates. Requires USER role."
     )
-    @GetMapping(value = ["/{chatId}/events"], produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
+    @GetMapping(value = ["/{conversationId}/events"], produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     @Privileged(role = "USER")
-    fun getEventsStream(@PathVariable chatId: String): SseEmitter {
-        return chatEventBroadcaster.createEmitter(chatId)
+    fun getEventsStream(@PathVariable conversationId: String): SseEmitter {
+        val userId = principalProvider.getUserId()
+
+        val accessOutcome = conversationService.verifyReadAccess(conversationId, userId)
+        if (accessOutcome != null) {
+            val emitter = SseEmitter(0L)
+            emitter.completeWithError(IllegalAccessException("Access denied"))
+            return emitter
+        }
+
+        return chatEventBroadcaster.createEmitter(conversationId, userId)
     }
 }

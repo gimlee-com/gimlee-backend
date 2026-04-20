@@ -1,4 +1,4 @@
-package com.gimlee.chat.domain
+package com.gimlee.api.web.admin
 
 import com.gimlee.chat.persistence.ChatRepository
 import com.gimlee.support.report.domain.model.ReportTargetInfo
@@ -19,10 +19,11 @@ class MessageReportTargetResolver(
             targetId = message.id,
             targetType = ReportTargetType.MESSAGE,
             contextId = message.chatId,
-            targetTitle = message.text.take(100),
+            targetTitle = message.text?.take(100) ?: "[system message]",
             snapshot = mapOf(
                 "chatId" to message.chatId,
-                "text" to message.text,
+                "text" to (message.text ?: ""),
+                "authorId" to message.authorId,
                 "author" to message.author,
                 "timestamp" to message.timestamp.toEpochMilli()
             )

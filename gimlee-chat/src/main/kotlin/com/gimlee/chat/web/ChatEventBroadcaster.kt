@@ -1,6 +1,6 @@
 package com.gimlee.chat.web
 
-import com.gimlee.events.InternalChatEvent
+import com.gimlee.chat.domain.event.InternalChatEvent
 import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
@@ -14,6 +14,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * Broadcaster that manages SSE emitters and buffers events for efficient real-time delivery.
  * 
+ * Emitters are tracked by (chatId, userId) for access control.
+ * 
  * NOTE: This implementation is JVM-local. For horizontal scaling, "Sticky Chat" load balancing 
  * (pinning chatId to instances) or a distributed event bus (e.g. Redis) is required.
  * See gimlee-chat/docs/architecture.md for details.
@@ -21,23 +23,50 @@ import java.util.concurrent.CopyOnWriteArrayList
 @Component
 class ChatEventBroadcaster {
     private val log = LoggerFactory.getLogger(javaClass)
-    
-    // chatId -> List of emitters
-    private val emitters = ConcurrentHashMap<String, CopyOnWriteArrayList<SseEmitter>>()
+
+    data class UserEmitter(val userId: String, val emitter: SseEmitter)
+
+    // chatId -> List of user emitters
+    private val emitters = ConcurrentHashMap<String, CopyOnWriteArrayList<UserEmitter>>()
 
     // chatId -> Buffer of events
     private val eventBuffer = ConcurrentHashMap<String, MutableList<InternalChatEvent>>()
 
-    fun createEmitter(chatId: String): SseEmitter {
+    fun createEmitter(chatId: String, userId: String? = null): SseEmitter {
         val emitter = SseEmitter(0L) // Infinite timeout
+        val userEmitter = UserEmitter(userId = userId ?: "", emitter = emitter)
         val chatEmitters = emitters.computeIfAbsent(chatId) { CopyOnWriteArrayList() }
-        chatEmitters.add(emitter)
+        chatEmitters.add(userEmitter)
 
-        emitter.onCompletion { chatEmitters.remove(emitter) }
-        emitter.onTimeout { chatEmitters.remove(emitter) }
-        emitter.onError { chatEmitters.remove(emitter) }
+        emitter.onCompletion { chatEmitters.remove(userEmitter) }
+        emitter.onTimeout { chatEmitters.remove(userEmitter) }
+        emitter.onError { chatEmitters.remove(userEmitter) }
 
         return emitter
+    }
+
+    fun closeEmittersForConversation(chatId: String) {
+        val chatEmitters = emitters.remove(chatId) ?: return
+        chatEmitters.forEach { userEmitter ->
+            try {
+                userEmitter.emitter.complete()
+            } catch (_: Exception) {
+                // Already closed
+            }
+        }
+    }
+
+    fun closeEmitterForUser(chatId: String, userId: String) {
+        val chatEmitters = emitters[chatId] ?: return
+        val toRemove = chatEmitters.filter { it.userId == userId }
+        toRemove.forEach { userEmitter ->
+            try {
+                userEmitter.emitter.complete()
+            } catch (_: Exception) {
+                // Already closed
+            }
+            chatEmitters.remove(userEmitter)
+        }
     }
 
     @EventListener
@@ -58,16 +87,16 @@ class ChatEventBroadcaster {
 
             val chatEmitters = emitters[chatId] ?: continue
             
-            val deadEmitters = mutableListOf<SseEmitter>()
-            for (emitter in chatEmitters) {
+            val deadEmitters = mutableListOf<UserEmitter>()
+            for (userEmitter in chatEmitters) {
                 try {
-                    emitter.send(
+                    userEmitter.emitter.send(
                         SseEmitter.event()
                             .name("chat-event")
                             .data(events)
                     )
                 } catch (e: IOException) {
-                    deadEmitters.add(emitter)
+                    deadEmitters.add(userEmitter)
                 }
             }
             
@@ -80,16 +109,16 @@ class ChatEventBroadcaster {
     @Scheduled(fixedRateString = "\${gimlee.chat.sse.heartbeat-ms:30000}")
     fun sendHeartbeats() {
         emitters.values.forEach { chatEmitters ->
-            val deadEmitters = mutableListOf<SseEmitter>()
-            chatEmitters.forEach { emitter ->
+            val deadEmitters = mutableListOf<UserEmitter>()
+            chatEmitters.forEach { userEmitter ->
                 try {
-                    emitter.send(
+                    userEmitter.emitter.send(
                         SseEmitter.event()
                             .name("heartbeat")
                             .comment("keep-alive")
                     )
                 } catch (e: IOException) {
-                    deadEmitters.add(emitter)
+                    deadEmitters.add(userEmitter)
                 }
             }
             chatEmitters.removeAll(deadEmitters)

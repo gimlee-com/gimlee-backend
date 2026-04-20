@@ -1,0 +1,11 @@
+### Get a specific conversation
+GET {{host}}/conversations/{{conversationId}}
+Authorization: Bearer {{token}}
+
+### List authenticated user's conversations
+GET {{host}}/conversations?limit=20
+Authorization: Bearer {{token}}
+
+### List conversations (with cursor pagination)
+GET {{host}}/conversations?limit=20&beforeActivityAt=2025-01-01T00:00:00Z
+Authorization: Bearer {{token}}

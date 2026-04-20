@@ -1,0 +1,8 @@
+### Get order conversation by purchase ID
+# Returns the conversation and recent messages for a purchase
+GET {{host}}/purchases/{{purchaseId}}/conversation
+Authorization: Bearer {{token}}
+
+### Get order conversation with custom message limit
+GET {{host}}/purchases/{{purchaseId}}/conversation?recentMessagesLimit=50
+Authorization: Bearer {{token}}

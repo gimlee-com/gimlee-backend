@@ -136,6 +136,12 @@ gimlee:
     persistence:
       # batch-ms: 1000
       # batch-size: 100
+    conversation:
+      default-max-participants: 50
+    order:
+      lock-on-complete: true
+      lock-on-failed: true
+      system-messages-enabled: true
 
   # gimlee-purchases properties
   purchases:

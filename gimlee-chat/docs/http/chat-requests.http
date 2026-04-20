@@ -1,5 +1,5 @@
 ### Send a message
-POST {{host}}/chat/{{chatId}}/messages
+POST {{host}}/chat/{{conversationId}}/messages
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -8,14 +8,18 @@ Authorization: Bearer {{token}}
 }
 
 ### Get chat history
-GET {{host}}/chat/{{chatId}}/messages?limit=20
+GET {{host}}/chat/{{conversationId}}/messages?limit=20
+Authorization: Bearer {{token}}
+
+### Get chat history (with cursor pagination)
+GET {{host}}/chat/{{conversationId}}/messages?limit=20&beforeId={{messageId}}
 Authorization: Bearer {{token}}
 
 ### Indicate typing
-POST {{host}}/chat/{{chatId}}/typing
+POST {{host}}/chat/{{conversationId}}/typing
 Authorization: Bearer {{token}}
 
 ### Subscribe to chat events (SSE)
-GET {{host}}/chat/{{chatId}}/events
+GET {{host}}/chat/{{conversationId}}/events
 Authorization: Bearer {{token}}
 Accept: text/event-stream
