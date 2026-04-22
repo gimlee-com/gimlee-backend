@@ -94,6 +94,7 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **Error Documentation:** Common error responses (401 Unauthorized, 403 Forbidden) and the error response schema (`StatusResponseDto`) are automatically handled by the global `OperationCustomizer`.
 *   **Stay in Sync:** Any addition or modification to Controllers requires corresponding updates to both their respective `.http` files and OpenAPI annotations to ensure consistency across all documentation formats.
 *   **Comprehensive Error Data:** When reporting conflicts or errors (e.g., price mismatches), return the current state of all relevant items so the client can recover gracefully.
+*   **DTO Schema Annotations:** All DTO classes and non-obvious fields must carry `@Schema(description = ...)` annotations. Class-level descriptions explain the DTO's purpose; field-level descriptions clarify semantics, usage context, and relationships to sibling fields (e.g., when two fields serve related but distinct purposes, each should cross-reference the other).
 *   **Dynamic Response Documentation:** For controllers using dynamic response structures (e.g., Jackson's `@JsonAnyGetter`), create a dedicated "Documentation DTO". Use this DTO in the `@ApiResponse`'s `implementation` attribute to ensure the OpenAPI schema accurately reflects all possible decorator fields.
 
 ### 7. Docker & Infrastructure
