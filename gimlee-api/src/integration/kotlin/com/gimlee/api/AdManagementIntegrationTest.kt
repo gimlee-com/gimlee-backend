@@ -1,7 +1,6 @@
 package com.gimlee.api
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.persistence.AdRepository
@@ -60,8 +59,7 @@ class AdManagementIntegrationTest(
         val ad = adService.createAd(uid, "Complete Ad", null, stock)
         adService.updateAd(ad.id, uid, UpdateAdRequest(
             description = "A full description",
-            price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
-            settlementCurrencies = setOf(Currency.ARRR),
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal.TEN),
             location = Location("city1", doubleArrayOf(1.0, 2.0)),
             stock = stock
         ))
@@ -114,7 +112,7 @@ class AdManagementIntegrationTest(
 
         When("updating an active ad clearing settlement currencies") {
             val ad = createCompleteActiveAd(sellerId)
-            val body = mapOf("settlementCurrencies" to emptyList<String>())
+            val body = mapOf("fixedPrices" to emptyMap<String, Any>())
 
             val response = restClient.put("/sales/ads/${ad.id}", body, headers)
 
@@ -125,7 +123,7 @@ class AdManagementIntegrationTest(
                 val fieldErrors = responseBody["fieldErrors"] as List<*>
                 fieldErrors.size shouldBe 1
                 val error = fieldErrors[0] as Map<*, *>
-                error["field"] shouldBe "settlementCurrencies"
+                error["field"] shouldBe "fixedPrices"
             }
         }
 
@@ -283,15 +281,14 @@ class AdManagementIntegrationTest(
                 responseBody["status"] shouldBe "AD_INCOMPLETE_AD_DATA"
                 val fieldErrors = responseBody["fieldErrors"] as List<*>
                 val fieldNames = fieldErrors.map { (it as Map<*, *>)["field"] as String }.toSet()
-                fieldNames shouldBe setOf("description", "price", "priceCurrency", "settlementCurrencies", "location", "stock")
+                fieldNames shouldBe setOf("description", "fixedPrices", "location", "stock")
             }
         }
 
         When("activating an ad missing only description and stock") {
             val ad = adService.createAd(sellerId.toHexString(), "Almost Complete", null, 0)
             adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
-                price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
-                settlementCurrencies = setOf(Currency.ARRR),
+                fixedPrices = mapOf(Currency.ARRR to BigDecimal.TEN),
                 location = Location("city1", doubleArrayOf(1.0, 2.0))
             ))
 

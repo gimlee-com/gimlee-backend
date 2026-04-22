@@ -2,7 +2,6 @@ package com.gimlee.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.model.Principal
@@ -58,8 +57,7 @@ class DeliveryAddressValidationIntegrationTest(
         val ad = adService.createAd(sellerId.toHexString(), "Test Item", null, 10)
         adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
             description = "Test Description",
-            price = CurrencyAmount(BigDecimal("10.00"), Currency.ARRR),
-            settlementCurrencies = setOf(Currency.ARRR),
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal("10.00")),
             location = Location("city1", doubleArrayOf(1.0, 2.0)),
             stock = 10
         ))

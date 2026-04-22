@@ -132,12 +132,23 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             queryFilters.add(regexFilter)
         }
         if (filters.priceRanges != null) {
-            val currencyFilters = filters.priceRanges.map { (currency, range) ->
-                val conditions = mutableListOf<Bson>()
-                conditions.add(Filters.eq(AdDocument.FIELD_CURRENCY, currency.name))
-                range.from?.let { conditions.add(Filters.gte(AdDocument.FIELD_PRICE, Decimal128(it))) }
-                range.to?.let { conditions.add(Filters.lte(AdDocument.FIELD_PRICE, Decimal128(it))) }
-                Filters.and(conditions)
+            val currencyFilters = filters.priceRanges.flatMap { (currency, range) ->
+                val peggedConditions = mutableListOf<Bson>()
+                peggedConditions.add(Filters.eq(AdDocument.FIELD_PRICING_MODE, PricingMode.PEGGED.shortName))
+                peggedConditions.add(Filters.eq(AdDocument.FIELD_CURRENCY, currency.name))
+                range.from?.let { peggedConditions.add(Filters.gte(AdDocument.FIELD_PRICE, Decimal128(it))) }
+                range.to?.let { peggedConditions.add(Filters.lte(AdDocument.FIELD_PRICE, Decimal128(it))) }
+                val peggedFilter = Filters.and(peggedConditions)
+
+                val fixedField = "${AdDocument.FIELD_FIXED_PRICES}.${currency.name}"
+                val fixedConditions = mutableListOf<Bson>()
+                fixedConditions.add(Filters.eq(AdDocument.FIELD_PRICING_MODE, PricingMode.FIXED_CRYPTO.shortName))
+                fixedConditions.add(Filters.exists(fixedField))
+                range.from?.let { fixedConditions.add(Filters.gte(fixedField, Decimal128(it))) }
+                range.to?.let { fixedConditions.add(Filters.lte(fixedField, Decimal128(it))) }
+                val fixedFilter = Filters.and(fixedConditions)
+
+                listOf(peggedFilter, fixedFilter)
             }
             if (currencyFilters.isNotEmpty()) {
                 queryFilters.add(Filters.or(currencyFilters))
@@ -369,11 +380,14 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             .append(AdDocument.FIELD_PRICING_MODE, ad.pricingMode.shortName)
             .append(AdDocument.FIELD_PRICE, ad.price?.let { Decimal128(it) })
             .append(AdDocument.FIELD_CURRENCY, ad.currency?.name)
+            .append(AdDocument.FIELD_FIXED_PRICES, ad.fixedPrices.takeIf { it.isNotEmpty() }?.let { fp ->
+                Document().also { d -> fp.forEach { (k, v) -> d.append(k.name, Decimal128(v)) } }
+            })
             .append(AdDocument.FIELD_SETTLEMENT_CURRENCIES, ad.settlementCurrencies.map { it.name })
             .append(AdDocument.FIELD_STATUS, ad.status.name)
             .append(AdDocument.FIELD_CREATED_AT, ad.createdAtMicros)
             .append(AdDocument.FIELD_UPDATED_AT, ad.updatedAtMicros)
-            .append(AdDocument.FIELD_CITY_ID, ad.cityId) // Map cityId
+            .append(AdDocument.FIELD_CITY_ID, ad.cityId)
             .append(AdDocument.FIELD_CATEGORY_IDS, ad.categoryIds)
             .append(AdDocument.FIELD_MEDIA_PATHS, ad.mediaPaths)
             .append(AdDocument.FIELD_MAIN_PHOTO_PATH, ad.mainPhotoPath)
@@ -403,6 +417,11 @@ class AdRepository(mongoDatabase: MongoDatabase) {
         @Suppress("UNCHECKED_CAST")
         val settlementCurrencyStrings = doc.get(AdDocument.FIELD_SETTLEMENT_CURRENCIES) as? List<String> ?: emptyList()
 
+        val fixedPricesDoc = doc.get(AdDocument.FIELD_FIXED_PRICES, Document::class.java)
+        val fixedPrices = fixedPricesDoc?.entries?.associate { (k, v) ->
+            Currency.valueOf(k) to (v as Decimal128).bigDecimalValue()
+        } ?: emptyMap()
+
         // Map location Document back to GeoJsonPoint
         val locationDoc = doc.get(AdDocument.FIELD_LOCATION, Document::class.java)
         val geoPoint = locationDoc?.let {
@@ -425,6 +444,7 @@ class AdRepository(mongoDatabase: MongoDatabase) {
             pricingMode = pricingModeString?.let { PricingMode.fromShortName(it) } ?: PricingMode.FIXED_CRYPTO,
             price = price,
             currency = currencyString?.let { Currency.valueOf(it)},
+            fixedPrices = fixedPrices,
             settlementCurrencies = settlementCurrencyStrings.map { Currency.valueOf(it) }.toSet(),
             status = AdStatus.valueOf(statusString ?: AdStatus.INACTIVE.name),
             createdAtMicros = doc.getLong(AdDocument.FIELD_CREATED_AT),

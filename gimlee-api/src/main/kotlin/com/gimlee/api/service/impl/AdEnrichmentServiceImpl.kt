@@ -80,7 +80,7 @@ class AdEnrichmentServiceImpl(
             val previewDto = AdPreviewDto.fromAd(ad, categoryPath)
 
             val convertedPrice = if (types.contains(AdEnrichmentType.PREFERRED_CURRENCY_PRICE)) {
-                convertPrice(ad.price, preferredCurrency)
+                convertPrice(getRepresentativePrice(ad), preferredCurrency)
             } else null
 
             val frozenCurrencies = computeFrozenCurrencies(ad)
@@ -109,7 +109,7 @@ class AdEnrichmentServiceImpl(
 
         val detailsDto = AdDetailsDto.fromAd(ad, categoryPath)
         val preferredPrice = if (types.contains(AdEnrichmentType.PREFERRED_CURRENCY_PRICE)) {
-            convertPrice(ad.price, preferredCurrency)
+            convertPrice(getRepresentativePrice(ad), preferredCurrency)
         } else null
 
         var userDetails: UserSpaceDetailsDto? = null
@@ -197,6 +197,12 @@ class AdEnrichmentServiceImpl(
         }
     }
 
+    private fun getRepresentativePrice(ad: Ad): CurrencyAmount? {
+        return ad.price ?: ad.fixedPrices.entries
+            .minByOrNull { it.key.name }
+            ?.let { CurrencyAmount(it.value, it.key) }
+    }
+
     private fun convertPrice(price: CurrencyAmount?, to: Currency): CurrencyAmountDto? {
         if (price == null) return null
         return try {
@@ -209,21 +215,34 @@ class AdEnrichmentServiceImpl(
     }
 
     private fun computeFrozenCurrencies(ad: Ad): List<Currency> {
-        if (!ad.volatilityProtection || ad.pricingMode != PricingMode.PEGGED) return emptyList()
-        val referenceCurrency = ad.price?.currency ?: return emptyList()
-        return ad.settlementCurrencies.filter { settlementCurrency ->
-            settlementCurrency != referenceCurrency && volatilityStateService.isFrozen(settlementCurrency)
+        if (!ad.volatilityProtection) return emptyList()
+        return when (ad.pricingMode) {
+            PricingMode.FIXED_CRYPTO -> {
+                ad.fixedPrices.keys.filter { volatilityStateService.isFrozen(it) }
+            }
+            PricingMode.PEGGED -> {
+                val referenceCurrency = ad.price?.currency ?: return emptyList()
+                ad.settlementCurrencies.filter { it != referenceCurrency && volatilityStateService.isFrozen(it) }
+            }
         }
     }
 
     private fun computeSettlementPrices(ad: Ad): List<CurrencyAmountDto>? {
-        val price = ad.price ?: return null
-        if (ad.settlementCurrencies.isEmpty()) return null
-        return ad.settlementCurrencies.mapNotNull { sc ->
-            if (sc == price.currency) {
-                CurrencyAmountDto(price.amount, sc)
-            } else {
-                convertPrice(price, sc)
+        return when (ad.pricingMode) {
+            PricingMode.FIXED_CRYPTO -> {
+                if (ad.fixedPrices.isEmpty()) return null
+                ad.fixedPrices.map { (currency, amount) -> CurrencyAmountDto(amount, currency) }
+            }
+            PricingMode.PEGGED -> {
+                val price = ad.price ?: return null
+                if (ad.settlementCurrencies.isEmpty()) return null
+                ad.settlementCurrencies.mapNotNull { sc ->
+                    if (sc == price.currency) {
+                        CurrencyAmountDto(price.amount, sc)
+                    } else {
+                        convertPrice(price, sc)
+                    }
+                }
             }
         }
     }

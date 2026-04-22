@@ -2,6 +2,7 @@ package com.gimlee.ads.domain
 
 import com.gimlee.ads.domain.model.AdStatus
 import com.gimlee.ads.domain.model.CurrencyAmount
+import com.gimlee.ads.domain.model.PricingMode
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.ads.persistence.AdRepository.AdConcurrentModificationException
@@ -40,6 +41,7 @@ class AdServiceTest : StringSpec({
             userId = userId,
             title = "Title",
             description = null,
+            pricingMode = PricingMode.PEGGED,
             price = null,
             currency = null,
             status = AdStatus.INACTIVE,
@@ -75,6 +77,7 @@ class AdServiceTest : StringSpec({
             userId = userId,
             title = "Title",
             description = null,
+            pricingMode = PricingMode.PEGGED,
             price = null,
             currency = null,
             status = AdStatus.INACTIVE,
@@ -108,6 +111,7 @@ class AdServiceTest : StringSpec({
             userId = userId,
             title = "Title",
             description = null,
+            pricingMode = PricingMode.PEGGED,
             price = null,
             currency = null,
             status = AdStatus.INACTIVE,
@@ -143,6 +147,7 @@ class AdServiceTest : StringSpec({
             userId = userId,
             title = "Title",
             description = null,
+            pricingMode = PricingMode.PEGGED,
             price = null,
             currency = null,
             status = AdStatus.INACTIVE,
@@ -192,14 +197,14 @@ class AdServiceTest : StringSpec({
         every { adRepository.findById(adId) } returns existingDoc
 
         val updateRequest = UpdateAdRequest(
-            price = com.gimlee.ads.domain.model.CurrencyAmount(BigDecimal("100"), Currency.USD)
+            fixedPrices = mapOf(Currency.USD to BigDecimal("100"))
         )
 
         val exception = io.kotest.assertions.throwables.shouldThrow<AdService.AdOperationException> {
             adService.updateAd(adId.toHexString(), userId.toHexString(), updateRequest)
         }
 
-        exception.outcome shouldBe AdOutcome.FIXED_CRYPTO_REQUIRES_SETTLEMENT_CURRENCY
+        exception.outcome shouldBe AdOutcome.FIXED_CRYPTO_INVALID_CURRENCY
     }
 
     "createAd should set stock" {
@@ -419,6 +424,7 @@ class AdServiceTest : StringSpec({
             description = "Description",
             price = BigDecimal("100"),
             currency = Currency.ARRR,
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal("100")),
             settlementCurrencies = setOf(Currency.ARRR),
             status = AdStatus.ACTIVE,
             createdAtMicros = 1000L,
@@ -450,6 +456,7 @@ class AdServiceTest : StringSpec({
             description = "Description",
             price = BigDecimal("100"),
             currency = Currency.ARRR,
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal("100")),
             settlementCurrencies = setOf(Currency.ARRR),
             status = AdStatus.ACTIVE,
             createdAtMicros = 1000L,

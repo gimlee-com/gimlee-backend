@@ -1,6 +1,7 @@
 package com.gimlee.ads.domain.model
 
 import com.gimlee.common.domain.model.Currency
+import java.math.BigDecimal
 
 /**
  * Data class representing the fields to update for an Ad within the domain layer.
@@ -10,6 +11,7 @@ data class UpdateAdRequest(
     val description: String? = null,
     val pricingMode: PricingMode? = null,
     val price: CurrencyAmount? = null,
+    val fixedPrices: Map<Currency, BigDecimal>? = null,
     val settlementCurrencies: Set<Currency>? = null,
     val location: Location? = null,
     val categoryId: Int? = null,

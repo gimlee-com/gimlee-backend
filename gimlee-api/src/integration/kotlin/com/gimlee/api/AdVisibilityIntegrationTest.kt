@@ -1,7 +1,6 @@
 package com.gimlee.api
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
@@ -27,8 +26,7 @@ class AdVisibilityIntegrationTest(
         val activeAd = adService.createAd(sellerIdStr, "Active Ad", null, 10)
         adService.updateAd(activeAd.id, sellerIdStr, UpdateAdRequest(
             description = "Desc",
-            price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
-            settlementCurrencies = setOf(Currency.ARRR),
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal.TEN),
             location = com.gimlee.ads.domain.model.Location("city1", doubleArrayOf(1.0, 2.0)),
             stock = 10
         ))

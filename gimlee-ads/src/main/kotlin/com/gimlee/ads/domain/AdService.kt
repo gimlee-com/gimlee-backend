@@ -78,6 +78,7 @@ class AdService(
             pricingMode = PricingMode.FIXED_CRYPTO,
             price = null,
             currency = null,
+            fixedPrices = emptyMap(),
             settlementCurrencies = emptySet(),
             status = AdStatus.INACTIVE,
             createdAtMicros = nowMicros,
@@ -162,6 +163,7 @@ class AdService(
         val pricingMode: PricingMode,
         val price: BigDecimal?,
         val currency: Currency?,
+        val fixedPrices: Map<Currency, BigDecimal>,
         val settlementCurrencies: Set<Currency>,
         val cityId: String?,
         val location: GeoJsonPoint?,
@@ -192,13 +194,38 @@ class AdService(
             newMainPhotoPath = null
         }
 
+        val pricingMode = update.pricingMode ?: existing.pricingMode
+        val fixedPrices = if (pricingMode == PricingMode.FIXED_CRYPTO) {
+            update.fixedPrices ?: existing.fixedPrices
+        } else {
+            emptyMap()
+        }
+
+        val settlementCurrencies = if (pricingMode == PricingMode.FIXED_CRYPTO) {
+            fixedPrices.keys
+        } else {
+            update.settlementCurrencies ?: existing.settlementCurrencies
+        }
+
+        val price = if (pricingMode == PricingMode.PEGGED) {
+            update.price?.amount ?: existing.price
+        } else {
+            null
+        }
+        val currency = if (pricingMode == PricingMode.PEGGED) {
+            update.price?.currency ?: existing.currency
+        } else {
+            null
+        }
+
         return AdUpdateFields(
             title = update.title ?: existing.title,
             description = update.description ?: existing.description,
-            pricingMode = update.pricingMode ?: existing.pricingMode,
-            price = update.price?.amount ?: existing.price,
-            currency = update.price?.currency ?: existing.currency,
-            settlementCurrencies = update.settlementCurrencies ?: existing.settlementCurrencies,
+            pricingMode = pricingMode,
+            price = price,
+            currency = currency,
+            fixedPrices = fixedPrices,
+            settlementCurrencies = settlementCurrencies,
             cityId = newCityId,
             location = newGeoPoint,
             mediaPaths = newMediaPaths,
@@ -210,35 +237,45 @@ class AdService(
     }
 
     private fun validateBusinessRules(existing: AdDocument, fields: AdUpdateFields, userId: ObjectId) {
-        // Volatility protection validation
-        if (fields.volatilityProtection && fields.pricingMode != PricingMode.PEGGED) {
-            throw AdOperationException(AdOutcome.VOLATILITY_PROTECTION_REQUIRES_PEGGED)
-        }
-
         // Fixed crypto validation
-        if (fields.pricingMode == PricingMode.FIXED_CRYPTO && fields.currency != null) {
-            if (!fields.currency.isSettlement) {
-                throw AdOperationException(AdOutcome.FIXED_CRYPTO_REQUIRES_SETTLEMENT_CURRENCY)
+        if (fields.pricingMode == PricingMode.FIXED_CRYPTO) {
+            fields.fixedPrices.keys.forEach { currency ->
+                if (!currency.isSettlement) {
+                    throw AdOperationException(AdOutcome.FIXED_CRYPTO_INVALID_CURRENCY, currency.name)
+                }
             }
-            if (fields.settlementCurrencies.isNotEmpty() && fields.currency !in fields.settlementCurrencies) {
-                throw AdOperationException(AdOutcome.FIXED_CRYPTO_PRICE_CURRENCY_NOT_IN_SETTLEMENT)
-            }
-        }
-
-        // Settlement currency validation
-        fields.settlementCurrencies.forEach { sc ->
-            if (!sc.isSettlement) {
-                throw AdOperationException(AdOutcome.CURRENCY_NOT_ALLOWED, sc.name)
+            fields.fixedPrices.forEach { (currency, amount) ->
+                if (amount <= BigDecimal.ZERO) {
+                    throw AdOperationException(AdOutcome.FIXED_CRYPTO_INVALID_PRICE, currency.name)
+                }
             }
         }
 
-        // Price change validation
-        if (fields.price != null && fields.currency != null) {
+        // Settlement currency validation (for PEGGED mode)
+        if (fields.pricingMode == PricingMode.PEGGED) {
+            fields.settlementCurrencies.forEach { sc ->
+                if (!sc.isSettlement) {
+                    throw AdOperationException(AdOutcome.CURRENCY_NOT_ALLOWED, sc.name)
+                }
+            }
+        }
+
+        // Price change validation (for PEGGED mode)
+        if (fields.pricingMode == PricingMode.PEGGED && fields.price != null && fields.currency != null) {
             val oldPriceValue = existing.price
             val oldCurrencyValue = existing.currency
             val oldPrice = if (oldPriceValue != null && oldCurrencyValue != null) CurrencyAmount(oldPriceValue, oldCurrencyValue) else null
             
             adPriceValidator.validatePrice(CurrencyAmount(fields.price, fields.currency), oldPrice)
+        }
+
+        // Price limit validation for each fixed price
+        if (fields.pricingMode == PricingMode.FIXED_CRYPTO) {
+            fields.fixedPrices.forEach { (currency, amount) ->
+                val oldAmount = existing.fixedPrices[currency]
+                val oldPrice = oldAmount?.let { CurrencyAmount(it, currency) }
+                adPriceValidator.validatePrice(CurrencyAmount(amount, currency), oldPrice)
+            }
         }
 
         // User role validation
@@ -267,6 +304,7 @@ class AdService(
             pricingMode = fields.pricingMode,
             price = fields.price,
             currency = fields.currency,
+            fixedPrices = fields.fixedPrices,
             settlementCurrencies = fields.settlementCurrencies,
             cityId = fields.cityId,
             categoryIds = fields.categoryIds,
@@ -274,29 +312,44 @@ class AdService(
             mediaPaths = fields.mediaPaths,
             mainPhotoPath = fields.mainPhotoPath,
             stock = fields.stock,
-            lockedStock = existing.lockedStock, // Locked stock is not updated via this method
+            lockedStock = existing.lockedStock,
             volatilityProtection = fields.volatilityProtection,
             updatedAtMicros = Instant.now().toMicros()
         )
     }
 
     private fun publishAdChangeEvents(existing: AdDocument, updated: AdUpdateFields, adId: String, userId: String) {
-        val oldPrice = existing.price
-        val oldCurrency = existing.currency
-        val newPrice = updated.price
-        val newCurrency = updated.currency
-
-        if (newPrice != null && newCurrency != null && oldPrice != null && oldCurrency != null) {
-            if (newPrice.compareTo(oldPrice) != 0 || newCurrency != oldCurrency) {
-                eventPublisher.publishEvent(AdPriceChangedEvent(
-                    adId = adId,
-                    sellerId = userId,
-                    adTitle = updated.title,
-                    oldPrice = "$oldPrice ${oldCurrency.name}",
-                    newPrice = "$newPrice ${newCurrency.name}",
-                    currency = newCurrency.name
-                ))
+        val priceChanged = when (updated.pricingMode) {
+            PricingMode.FIXED_CRYPTO -> existing.fixedPrices != updated.fixedPrices
+            PricingMode.PEGGED -> {
+                val oldPrice = existing.price
+                val oldCurrency = existing.currency
+                val newPrice = updated.price
+                val newCurrency = updated.currency
+                newPrice != null && newCurrency != null && oldPrice != null && oldCurrency != null &&
+                    (newPrice.compareTo(oldPrice) != 0 || newCurrency != oldCurrency)
             }
+        }
+
+        if (priceChanged) {
+            val oldPriceStr = if (updated.pricingMode == PricingMode.FIXED_CRYPTO) {
+                existing.fixedPrices.entries.joinToString(", ") { "${it.value} ${it.key}" }
+            } else {
+                "${existing.price} ${existing.currency?.name}"
+            }
+            val newPriceStr = if (updated.pricingMode == PricingMode.FIXED_CRYPTO) {
+                updated.fixedPrices.entries.joinToString(", ") { "${it.value} ${it.key}" }
+            } else {
+                "${updated.price} ${updated.currency?.name}"
+            }
+            eventPublisher.publishEvent(AdPriceChangedEvent(
+                adId = adId,
+                sellerId = userId,
+                adTitle = updated.title,
+                oldPrice = oldPriceStr,
+                newPrice = newPriceStr,
+                currency = updated.currency?.name ?: updated.fixedPrices.keys.firstOrNull()?.name ?: ""
+            ))
         }
 
         val oldStock = existing.stock
@@ -485,9 +538,6 @@ class AdService(
     }
 
     private fun checkForCompleteness(existingAd: AdDocument, adId: String, outcome: AdOutcome = AdOutcome.INCOMPLETE_AD_DATA) {
-        val hasValidSettlement = existingAd.settlementCurrencies.isNotEmpty() &&
-                existingAd.settlementCurrencies.all { it.isSettlement }
-
         val fieldErrors = mutableListOf<AdValidationException.FieldError>()
 
         if (existingAd.title.isBlank()) {
@@ -496,15 +546,28 @@ class AdService(
         if (existingAd.description.isNullOrBlank()) {
             fieldErrors += AdValidationException.FieldError("description", "validation.ad.description-required")
         }
-        if (existingAd.price == null) {
-            fieldErrors += AdValidationException.FieldError("price", "validation.ad.price-required")
+
+        when (existingAd.pricingMode) {
+            PricingMode.FIXED_CRYPTO -> {
+                if (existingAd.fixedPrices.isEmpty()) {
+                    fieldErrors += AdValidationException.FieldError("fixedPrices", "validation.ad.fixed-prices-required")
+                }
+            }
+            PricingMode.PEGGED -> {
+                if (existingAd.price == null) {
+                    fieldErrors += AdValidationException.FieldError("price", "validation.ad.price-required")
+                }
+                if (existingAd.currency == null) {
+                    fieldErrors += AdValidationException.FieldError("priceCurrency", "validation.ad.price-currency-required")
+                }
+                val hasValidSettlement = existingAd.settlementCurrencies.isNotEmpty() &&
+                        existingAd.settlementCurrencies.all { it.isSettlement }
+                if (!hasValidSettlement) {
+                    fieldErrors += AdValidationException.FieldError("settlementCurrencies", "validation.ad.settlement-currencies-required")
+                }
+            }
         }
-        if (existingAd.currency == null) {
-            fieldErrors += AdValidationException.FieldError("priceCurrency", "validation.ad.price-currency-required")
-        }
-        if (!hasValidSettlement) {
-            fieldErrors += AdValidationException.FieldError("settlementCurrencies", "validation.ad.settlement-currencies-required")
-        }
+
         if (existingAd.cityId == null || existingAd.location == null) {
             fieldErrors += AdValidationException.FieldError("location", "validation.ad.location-required")
         }

@@ -32,10 +32,9 @@ class AdSettlementCurrencyIntegrationTest(
         val principal = Principal(userId = userId.toHexString(), username = "testuser", roles = listOf(Role.USER, Role.PIRATE))
         val ad = adService.createAd(userId.toHexString(), "Test Ad", null, 10)
 
-        When("attempting to set a non-settlement currency (USD) as price in FIXED_CRYPTO mode") {
+        When("attempting to set a non-settlement currency (USD) in fixedPrices for FIXED_CRYPTO mode") {
             val updateRequest = mapOf(
-                "price" to 100,
-                "priceCurrency" to "USD"
+                "fixedPrices" to mapOf("USD" to 100)
             )
 
             val result = mockMvc.put("/sales/ads/${ad.id}") {
@@ -49,16 +48,14 @@ class AdSettlementCurrencyIntegrationTest(
             val content = result.response.contentAsString
             val response = objectMapper.readValue(content, StatusResponseDto::class.java)
 
-            Then("it should return a bad request status with FIXED_CRYPTO_REQUIRES_SETTLEMENT_CURRENCY") {
-                response.status shouldBe "AD_FIXED_CRYPTO_REQUIRES_SETTLEMENT_CURRENCY"
+            Then("it should return a bad request status with FIXED_CRYPTO_INVALID_CURRENCY") {
+                response.status shouldBe "AD_FIXED_CRYPTO_INVALID_CURRENCY"
             }
         }
         
         When("attempting to set a settlement currency (ARRR) via API with PIRATE role") {
             val updateRequest = mapOf(
-                "price" to 100,
-                "priceCurrency" to "ARRR",
-                "settlementCurrencies" to listOf("ARRR")
+                "fixedPrices" to mapOf("ARRR" to 100)
             )
 
             mockMvc.put("/sales/ads/${ad.id}") {
@@ -71,7 +68,7 @@ class AdSettlementCurrencyIntegrationTest(
 
             Then("it should succeed") {
                 val updatedAd = adService.getAd(ad.id)
-                updatedAd?.price?.currency shouldBe Currency.ARRR
+                updatedAd?.fixedPrices?.keys shouldBe setOf(Currency.ARRR)
             }
         }
 
@@ -82,9 +79,7 @@ class AdSettlementCurrencyIntegrationTest(
             val ad2 = adService.createAd(userWithoutPirateId.toHexString(), "Test Ad 2", null, 10)
 
             val updateRequest = mapOf(
-                "price" to 100,
-                "priceCurrency" to "ARRR",
-                "settlementCurrencies" to listOf("ARRR")
+                "fixedPrices" to mapOf("ARRR" to 100)
             )
 
             val result = mockMvc.put("/sales/ads/${ad2.id}") {
@@ -103,9 +98,7 @@ class AdSettlementCurrencyIntegrationTest(
 
         When("attempting to set a settlement currency (YEC) via API without YCASH role") {
             val updateRequest = mapOf(
-                "price" to 100,
-                "priceCurrency" to "YEC",
-                "settlementCurrencies" to listOf("YEC")
+                "fixedPrices" to mapOf("YEC" to 100)
             )
 
             val result = mockMvc.put("/sales/ads/${ad.id}") {
@@ -127,9 +120,7 @@ class AdSettlementCurrencyIntegrationTest(
             val principalWithYcash = Principal(userId = userId.toHexString(), username = "testuser", roles = listOf(Role.USER, Role.PIRATE, Role.YCASH))
             
             val updateRequest = mapOf(
-                "price" to 100,
-                "priceCurrency" to "YEC",
-                "settlementCurrencies" to listOf("YEC")
+                "fixedPrices" to mapOf("YEC" to 100)
             )
 
             mockMvc.put("/sales/ads/${ad.id}") {
@@ -142,7 +133,7 @@ class AdSettlementCurrencyIntegrationTest(
 
             Then("it should succeed") {
                 val updatedAd = adService.getAd(ad.id)
-                updatedAd?.price?.currency shouldBe Currency.YEC
+                updatedAd?.fixedPrices?.keys shouldBe setOf(Currency.YEC)
             }
         }
     }

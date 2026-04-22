@@ -1,6 +1,7 @@
 package com.gimlee.ads.domain.model
 
 import com.gimlee.common.domain.model.Currency
+import java.math.BigDecimal
 import java.time.Instant
 
 /**
@@ -13,6 +14,7 @@ data class Ad(
     val description: String?,
     val pricingMode: PricingMode = PricingMode.FIXED_CRYPTO,
     val price: CurrencyAmount?,
+    val fixedPrices: Map<Currency, BigDecimal> = emptyMap(),
     val settlementCurrencies: Set<Currency> = emptySet(),
     val status: AdStatus,
     val createdAt: Instant,

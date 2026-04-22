@@ -20,6 +20,7 @@ data class AdDocument(
     val pricingMode: PricingMode = PricingMode.FIXED_CRYPTO,
     val price: BigDecimal?,
     val currency: Currency?,
+    val fixedPrices: Map<Currency, BigDecimal> = emptyMap(),
     val settlementCurrencies: Set<Currency> = emptySet(),
     val status: AdStatus,
     val createdAtMicros: Long,
@@ -42,6 +43,7 @@ data class AdDocument(
         const val FIELD_PRICING_MODE = "pm"
         const val FIELD_PRICE = "p"
         const val FIELD_CURRENCY = "c"
+        const val FIELD_FIXED_PRICES = "fp"
         const val FIELD_SETTLEMENT_CURRENCIES = "sc"
         const val FIELD_STATUS = "s"
         const val FIELD_CREATED_AT = "crt"
@@ -59,9 +61,23 @@ data class AdDocument(
 
     /**
      * Converts this persistence document to the domain Ad object.
+     * Auto-migrates legacy FIXED_CRYPTO ads that have price/currency but no fixedPrices.
      */
     fun toDomain(): Ad {
         val domainPrice = if (price != null && currency != null) CurrencyAmount(price, currency) else null
+
+        val effectiveFixedPrices = if (pricingMode == PricingMode.FIXED_CRYPTO && fixedPrices.isEmpty() && price != null && currency != null && currency.isSettlement) {
+            mapOf(currency to price)
+        } else {
+            fixedPrices
+        }
+
+        val effectiveSettlementCurrencies = if (pricingMode == PricingMode.FIXED_CRYPTO && effectiveFixedPrices.isNotEmpty()) {
+            effectiveFixedPrices.keys
+        } else {
+            settlementCurrencies
+        }
+
         return Ad(
             id = id.toHexString(),
             userId = userId.toHexString(),
@@ -69,7 +85,8 @@ data class AdDocument(
             description = description,
             pricingMode = pricingMode,
             price = domainPrice,
-            settlementCurrencies = settlementCurrencies,
+            fixedPrices = effectiveFixedPrices,
+            settlementCurrencies = effectiveSettlementCurrencies,
             status = status,
             createdAt = fromMicros(createdAtMicros),
             updatedAt = fromMicros(updatedAtMicros),

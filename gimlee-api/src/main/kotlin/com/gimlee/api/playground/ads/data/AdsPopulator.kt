@@ -215,18 +215,25 @@ class AdsPopulator(
                 val pricingMode = if (Random.nextBoolean()) PricingMode.FIXED_CRYPTO else PricingMode.PEGGED
                 val settlementCurrencies = resolveSettlementCurrencies(allowedSettlementCurrencies, forceSettlementCurrency, forceSettlementCurrencies)
 
-                val (priceAmount, priceCurrency) = when (pricingMode) {
+                val fixedPrices: Map<Currency, BigDecimal>?
+                val priceAmount: BigDecimal?
+                val priceCurrency: Currency?
+
+                when (pricingMode) {
                     PricingMode.FIXED_CRYPTO -> {
-                        val sc = settlementCurrencies.random()
-                        randomPrice(sc) to sc
+                        fixedPrices = settlementCurrencies.associateWith { randomPrice(it) }
+                        priceAmount = null
+                        priceCurrency = null
                     }
                     PricingMode.PEGGED -> {
+                        fixedPrices = null
                         val ref = REFERENCE_CURRENCIES.random()
-                        randomPrice(ref) to ref
+                        priceAmount = randomPrice(ref)
+                        priceCurrency = ref
                     }
                 }
 
-                val volatilityProtection = pricingMode == PricingMode.PEGGED && Random.nextBoolean()
+                val volatilityProtection = Random.nextBoolean()
                 val location = Location(city.id, doubleArrayOf(city.lon, city.lat))
                 val randomCategoryId = categoryService.getRandomLeafCategoryId()
 
@@ -263,8 +270,9 @@ class AdsPopulator(
                     title = title,
                     description = template.description,
                     pricingMode = pricingMode,
-                    price = CurrencyAmount(priceAmount, priceCurrency),
-                    settlementCurrencies = settlementCurrencies,
+                    price = if (priceAmount != null && priceCurrency != null) CurrencyAmount(priceAmount, priceCurrency) else null,
+                    fixedPrices = fixedPrices,
+                    settlementCurrencies = if (pricingMode == PricingMode.PEGGED) settlementCurrencies else null,
                     location = location,
                     mediaPaths = adMediaPaths,
                     mainPhotoPath = adMainPhotoPath,

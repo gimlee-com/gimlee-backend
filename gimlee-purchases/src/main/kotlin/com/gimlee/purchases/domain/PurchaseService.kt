@@ -117,7 +117,10 @@ class PurchaseService(
 
     private fun validateSettlementCurrency(ads: Map<String, Ad>, currency: Currency) {
         val unsupportedAds = ads.values.filter { ad ->
-            currency !in ad.settlementCurrencies
+            when (ad.pricingMode) {
+                PricingMode.FIXED_CRYPTO -> currency !in ad.fixedPrices.keys
+                PricingMode.PEGGED -> currency !in ad.settlementCurrencies
+            }
         }
         if (unsupportedAds.isNotEmpty()) {
             throw IllegalArgumentException("Currency $currency is not accepted by ads: ${unsupportedAds.map { it.id }.joinToString()}")
@@ -133,12 +136,20 @@ class PurchaseService(
 
         items.forEach { itemRequest ->
             val ad = ads[itemRequest.adId]!!
-            val adPrice = ad.price ?: throw IllegalStateException("Ad ${itemRequest.adId} has no price set.")
             
-            val expectedPrice = if (adPrice.currency == paymentCurrency) {
-                adPrice.amount
-            } else {
-                currencyConverterService.convert(adPrice.amount, adPrice.currency, paymentCurrency).targetAmount
+            val expectedPrice = when (ad.pricingMode) {
+                PricingMode.FIXED_CRYPTO -> {
+                    ad.fixedPrices[paymentCurrency]
+                        ?: throw IllegalStateException("Ad ${itemRequest.adId} does not have a fixed price for $paymentCurrency.")
+                }
+                PricingMode.PEGGED -> {
+                    val adPrice = ad.price ?: throw IllegalStateException("Ad ${itemRequest.adId} has no price set.")
+                    if (adPrice.currency == paymentCurrency) {
+                        adPrice.amount
+                    } else {
+                        currencyConverterService.convert(adPrice.amount, adPrice.currency, paymentCurrency).targetAmount
+                    }
+                }
             }
 
             // Check tolerance: abs(request - expected) / expected <= tolerance
@@ -164,20 +175,33 @@ class PurchaseService(
     ): Map<String, CurrencyAmount> {
         return items.associate { itemRequest ->
             val ad = ads[itemRequest.adId]!!
-            val adPrice = ad.price ?: throw IllegalStateException("Ad ${itemRequest.adId} has no price set.")
-            val expectedPrice = if (adPrice.currency == paymentCurrency) {
-                adPrice.amount
-            } else {
-                currencyConverterService.convert(adPrice.amount, adPrice.currency, paymentCurrency).targetAmount
+            val expectedPrice = when (ad.pricingMode) {
+                PricingMode.FIXED_CRYPTO -> {
+                    ad.fixedPrices[paymentCurrency]
+                        ?: throw IllegalStateException("Ad ${itemRequest.adId} does not have a fixed price for $paymentCurrency.")
+                }
+                PricingMode.PEGGED -> {
+                    val adPrice = ad.price ?: throw IllegalStateException("Ad ${itemRequest.adId} has no price set.")
+                    if (adPrice.currency == paymentCurrency) {
+                        adPrice.amount
+                    } else {
+                        currencyConverterService.convert(adPrice.amount, adPrice.currency, paymentCurrency).targetAmount
+                    }
+                }
             }
             itemRequest.adId to CurrencyAmount(expectedPrice, paymentCurrency)
         }
     }
 
     private fun isProtectedSettlementCurrency(ad: Ad, settlementCurrency: Currency): Boolean {
-        if (!ad.volatilityProtection || ad.pricingMode != PricingMode.PEGGED) return false
-        val referenceCurrency = ad.price?.currency ?: return false
-        return referenceCurrency != settlementCurrency
+        if (!ad.volatilityProtection) return false
+        return when (ad.pricingMode) {
+            PricingMode.FIXED_CRYPTO -> true
+            PricingMode.PEGGED -> {
+                val referenceCurrency = ad.price?.currency ?: return false
+                referenceCurrency != settlementCurrency
+            }
+        }
     }
 
     private fun collectPurchasedItemDetails(

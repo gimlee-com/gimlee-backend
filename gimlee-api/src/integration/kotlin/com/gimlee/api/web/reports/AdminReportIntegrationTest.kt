@@ -1,7 +1,6 @@
 package com.gimlee.api.web.reports
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.domain.User
@@ -57,8 +56,7 @@ class AdminReportIntegrationTest(
         val ad = adService.createAd(uid, "Reported Ad", null, 10)
         adService.updateAd(ad.id, uid, UpdateAdRequest(
             description = "A description for the ad",
-            price = CurrencyAmount(BigDecimal.TEN, Currency.ARRR),
-            settlementCurrencies = setOf(Currency.ARRR),
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal.TEN),
             location = Location("city1", doubleArrayOf(1.0, 2.0)),
             stock = 10
         ))

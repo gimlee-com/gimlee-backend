@@ -2,7 +2,6 @@ package com.gimlee.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.api.web.dto.AdDiscoveryDetailsDto
 import com.gimlee.auth.model.Role
@@ -40,8 +39,7 @@ class OtherAdsIntegrationTest(
             val ad = adService.createAd(sellerIdStr, "Ad $i", null, 10)
             adService.updateAd(ad.id, sellerIdStr, UpdateAdRequest(
                 description = "Desc $i",
-                price = CurrencyAmount(BigDecimal.valueOf(i.toLong()), Currency.ARRR),
-                settlementCurrencies = setOf(Currency.ARRR),
+                fixedPrices = mapOf(Currency.ARRR to BigDecimal.valueOf(i.toLong())),
                 location = com.gimlee.ads.domain.model.Location("city1", doubleArrayOf(1.0, 2.0)),
                 stock = 10
             ))

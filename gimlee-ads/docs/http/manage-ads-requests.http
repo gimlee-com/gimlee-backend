@@ -40,7 +40,12 @@ Authorization: Bearer {{auth_token}}
 # AD_ACTIVE_AD_INCOMPLETE_UPDATE suggesting to deactivate the ad first.
 # Uses optimistic locking — concurrent modifications return 409 AD_CONCURRENT_MODIFICATION.
 # Replace {adId} with the actual ID of the ad you want to update.
-# @name /sales/ads/{adId} [PUT]
+#
+# Pricing Modes:
+#   FIXED_CRYPTO — set fixedPrices (price per settlement currency). No conversion at purchase time.
+#   PEGGED — set price, priceCurrency, and settlementCurrencies. Live conversion at purchase time.
+#
+# @name /sales/ads/{adId} [PUT] - FIXED_CRYPTO example
 PUT {{host}}/api/sales/ads/{adId}
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
@@ -48,15 +53,15 @@ Authorization: Bearer {{auth_token}}
 {
   "title": "Updated Ad Title",
   "description": "This is a detailed description of the item.",
-  "price": 19.99,
-  "currency": "YEC",
-  "categoryId": "60f8f9b3a9d9e8f8a8b8c8d8",
+  "pricingMode": "FIXED_CRYPTO",
+  "fixedPrices": {
+    "ARRR": 100.00,
+    "YEC": 5000.00
+  },
+  "categoryId": 5181,
   "location": {
     "cityId": "city-id-123",
-    "point": {
-      "latitude": 40.7128,
-      "longitude": -74.0060
-    }
+    "point": [19.9450, 50.0647]
   },
   "mediaPaths": [
     "path/to/media/image1.jpg",
@@ -64,8 +69,34 @@ Authorization: Bearer {{auth_token}}
   ],
   "mainPhotoPath": "path/to/media/image1.jpg",
   "stock": 10,
-  "volatilityProtection": true,
-  "peggedCurrency": "USD"
+  "volatilityProtection": true
+}
+
+### Update an Existing Ad — PEGGED example
+# @name /sales/ads/{adId} [PUT] - PEGGED example
+PUT {{host}}/api/sales/ads/{adId}
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "title": "Updated Ad Title",
+  "description": "This is a detailed description of the item.",
+  "pricingMode": "PEGGED",
+  "price": 19.99,
+  "priceCurrency": "USD",
+  "settlementCurrencies": ["ARRR", "YEC"],
+  "categoryId": 5181,
+  "location": {
+    "cityId": "city-id-123",
+    "point": [19.9450, 50.0647]
+  },
+  "mediaPaths": [
+    "path/to/media/image1.jpg",
+    "path/to/media/details/image2.png"
+  ],
+  "mainPhotoPath": "path/to/media/image1.jpg",
+  "stock": 10,
+  "volatilityProtection": true
 }
 
 ### Expected Response (Success - 200 OK):

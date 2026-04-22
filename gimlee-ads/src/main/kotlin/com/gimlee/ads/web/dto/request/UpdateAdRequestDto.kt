@@ -26,6 +26,8 @@ data class UpdateAdRequestDto(
 
     val priceCurrency: Currency?,
 
+    val fixedPrices: Map<Currency, BigDecimal>?,
+
     val settlementCurrencies: Set<Currency>?,
 
     val categoryId: Int?,
@@ -52,6 +54,7 @@ data class UpdateAdRequestDto(
                 require(priceCurrency != null) { "Price currency must be provided when the price is provided." }
                 CurrencyAmount(price, priceCurrency)
             },
+            fixedPrices = fixedPrices,
             settlementCurrencies = settlementCurrencies,
             location = location?.let { dto ->
                 val point = dto.point ?: cityDataById[dto.cityId]?.let { doubleArrayOf(it.lon, it.lat) }

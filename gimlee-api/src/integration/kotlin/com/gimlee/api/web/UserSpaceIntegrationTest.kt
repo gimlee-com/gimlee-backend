@@ -1,7 +1,6 @@
 package com.gimlee.api.web
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.domain.User
 import com.gimlee.auth.model.Role
@@ -38,8 +37,7 @@ class UserSpaceIntegrationTest(
         val ad = adService.createAd(userId.toHexString(), "Pirate Treasure", null, 1)
         adService.updateAd(ad.id, userId.toHexString(), UpdateAdRequest(
             description = "Test Description",
-            price = CurrencyAmount(BigDecimal("1000"), Currency.ARRR),
-            settlementCurrencies = setOf(Currency.ARRR),
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal("1000")),
             location = com.gimlee.ads.domain.model.Location("city", doubleArrayOf(0.0, 0.0)),
             stock = 1
         ))

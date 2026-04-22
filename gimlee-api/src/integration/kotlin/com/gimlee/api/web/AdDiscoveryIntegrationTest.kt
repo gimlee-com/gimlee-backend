@@ -1,7 +1,6 @@
 package com.gimlee.api.web
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.auth.domain.User
 import com.gimlee.auth.model.Role
@@ -44,8 +43,7 @@ class AdDiscoveryIntegrationTest(
         val ad = adService.createAd(sellerIdStr, "Test Ad", null, 10)
         adService.updateAd(ad.id, sellerIdStr, UpdateAdRequest(
             description = "Description",
-            price = CurrencyAmount(BigDecimal("100"), Currency.ARRR),
-            settlementCurrencies = setOf(Currency.ARRR),
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal("100")),
             location = com.gimlee.ads.domain.model.Location("city", doubleArrayOf(0.0, 0.0)),
             stock = 10
         ))
@@ -67,7 +65,7 @@ class AdDiscoveryIntegrationTest(
 
                 val content = response.body ?: ""
 
-                content.contains("\"price\":{\"amount\":100,\"currency\":\"ARRR\"}") shouldBe true
+                content.contains("\"settlementPrices\":[{\"amount\":100") shouldBe true
                 // USD has 2 decimal places. 100 * 0.5 = 50.00
                 content.contains("\"preferredPrice\":{\"amount\":50.00,\"currency\":\"USD\"}") shouldBe true
                 content.contains("\"availableStock\":10") shouldBe true

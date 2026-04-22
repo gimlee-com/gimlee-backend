@@ -1,7 +1,6 @@
 package com.gimlee.api.web
 
 import com.gimlee.ads.domain.AdService
-import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.persistence.AdRepository
 import com.gimlee.auth.model.Role
@@ -64,8 +63,7 @@ class AdDiscoveryFilteringIntegrationTest(
         val ad1 = adService.createAd(sellerIdStr, "ARRR Ad", null, 10)
         adService.updateAd(ad1.id, sellerIdStr, UpdateAdRequest(
             description = "Description 1",
-            price = CurrencyAmount(BigDecimal("100"), Currency.ARRR),
-            settlementCurrencies = setOf(Currency.ARRR),
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal("100")),
             location = com.gimlee.ads.domain.model.Location("city1", doubleArrayOf(0.0, 0.0)),
             stock = 10
         ))
@@ -75,8 +73,7 @@ class AdDiscoveryFilteringIntegrationTest(
         val ad2 = adService.createAd(sellerIdStr, "YEC Ad", null, 10)
         adService.updateAd(ad2.id, sellerIdStr, UpdateAdRequest(
             description = "Description 2",
-            price = CurrencyAmount(BigDecimal("100"), Currency.YEC),
-            settlementCurrencies = setOf(Currency.YEC),
+            fixedPrices = mapOf(Currency.YEC to BigDecimal("100")),
             location = com.gimlee.ads.domain.model.Location("city2", doubleArrayOf(0.0, 0.0)),
             stock = 10
         ))
@@ -86,8 +83,7 @@ class AdDiscoveryFilteringIntegrationTest(
         val ad3 = adService.createAd(sellerIdStr, "Expensive Ad", null, 10)
         adService.updateAd(ad3.id, sellerIdStr, UpdateAdRequest(
             description = "Description 3",
-            price = CurrencyAmount(BigDecimal("500"), Currency.ARRR),
-            settlementCurrencies = setOf(Currency.ARRR),
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal("500")),
             location = com.gimlee.ads.domain.model.Location("city3", doubleArrayOf(0.0, 0.0)),
             stock = 10
         ))

@@ -43,8 +43,7 @@ class AnalyticsIntegrationTest(
         val ad = adService.createAd(sellerId.toHexString(), "Test Ad", null, 10)
         adService.updateAd(ad.id, sellerId.toHexString(), com.gimlee.ads.domain.model.UpdateAdRequest(
             description = "Description",
-            price = com.gimlee.ads.domain.model.CurrencyAmount(java.math.BigDecimal("100"), com.gimlee.common.domain.model.Currency.ARRR),
-            settlementCurrencies = setOf(Currency.ARRR),
+            fixedPrices = mapOf(Currency.ARRR to java.math.BigDecimal("100")),
             location = Location("city", doubleArrayOf(1.0, 1.0))
         ))
         adService.activateAd(ad.id, sellerId.toHexString())
