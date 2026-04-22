@@ -68,6 +68,7 @@ class AdDiscoveryIntegrationTest(
                 content.contains("\"settlementPrices\":[{\"amount\":100") shouldBe true
                 // USD has 2 decimal places. 100 * 0.5 = 50.00
                 content.contains("\"preferredPrice\":{\"amount\":50.00,\"currency\":\"USD\"}") shouldBe true
+                content.contains("\"preferredPrices\":{\"currency\":\"USD\",\"prices\":{\"ARRR\":50.00}}") shouldBe true
                 content.contains("\"availableStock\":10") shouldBe true
                 content.contains("\"memberSince\":") shouldBe true
             }
@@ -90,16 +91,68 @@ class AdDiscoveryIntegrationTest(
                 
                 // ARRR has 8 decimal places.
                 content.contains("\"preferredPrice\":{\"amount\":100.00000000,\"currency\":\"ARRR\"}") shouldBe true
+                content.contains("\"preferredPrices\":{\"currency\":\"ARRR\",\"prices\":{\"ARRR\":100.00000000}}") shouldBe true
             }
         }
         
         When("fetching multiple ads") {
-            Then("they should also include preferredPrice") {
+            Then("they should also include preferredPrice and preferredPrices") {
                 val response = restClient.get("/ads/")
                 response.statusCode shouldBe 200
 
                 val content = response.body ?: ""
                 content.contains("\"preferredPrice\":{\"amount\":50.00,\"currency\":\"USD\"}") shouldBe true
+                content.contains("\"preferredPrices\":{\"currency\":\"USD\",\"prices\":{\"ARRR\":50.00}}") shouldBe true
+            }
+        }
+    }
+
+    Given("a multi-currency FIXED_CRYPTO ad") {
+        val sellerId = ObjectId.get()
+        userRepository.save(User(id = sellerId, username = "multi-seller"))
+        userRoleRepository.add(sellerId, Role.USER)
+        userRoleRepository.add(sellerId, Role.PIRATE)
+        userRoleRepository.add(sellerId, Role.YCASH)
+        val sellerIdStr = sellerId.toHexString()
+
+        val ad = adService.createAd(sellerIdStr, "Multi-Currency Ad", null, 10)
+        adService.updateAd(ad.id, sellerIdStr, UpdateAdRequest(
+            description = "A multi-currency ad",
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal("100"), Currency.YEC to BigDecimal("5000")),
+            location = com.gimlee.ads.domain.model.Location("city", doubleArrayOf(0.0, 0.0)),
+            stock = 5
+        ))
+        adService.activateAd(ad.id, sellerIdStr)
+
+        // ARRR to USD: 1 ARRR = 0.5 USD
+        exchangeRateRepository.save(ExchangeRate(
+            baseCurrency = Currency.ARRR,
+            quoteCurrency = Currency.USD,
+            rate = BigDecimal("0.5"),
+            updatedAt = Instant.now(),
+            source = "test"
+        ))
+        // YEC to USD: 1 YEC = 0.02 USD
+        exchangeRateRepository.save(ExchangeRate(
+            baseCurrency = Currency.YEC,
+            quoteCurrency = Currency.USD,
+            rate = BigDecimal("0.02"),
+            updatedAt = Instant.now(),
+            source = "test"
+        ))
+
+        When("fetching the ad as a guest") {
+            Then("preferredPrices should include both currencies converted to USD") {
+                val response = restClient.get("/ads/${ad.id}")
+                response.statusCode shouldBe 200
+
+                val content = response.body ?: ""
+
+                // 100 ARRR * 0.5 = 50.00 USD, 5000 YEC * 0.02 = 100.00 USD
+                content.contains("\"preferredPrices\"") shouldBe true
+                content.contains("\"currency\":\"USD\"") shouldBe true
+                content.contains("\"ARRR\":50.00") shouldBe true
+                content.contains("\"YEC\":100.00") shouldBe true
             }
         }
     }

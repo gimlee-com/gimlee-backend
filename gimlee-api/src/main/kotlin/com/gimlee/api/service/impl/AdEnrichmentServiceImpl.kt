@@ -21,6 +21,7 @@ import com.gimlee.api.service.AdEnrichmentType
 import com.gimlee.api.web.dto.AdDiscoveryDetailsDto
 import com.gimlee.api.web.dto.AdDiscoveryPreviewDto
 import com.gimlee.api.web.dto.AdDiscoveryStatsDto
+import com.gimlee.api.web.dto.PreferredPricesDto
 import com.gimlee.api.web.dto.UserSpaceDetailsDto
 import com.gimlee.auth.service.UserService
 import com.gimlee.common.domain.model.Currency
@@ -86,11 +87,15 @@ class AdEnrichmentServiceImpl(
             val frozenCurrencies = computeFrozenCurrencies(ad)
             val settlementPrices = computeSettlementPrices(ad)
 
+            val preferredPrices = if (types.contains(AdEnrichmentType.PREFERRED_CURRENCY_PRICE)) {
+                computePreferredPrices(settlementPrices, preferredCurrency)
+            } else null
+
             val isWatched = if (types.contains(AdEnrichmentType.WATCHLIST) && !userId.isNullOrBlank()) {
                 ad.id in watchedAdIds
             } else null
 
-            AdDiscoveryPreviewDto.fromAdPreview(previewDto, convertedPrice, frozenCurrencies, settlementPrices, isWatched)
+            AdDiscoveryPreviewDto.fromAdPreview(previewDto, convertedPrice, frozenCurrencies, settlementPrices, isWatched, preferredPrices)
         }
     }
 
@@ -164,11 +169,15 @@ class AdEnrichmentServiceImpl(
         val frozenCurrencies = computeFrozenCurrencies(ad)
         val settlementPrices = computeSettlementPrices(ad)
 
+        val preferredPrices = if (types.contains(AdEnrichmentType.PREFERRED_CURRENCY_PRICE)) {
+            computePreferredPrices(settlementPrices, preferredCurrency)
+        } else null
+
         val isWatched = if (types.contains(AdEnrichmentType.WATCHLIST) && !userId.isNullOrBlank()) {
             watchlistService.isInWatchlist(userId, ad.id)
         } else null
 
-        return AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails, otherAdsDtos, stats, frozenCurrencies, settlementPrices, isWatched)
+        return AdDiscoveryDetailsDto.fromAdDetails(detailsDto, preferredPrice, userDetails, otherAdsDtos, stats, frozenCurrencies, settlementPrices, isWatched, preferredPrices)
     }
 
     override fun getPreferredCurrency(userId: String?): Currency {
@@ -245,5 +254,20 @@ class AdEnrichmentServiceImpl(
                 }
             }
         }
+    }
+
+    private fun computePreferredPrices(
+        settlementPrices: List<CurrencyAmountDto>?,
+        preferredCurrency: Currency
+    ): PreferredPricesDto? {
+        if (settlementPrices.isNullOrEmpty()) return null
+
+        val prices = settlementPrices.mapNotNull { sp ->
+            val converted = convertPrice(CurrencyAmount(sp.amount, sp.currency), preferredCurrency)
+            converted?.let { sp.currency to it.amount }
+        }.toMap()
+
+        if (prices.isEmpty()) return null
+        return PreferredPricesDto(currency = preferredCurrency, prices = prices)
     }
 }

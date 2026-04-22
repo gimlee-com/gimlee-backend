@@ -8,6 +8,15 @@ import com.gimlee.ads.web.dto.response.CurrencyAmountDto
 import com.gimlee.ads.web.dto.response.LocationWithCityDetailsDto
 import com.gimlee.common.domain.model.Currency
 import io.swagger.v3.oas.annotations.media.Schema
+import java.math.BigDecimal
+
+@Schema(description = "Settlement prices converted to the buyer's preferred currency")
+data class PreferredPricesDto(
+    @Schema(description = "The buyer's preferred currency")
+    val currency: Currency,
+    @Schema(description = "Map of settlement currency to amount in the preferred currency")
+    val prices: Map<Currency, BigDecimal>
+)
 
 @Schema(description = "Ad preview information with preferred currency price")
 data class AdDiscoveryPreviewDto(
@@ -18,6 +27,8 @@ data class AdDiscoveryPreviewDto(
     val settlementCurrencies: Set<Currency> = emptySet(),
     val settlementPrices: List<CurrencyAmountDto>? = null,
     val preferredPrice: CurrencyAmountDto? = null,
+    @Schema(description = "Settlement prices converted to the buyer's preferred currency")
+    val preferredPrices: PreferredPricesDto? = null,
     val mainPhotoPath: String? = null,
     val categoryId: Int? = null,
     val categoryPath: List<CategoryPathElementDto>? = null,
@@ -32,7 +43,8 @@ data class AdDiscoveryPreviewDto(
             preferredPrice: CurrencyAmountDto?,
             frozenCurrencies: List<Currency> = emptyList(),
             settlementPrices: List<CurrencyAmountDto>? = null,
-            isWatched: Boolean? = null
+            isWatched: Boolean? = null,
+            preferredPrices: PreferredPricesDto? = null
         ): AdDiscoveryPreviewDto {
             val buyable = frozenCurrencies.size < preview.settlementCurrencies.size
             return AdDiscoveryPreviewDto(
@@ -43,6 +55,7 @@ data class AdDiscoveryPreviewDto(
                 settlementCurrencies = preview.settlementCurrencies,
                 settlementPrices = settlementPrices,
                 preferredPrice = preferredPrice,
+                preferredPrices = preferredPrices,
                 mainPhotoPath = preview.mainPhotoPath,
                 categoryId = preview.categoryId,
                 categoryPath = preview.categoryPath,
@@ -66,6 +79,8 @@ data class AdDiscoveryDetailsDto(
     val settlementCurrencies: Set<Currency> = emptySet(),
     val settlementPrices: List<CurrencyAmountDto>? = null,
     val preferredPrice: CurrencyAmountDto?,
+    @Schema(description = "Settlement prices converted to the buyer's preferred currency")
+    val preferredPrices: PreferredPricesDto? = null,
     val categoryId: Int?,
     val categoryPath: List<CategoryPathElementDto>?,
     val mediaPaths: List<String>?,
@@ -88,7 +103,8 @@ data class AdDiscoveryDetailsDto(
             stats: AdDiscoveryStatsDto? = null,
             frozenCurrencies: List<Currency> = emptyList(),
             settlementPrices: List<CurrencyAmountDto>? = null,
-            isWatched: Boolean? = null
+            isWatched: Boolean? = null,
+            preferredPrices: PreferredPricesDto? = null
         ): AdDiscoveryDetailsDto {
             val buyable = frozenCurrencies.size < details.settlementCurrencies.size
             return AdDiscoveryDetailsDto(
@@ -101,6 +117,7 @@ data class AdDiscoveryDetailsDto(
                 settlementCurrencies = details.settlementCurrencies,
                 settlementPrices = settlementPrices,
                 preferredPrice = preferredPrice,
+                preferredPrices = preferredPrices,
                 categoryId = details.categoryId,
                 categoryPath = details.categoryPath,
                 mediaPaths = details.mediaPaths,

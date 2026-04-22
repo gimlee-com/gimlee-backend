@@ -15,6 +15,10 @@ Accept-Language: pl-PL
 #       "title": "Ad Title",
 #       "price": { "amount": 100, "currency": "ARRR" },
 #       "preferredPrice": { "amount": 50.00, "currency": "PLN" },
+#       "preferredPrices": {
+#         "currency": "PLN",
+#         "prices": { "ARRR": 50.00 }
+#       },
 #       ...
 #     }
 #   ],
@@ -108,7 +112,15 @@ Accept-Language: en-US
 #   "title": "Ad Title",
 #   "availableStock": 10,
 #   "price": { "amount": 100, "currency": "ARRR" },
+#   "settlementPrices": [
+#     { "amount": 100, "currency": "ARRR" },
+#     { "amount": 5000, "currency": "YEC" }
+#   ],
 #   "preferredPrice": { "amount": 25.50, "currency": "USD" },
+#   "preferredPrices": {
+#     "currency": "USD",
+#     "prices": { "ARRR": 25.50, "YEC": 50.00 }
+#   },
 #   "user": {
 #     "userId": "60f8f9b3a9d9e8f8a8b8c8d8",
 #     "username": "pirate",
