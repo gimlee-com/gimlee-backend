@@ -10,11 +10,20 @@ import com.gimlee.common.domain.model.Currency
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 
-@Schema(description = "Settlement prices converted to the buyer's preferred currency")
+@Schema(
+    description = "Per-settlement-currency price breakdown converted to the buyer's preferred currency. " +
+        "Each entry maps a settlement cryptocurrency to its equivalent amount in the preferred fiat currency. " +
+        "Use this to display a detailed price comparison across all payment options. " +
+        "See also 'preferredPrice' for a single representative price suitable for summary views."
+)
 data class PreferredPricesDto(
-    @Schema(description = "The buyer's preferred currency")
+    @Schema(description = "The buyer's preferred currency (e.g. USD, PLN)", example = "USD")
     val currency: Currency,
-    @Schema(description = "Map of settlement currency to amount in the preferred currency")
+    @Schema(
+        description = "Map of settlement currency ticker to the converted amount in the preferred currency. " +
+            "Example: {\"ARRR\": 50.00, \"YEC\": 100.00} means 50 USD worth of ARRR and 100 USD worth of YEC.",
+        example = "{\"ARRR\": 50.00, \"YEC\": 100.00}"
+    )
     val prices: Map<Currency, BigDecimal>
 )
 
@@ -26,8 +35,19 @@ data class AdDiscoveryPreviewDto(
     val price: CurrencyAmountDto? = null,
     val settlementCurrencies: Set<Currency> = emptySet(),
     val settlementPrices: List<CurrencyAmountDto>? = null,
+    @Schema(
+        description = "A single representative price converted to the buyer's preferred currency. " +
+            "Best suited for card/list views where a single price summary is needed. " +
+            "For ads with multiple settlement currencies, this is derived from the primary (first alphabetical) " +
+            "settlement currency. For a full per-currency breakdown, use 'preferredPrices' instead."
+    )
     val preferredPrice: CurrencyAmountDto? = null,
-    @Schema(description = "Settlement prices converted to the buyer's preferred currency")
+    @Schema(
+        description = "Per-settlement-currency price breakdown in the buyer's preferred currency. " +
+            "Present when the ad has settlement prices and the buyer's preferred currency is known. " +
+            "Use this to show the buyer what each crypto payment option costs in their familiar currency. " +
+            "For a single summary price, use 'preferredPrice' instead."
+    )
     val preferredPrices: PreferredPricesDto? = null,
     val mainPhotoPath: String? = null,
     val categoryId: Int? = null,
@@ -78,8 +98,19 @@ data class AdDiscoveryDetailsDto(
     val price: CurrencyAmountDto?,
     val settlementCurrencies: Set<Currency> = emptySet(),
     val settlementPrices: List<CurrencyAmountDto>? = null,
+    @Schema(
+        description = "A single representative price converted to the buyer's preferred currency. " +
+            "Best suited for card/list views where a single price summary is needed. " +
+            "For ads with multiple settlement currencies, this is derived from the primary (first alphabetical) " +
+            "settlement currency. For a full per-currency breakdown, use 'preferredPrices' instead."
+    )
     val preferredPrice: CurrencyAmountDto?,
-    @Schema(description = "Settlement prices converted to the buyer's preferred currency")
+    @Schema(
+        description = "Per-settlement-currency price breakdown in the buyer's preferred currency. " +
+            "Present when the ad has settlement prices and the buyer's preferred currency is known. " +
+            "Use this to show the buyer what each crypto payment option costs in their familiar currency. " +
+            "For a single summary price, use 'preferredPrice' instead."
+    )
     val preferredPrices: PreferredPricesDto? = null,
     val categoryId: Int?,
     val categoryPath: List<CategoryPathElementDto>?,
