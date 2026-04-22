@@ -167,7 +167,17 @@ class ManageAdController(
 
     @Operation(
         summary = "Update an Existing Ad",
-        description = "Allows updating an INACTIVE or ACTIVE ad. If the ad is ACTIVE, the update must preserve all required fields (title, description, price, settlement currencies, location, stock > 0). Requires USER role authentication."
+        description = "Allows updating an INACTIVE or ACTIVE ad. If the ad is ACTIVE, the update must preserve " +
+                "all required fields (title, description, pricing, location, stock > 0). Otherwise, the request " +
+                "is rejected with AD_ACTIVE_AD_INCOMPLETE_UPDATE.\n\n" +
+                "**Pricing modes** determine which fields are valid in the request:\n\n" +
+                "| Field | FIXED_CRYPTO | PEGGED |\n" +
+                "|-------|-------------|--------|\n" +
+                "| `fixedPrices` | ✅ Required for activation | ❌ Rejected (AD_PEGGED_CONFLICTING_FIXED_PRICES) |\n" +
+                "| `price` + `priceCurrency` | ❌ Rejected (AD_FIXED_CRYPTO_CONFLICTING_PRICE) | ✅ Required for activation |\n" +
+                "| `settlementCurrencies` | ❌ Rejected (AD_FIXED_CRYPTO_CONFLICTING_SETTLEMENT) — derived from fixedPrices keys | ✅ Required for activation |\n\n" +
+                "If `pricingMode` is omitted, the ad's current mode is used to determine which fields are allowed. " +
+                "Switching modes clears the previous mode's pricing fields automatically."
     )
     @ApiResponse(
         responseCode = "200",
@@ -181,12 +191,16 @@ class ManageAdController(
     )
     @ApiResponse(
         responseCode = "400",
-        description = "Invalid update data or incomplete active ad. Possible status codes: AD_INVALID_AD_STATUS, AD_INVALID_AD_ID, AD_ACTIVE_AD_INCOMPLETE_UPDATE",
+        description = "Invalid update data, conflicting pricing fields, or incomplete active ad. Possible status codes: " +
+                "AD_FIXED_CRYPTO_CONFLICTING_PRICE, AD_FIXED_CRYPTO_CONFLICTING_SETTLEMENT, " +
+                "AD_PEGGED_CONFLICTING_FIXED_PRICES, AD_FIXED_CRYPTO_INVALID_CURRENCY, " +
+                "AD_FIXED_CRYPTO_INVALID_PRICE, AD_ACTIVE_AD_INCOMPLETE_UPDATE, " +
+                "AD_INVALID_AD_STATUS, AD_PRICE_EXCEEDS_LIMIT",
         content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
     )
     @ApiResponse(
         responseCode = "403",
-        description = "Forbidden (e.g., using ARRR without PIRATE role). Possible status codes: AD_PIRATE_ROLE_REQUIRED",
+        description = "Missing required role for a settlement currency. Possible status codes: AD_PIRATE_ROLE_REQUIRED, AD_YCASH_ROLE_REQUIRED",
         content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
     )
     @ApiResponse(

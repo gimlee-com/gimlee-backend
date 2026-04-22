@@ -142,6 +142,29 @@ Authorization: Bearer {{auth_token}}
 ### Expected Response (Bad Request - 400 Bad Request):
 # Content-Type: application/json
 #
+# Conflict: sending fields that belong to the wrong pricing mode
+# {
+#   "success": false,
+#   "status": "AD_FIXED_CRYPTO_CONFLICTING_PRICE",
+#   "message": "Cannot set a reference price when using Fixed Crypto pricing. Use fixedPrices to set per-currency prices.",
+#   "data": null
+# }
+# or
+# {
+#   "success": false,
+#   "status": "AD_FIXED_CRYPTO_CONFLICTING_SETTLEMENT",
+#   "message": "Cannot set settlement currencies explicitly when using Fixed Crypto pricing. Settlement currencies are derived from fixedPrices.",
+#   "data": null
+# }
+# or
+# {
+#   "success": false,
+#   "status": "AD_PEGGED_CONFLICTING_FIXED_PRICES",
+#   "message": "Cannot set fixedPrices when using Pegged pricing. Use price, priceCurrency, and settlementCurrencies instead.",
+#   "data": null
+# }
+# or
+# Incomplete active ad update
 # {
 #   "success": false,
 #   "status": "AD_ACTIVE_AD_INCOMPLETE_UPDATE",
@@ -152,6 +175,7 @@ Authorization: Bearer {{auth_token}}
 #   ]
 # }
 # or
+# DTO validation errors
 # {
 #   "success": false,
 #   "status": "BAD_REQUEST",
