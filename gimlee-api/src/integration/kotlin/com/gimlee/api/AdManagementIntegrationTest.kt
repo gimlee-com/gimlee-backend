@@ -1,9 +1,12 @@
 package com.gimlee.api
 
 import com.gimlee.ads.domain.AdService
+import com.gimlee.ads.domain.model.CurrencyAmount
 import com.gimlee.ads.domain.model.Location
+import com.gimlee.ads.domain.model.PricingMode
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.ads.persistence.AdRepository
+import com.gimlee.ads.persistence.model.AdDocument
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.common.BaseIntegrationTest
@@ -15,6 +18,7 @@ import com.gimlee.payments.crypto.persistence.model.WalletShieldedAddressType
 import com.gimlee.purchases.domain.PurchaseService
 import com.gimlee.purchases.domain.model.DeliveryAddressSnapshot
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.bson.Document
@@ -326,6 +330,104 @@ class AdManagementIntegrationTest(
                 io.kotest.assertions.throwables.shouldThrow<AdRepository.AdConcurrentModificationException> {
                     adRepository.save(updatedStaleDoc)
                 }
+            }
+        }
+    }
+    Given("pricing mode switching") {
+        val sellerId = setupSellerWithWallet()
+        val headers = authHeaders(sellerId)
+        val uid = sellerId.toHexString()
+
+        When("switching from PEGGED to FIXED_CRYPTO") {
+            val ad = adService.createAd(uid, "Mode Switch Ad", null, 10)
+            adService.updateAd(ad.id, uid, UpdateAdRequest(
+                pricingMode = PricingMode.PEGGED,
+                price = CurrencyAmount(BigDecimal("50"), Currency.USD),
+                settlementCurrencies = setOf(Currency.ARRR)
+            ))
+
+            val peggedAd = adService.getAd(ad.id)!!
+            peggedAd.price?.currency shouldBe Currency.USD
+            peggedAd.settlementCurrencies shouldBe setOf(Currency.ARRR)
+
+            val body = mapOf(
+                "pricingMode" to "FIXED_CRYPTO",
+                "fixedPrices" to mapOf("ARRR" to 200)
+            )
+            val response = restClient.put("/sales/ads/${ad.id}", body, headers)
+
+            Then("it should succeed and clear price/currency in the DB") {
+                response.statusCode shouldBe 200
+                val responseBody = response.bodyAs<Map<String, Any>>()!!
+                responseBody["pricingMode"] shouldBe "FIXED_CRYPTO"
+                responseBody["price"].shouldBeNull()
+
+                val rawDoc = mongoTemplate.getCollection(AdRepository.COLLECTION_NAME)
+                    .find(Document("_id", ObjectId(ad.id))).first()!!
+                rawDoc[AdDocument.FIELD_PRICING_MODE] shouldBe "FC"
+                rawDoc[AdDocument.FIELD_PRICE].shouldBeNull()
+                rawDoc[AdDocument.FIELD_CURRENCY].shouldBeNull()
+                val fp = rawDoc[AdDocument.FIELD_FIXED_PRICES] as Document
+                fp.containsKey("ARRR") shouldBe true
+            }
+        }
+
+        When("switching from FIXED_CRYPTO to PEGGED") {
+            val ad = adService.createAd(uid, "Mode Switch Ad 2", null, 10)
+            adService.updateAd(ad.id, uid, UpdateAdRequest(
+                fixedPrices = mapOf(Currency.ARRR to BigDecimal("100"))
+            ))
+
+            val fixedAd = adService.getAd(ad.id)!!
+            fixedAd.fixedPrices.keys shouldBe setOf(Currency.ARRR)
+
+            val body = mapOf(
+                "pricingMode" to "PEGGED",
+                "price" to 50,
+                "priceCurrency" to "USD",
+                "settlementCurrencies" to listOf("ARRR")
+            )
+            val response = restClient.put("/sales/ads/${ad.id}", body, headers)
+
+            Then("it should succeed and clear fixedPrices in the DB") {
+                response.statusCode shouldBe 200
+                val responseBody = response.bodyAs<Map<String, Any>>()!!
+                responseBody["pricingMode"] shouldBe "PEGGED"
+
+                val rawDoc = mongoTemplate.getCollection(AdRepository.COLLECTION_NAME)
+                    .find(Document("_id", ObjectId(ad.id))).first()!!
+                rawDoc[AdDocument.FIELD_PRICING_MODE] shouldBe "PG"
+                rawDoc[AdDocument.FIELD_FIXED_PRICES].shouldBeNull()
+                rawDoc[AdDocument.FIELD_PRICE] shouldBe org.bson.types.Decimal128(BigDecimal("50"))
+                rawDoc[AdDocument.FIELD_CURRENCY] shouldBe "USD"
+                @Suppress("UNCHECKED_CAST")
+                val sc = rawDoc[AdDocument.FIELD_SETTLEMENT_CURRENCIES] as List<String>
+                sc shouldBe listOf("ARRR")
+            }
+        }
+    }
+
+    Given("FIXED_CRYPTO activation without fixedPrices") {
+        val sellerId = setupSellerWithWallet()
+        val headers = authHeaders(sellerId)
+
+        When("attempting to activate a FIXED_CRYPTO ad without setting fixedPrices") {
+            val ad = adService.createAd(sellerId.toHexString(), "No Prices Ad", null, 5)
+            adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
+                description = "A description",
+                location = Location("city1", doubleArrayOf(1.0, 2.0)),
+                stock = 5
+            ))
+
+            val response = restClient.post("/sales/ads/${ad.id}/activate", null, headers)
+
+            Then("it should return INCOMPLETE_AD_DATA with fixedPrices field error") {
+                response.statusCode shouldBe 400
+                val responseBody = response.bodyAs<Map<String, Any>>()!!
+                responseBody["status"] shouldBe "AD_INCOMPLETE_AD_DATA"
+                val fieldErrors = responseBody["fieldErrors"] as List<*>
+                val fieldNames = fieldErrors.map { (it as Map<*, *>)["field"] as String }.toSet()
+                fieldNames shouldBe setOf("fixedPrices")
             }
         }
     }

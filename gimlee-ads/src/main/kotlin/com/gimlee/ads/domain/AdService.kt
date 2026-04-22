@@ -114,6 +114,7 @@ class AdService(
 
         validateAdOwnershipAndStatus(existingAdDoc, userObjectId)
         validateUpdateData(updateData)
+        validateConflictingFields(updateData, existingAdDoc)
 
         val updatedFields = resolveUpdatedFields(existingAdDoc, updateData)
         
@@ -154,6 +155,25 @@ class AdService(
     private fun validateUpdateData(updateData: UpdateAdRequest) {
         if (updateData.title != null && updateData.title.isBlank()) {
             throw AdOperationException(AdOutcome.TITLE_MANDATORY)
+        }
+    }
+
+    private fun validateConflictingFields(update: UpdateAdRequest, existing: AdDocument) {
+        val effectiveMode = update.pricingMode ?: existing.pricingMode
+        when (effectiveMode) {
+            PricingMode.FIXED_CRYPTO -> {
+                if (update.price != null) {
+                    throw AdOperationException(AdOutcome.FIXED_CRYPTO_CONFLICTING_PRICE)
+                }
+                if (update.settlementCurrencies != null) {
+                    throw AdOperationException(AdOutcome.FIXED_CRYPTO_CONFLICTING_SETTLEMENT)
+                }
+            }
+            PricingMode.PEGGED -> {
+                if (update.fixedPrices != null) {
+                    throw AdOperationException(AdOutcome.PEGGED_CONFLICTING_FIXED_PRICES)
+                }
+            }
         }
     }
 
