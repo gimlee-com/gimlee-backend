@@ -5,14 +5,9 @@ import com.gimlee.mediastore.config.MediaStoreConfig
 import com.gimlee.mediastore.domain.MediaItem
 import com.gimlee.mediastore.exception.MediaUploadException
 import com.gimlee.mediastore.persistence.MediaItemRepository
-import net.coobird.thumbnailator.Thumbnails
-import net.coobird.thumbnailator.resizers.configurations.AlphaInterpolation
-import net.coobird.thumbnailator.resizers.configurations.Antialiasing
-import net.coobird.thumbnailator.resizers.configurations.Dithering
 import org.springframework.stereotype.Service
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.time.Instant
@@ -22,7 +17,8 @@ import javax.imageio.ImageIO
 class PictureUploadService(
     private val mediaItemRepository: MediaItemRepository,
     private val mediaStoreConfig: MediaStoreConfig,
-    private val storageService: StorageService
+    private val storageService: StorageService,
+    private val imageCompressor: ImageCompressor
 ) {
 
     fun uploadAndCreateThumbs(fileInputStream: InputStream): MediaItem {
@@ -57,20 +53,18 @@ class PictureUploadService(
 
         val fullFileName = "$fileName.$extension"
 
-        // Generate and upload large image
         val targetLargeImageWidth = if (bufferedImage.width < mediaStoreConfig.pictureSizeLg) {
             bufferedImage.width
         } else {
             mediaStoreConfig.pictureSizeLg
         }
-        val largeImage = Thumbnails.of(bufferedImage)
-            .size(targetLargeImageWidth, (targetLargeImageWidth * 1.5).toInt())
-            .outputFormat("jpg")
-            .outputQuality(mediaStoreConfig.jpegQuality)
-            .asBufferedImage()
-        uploadImage(largeImage, "/$fullFileName")
+        val largeImageBytes = imageCompressor.resize(
+            bufferedImage,
+            targetLargeImageWidth,
+            (targetLargeImageWidth * 1.5).toInt()
+        )
+        uploadBytes(largeImageBytes, "/$fullFileName")
 
-        // Generate and upload thumbnails
         uploadThumbnail(bufferedImage, fullFileName, mediaStoreConfig.pictureSizeXs, mediaStoreConfig.xsThumbsPath)
         uploadThumbnail(bufferedImage, fullFileName, mediaStoreConfig.pictureSizeSm, mediaStoreConfig.smThumbsPath)
         uploadThumbnail(bufferedImage, fullFileName, mediaStoreConfig.pictureSizeMd, mediaStoreConfig.mdThumbsPath)
@@ -80,24 +74,15 @@ class PictureUploadService(
         val imageAspectRatio = image.width.toDouble() / image.height.toDouble()
         val (width, height) = calculateThumbDimensions(size, imageAspectRatio)
 
-        val thumbnailImage = Thumbnails.of(image)
-            .antialiasing(Antialiasing.OFF)
-            .dithering(Dithering.DISABLE)
-            .alphaInterpolation(AlphaInterpolation.QUALITY)
-            .size(width, height)
-            .outputQuality(mediaStoreConfig.jpegQuality)
-            .asBufferedImage()
-
-        uploadImage(thumbnailImage, "$path$fileName")
+        val thumbnailBytes = imageCompressor.createThumbnail(image, width, height)
+        uploadBytes(thumbnailBytes, "$path$fileName")
     }
 
-    private fun uploadImage(image: BufferedImage, destinationPath: String) {
-        val outputStream = ByteArrayOutputStream()
-        ImageIO.write(image, "jpg", outputStream)
-        val inputStream = ByteArrayInputStream(outputStream.toByteArray())
+    private fun uploadBytes(bytes: ByteArray, destinationPath: String) {
+        val inputStream = ByteArrayInputStream(bytes)
         storageService.upload(
             inputStream,
-            outputStream.size().toLong(),
+            bytes.size.toLong(),
             "image/jpeg",
             destinationPath.removePrefix("/")
         )
