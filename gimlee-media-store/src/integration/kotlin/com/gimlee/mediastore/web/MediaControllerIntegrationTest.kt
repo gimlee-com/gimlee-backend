@@ -1,7 +1,7 @@
 package com.gimlee.mediastore.web
 
 import com.gimlee.common.BaseIntegrationTest
-import com.gimlee.mediastore.media.web.dto.MediaUploadResponseDto
+import com.gimlee.mediastore.web.dto.MediaUploadResponseDto
 import com.gimlee.mediastore.MediaStoreTestApplication
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
