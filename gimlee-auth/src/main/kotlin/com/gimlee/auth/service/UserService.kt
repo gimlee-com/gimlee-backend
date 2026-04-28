@@ -36,4 +36,8 @@ class UserService(private val userRepository: UserRepository) {
         val users = findByIds(ids)
         return users.associate { it.id!!.toHexString() to (it.username ?: "Unknown") }
     }
+
+    fun searchByUsernameContaining(query: String, limit: Int = 50): List<User> {
+        return userRepository.findByUsernameContaining(query, limit)
+    }
 }

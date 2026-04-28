@@ -3,11 +3,8 @@ package com.gimlee.ads.web
 import com.gimlee.ads.domain.AdService
 import com.gimlee.ads.domain.CategoryService
 import com.gimlee.ads.domain.model.Ad
-import com.gimlee.ads.domain.model.AdFilters
-import com.gimlee.ads.domain.model.AdSorting
 import com.gimlee.ads.domain.model.AdStatus
 import com.gimlee.ads.web.dto.request.CreateAdRequestDto
-import com.gimlee.ads.web.dto.request.SalesAdsRequestDto
 import com.gimlee.ads.web.dto.request.UpdateAdRequestDto
 import com.gimlee.ads.web.dto.response.AdDto
 import com.gimlee.ads.web.dto.response.AllowedCurrenciesDto
@@ -26,11 +23,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
-import org.springdoc.core.annotations.ParameterObject
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -52,36 +46,6 @@ class ManageAdController(
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
-
-    companion object {
-        private const val PAGE_SIZE = 60
-    }
-
-    @Operation(
-        summary = "Fetch My Ads",
-        description = "Fetches ads belonging to the authenticated user. Supports filtering and pagination."
-    )
-    @ApiResponse(responseCode = "200", description = "Paged list of user's ads")
-    @GetMapping("/")
-    @Privileged("USER")
-    fun getMyAds(@Valid @ParameterObject request: SalesAdsRequestDto): Page<AdDto> {
-        val principal = HttpServletRequestAuthUtil.getPrincipal()
-        val pageOfMyAds = adService.getAds(
-            filters = AdFilters(
-                createdBy = principal.userId,
-                text = request.t,
-                statuses = request.s ?: listOf(AdStatus.ACTIVE, AdStatus.INACTIVE)
-            ),
-            sorting = AdSorting(by = request.by, direction = request.dir),
-            pageRequest = PageRequest.of(request.p, PAGE_SIZE)
-        )
-        val language = LocaleContextHolder.getLocale().toLanguageTag()
-        val categoryIds = pageOfMyAds.content.mapNotNull { it.categoryId }.toSet()
-        val categoryPaths = categoryService.getFullCategoryPaths(categoryIds, language)
-        return pageOfMyAds.map { ad ->
-            AdDto.fromDomain(ad, computeFrozenCurrencies(ad), ad.categoryId?.let { categoryPaths[it] })
-        }
-    }
 
     @Operation(
         summary = "Get Allowed Currencies",

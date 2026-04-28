@@ -73,6 +73,17 @@ class UserRepository(
 
     fun save(user: User) = mongoTemplate.save(user, USERS_COLLECTION_NAME)
 
+    fun findByUsernameContaining(query: String, limit: Int): List<User> {
+        val escapedQuery = Regex.escape(query)
+        val criteria = Criteria.where(FIELD_USERNAME).regex(".*$escapedQuery.*", "i")
+        val mongoQuery = Query(criteria).limit(limit)
+        mongoQuery.fields()
+            .exclude(FIELD_PASSWORD)
+            .exclude(FIELD_PASSWORD_SALT)
+            .exclude(FIELD_VERIFICATION_CODE)
+        return mongoTemplate.find(mongoQuery, User::class.java, USERS_COLLECTION_NAME)
+    }
+
     fun updateStatus(userId: ObjectId, status: UserStatus) {
         val query = Query(Criteria.where(User.FIELD_ID).`is`(userId))
         val update = org.springframework.data.mongodb.core.query.Update()

@@ -12,8 +12,11 @@ import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.payments.domain.service.VolatilityStateService
 import com.gimlee.purchases.domain.model.Purchase
+import com.gimlee.purchases.domain.model.PurchaseFilters
 import com.gimlee.purchases.domain.model.PurchaseItem
+import com.gimlee.purchases.domain.model.PurchaseSorting
 import com.gimlee.purchases.domain.model.PurchaseStatus
+import com.gimlee.purchases.domain.model.StatusChange
 import com.gimlee.purchases.domain.model.DeliveryAddressSnapshot
 import com.gimlee.purchases.persistence.PurchaseRepository
 import com.gimlee.purchases.web.dto.request.PurchaseItemRequestDto
@@ -274,6 +277,7 @@ class PurchaseService(
             totalAmount = totalAmount,
             status = PurchaseStatus.CREATED,
             deliveryAddress = deliveryAddress,
+            statusHistory = listOf(StatusChange(PurchaseStatus.CREATED, now)),
             createdAt = now
         )
         
@@ -289,9 +293,20 @@ class PurchaseService(
             paymentMethod = paymentMethod
         )
 
-        // Update status to AWAITING_PAYMENT
-        val activePurchase = purchase.copy(status = PurchaseStatus.AWAITING_PAYMENT)
-        val savedPurchase = purchaseRepository.save(activePurchase)
+        // Atomically transition to AWAITING_PAYMENT
+        val transitioned = purchaseRepository.transitionStatus(
+            purchaseId = purchaseId,
+            newStatus = PurchaseStatus.AWAITING_PAYMENT,
+            allowedCurrentStatuses = listOf(PurchaseStatus.CREATED),
+            timestamp = Instant.now()
+        )
+
+        val savedPurchase = if (transitioned) {
+            purchaseRepository.findById(purchaseId) ?: purchase
+        } else {
+            log.warn("Failed to transition purchase {} to AWAITING_PAYMENT", purchaseId)
+            purchase
+        }
         publishPurchaseEvent(savedPurchase)
 
         return savedPurchase
@@ -312,9 +327,18 @@ class PurchaseService(
 
         if (newStatus != null && purchase.status != newStatus) {
             log.info("Updating purchase ${purchase.id} status to $newStatus based on payment event.")
-            val updatedPurchase = purchase.copy(status = newStatus)
-            purchaseRepository.save(updatedPurchase)
-            publishPurchaseEvent(updatedPurchase)
+            val transitioned = purchaseRepository.transitionStatus(
+                purchaseId = purchase.id,
+                newStatus = newStatus,
+                allowedCurrentStatuses = listOf(PurchaseStatus.AWAITING_PAYMENT, PurchaseStatus.CREATED),
+                timestamp = Instant.now()
+            )
+            if (transitioned) {
+                val updatedPurchase = purchaseRepository.findById(purchase.id) ?: return
+                publishPurchaseEvent(updatedPurchase)
+            } else {
+                log.warn("Failed to transition purchase {} to {} — current status may have changed", purchase.id, newStatus)
+            }
         }
     }
 
@@ -330,10 +354,19 @@ class PurchaseService(
             throw IllegalStateException("Purchase $purchaseId cannot be cancelled in status ${purchase.status}")
         }
 
-        val updatedPurchase = purchase.copy(status = PurchaseStatus.CANCELLED)
-        purchaseRepository.save(updatedPurchase)
+        val transitioned = purchaseRepository.transitionStatus(
+            purchaseId = purchaseId,
+            newStatus = PurchaseStatus.CANCELLED,
+            allowedCurrentStatuses = listOf(PurchaseStatus.AWAITING_PAYMENT),
+            timestamp = Instant.now()
+        )
+
+        if (!transitioned) {
+            throw IllegalStateException("Purchase $purchaseId cannot be cancelled — status has changed concurrently")
+        }
 
         paymentService.cancelPaymentForPurchase(purchaseId)
+        val updatedPurchase = purchaseRepository.findById(purchaseId) ?: return
         publishPurchaseEvent(updatedPurchase)
 
         log.info("Purchase $purchaseId cancelled by buyer $buyerId")
@@ -358,8 +391,16 @@ class PurchaseService(
         return purchaseRepository.findAllBySellerId(sellerId, pageable)
     }
 
+    fun getPurchasesForSeller(sellerId: ObjectId, filters: PurchaseFilters, sorting: PurchaseSorting, pageable: Pageable): Page<Purchase> {
+        return purchaseRepository.findAllBySellerId(sellerId, filters, sorting, pageable)
+    }
+
     fun getPurchasesForBuyer(buyerId: ObjectId, pageable: Pageable): Page<Purchase> {
         return purchaseRepository.findAllByBuyerId(buyerId, pageable)
+    }
+
+    fun getPurchasesForBuyer(buyerId: ObjectId, filters: PurchaseFilters, sorting: PurchaseSorting, pageable: Pageable): Page<Purchase> {
+        return purchaseRepository.findAllByBuyerId(buyerId, filters, sorting, pageable)
     }
 
     fun hasCompletedPurchaseForAd(buyerId: ObjectId, adId: ObjectId): Boolean {

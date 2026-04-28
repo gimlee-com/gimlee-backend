@@ -37,6 +37,18 @@ class AdVisitService(
     }
 
     /**
+     * Gets total visit counts for multiple ads within a date range in a single query.
+     */
+    fun getVisitCounts(adIds: List<String>, startDate: LocalDate, endDate: LocalDate): Map<String, Long> {
+        if (adIds.isEmpty()) return emptyMap()
+        return adVisitRepository.getVisitCounts(
+            adIds,
+            AdVisitDocument.toDateInt(startDate),
+            AdVisitDocument.toDateInt(endDate)
+        )
+    }
+
+    /**
      * Gets daily visit counts for an ad within a date range.
      */
     fun getDailyVisits(adId: String, startDate: LocalDate, endDate: LocalDate): Map<LocalDate, Int> {

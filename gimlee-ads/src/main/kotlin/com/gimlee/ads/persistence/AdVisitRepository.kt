@@ -73,6 +73,32 @@ class AdVisitRepository(private val mongoDatabase: MongoDatabase) {
         return docs.sumOf { (it.get(AdVisitDocument.FIELD_COUNT) as? Number)?.toLong() ?: 0L }
     }
 
+    fun getVisitCounts(adIds: List<String>, startDateInt: Int, endDateInt: Int): Map<String, Long> {
+        if (adIds.isEmpty()) return emptyMap()
+        val objectIds = adIds.mapNotNull { runCatching { ObjectId(it) }.getOrNull() }
+        if (objectIds.isEmpty()) return emptyMap()
+
+        val pipeline = listOf(
+            Aggregates.match(
+                Filters.and(
+                    Filters.`in`(AdVisitDocument.FIELD_AD_ID, objectIds),
+                    Filters.gte(AdVisitDocument.FIELD_DATE, startDateInt),
+                    Filters.lte(AdVisitDocument.FIELD_DATE, endDateInt)
+                )
+            ),
+            Aggregates.group(
+                "\$${AdVisitDocument.FIELD_AD_ID}",
+                Accumulators.sum("total", "\$${AdVisitDocument.FIELD_COUNT}")
+            )
+        )
+
+        return collection.aggregate(pipeline).associate { doc ->
+            val adId = doc.getObjectId("_id").toHexString()
+            val total = (doc.get("total") as? Number)?.toLong() ?: 0L
+            adId to total
+        }
+    }
+
     fun findDailyVisits(adId: String, startDateInt: Int, endDateInt: Int): List<AdVisitDocument> {
         val aid = ObjectId(adId)
         val filter = Filters.and(

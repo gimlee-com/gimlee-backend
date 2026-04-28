@@ -1,4 +1,4 @@
-package com.gimlee.mediastore.media.web.dto
+package com.gimlee.mediastore.web.dto
 
 import com.gimlee.mediastore.domain.MediaItem
 import java.time.Instant

@@ -13,6 +13,7 @@ data class Purchase(
     val totalAmount: BigDecimal,
     val status: PurchaseStatus,
     val deliveryAddress: DeliveryAddressSnapshot? = null,
+    val statusHistory: List<StatusChange> = emptyList(),
     val createdAt: Instant
 )
 

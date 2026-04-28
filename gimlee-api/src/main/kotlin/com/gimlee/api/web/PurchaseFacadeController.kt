@@ -1,22 +1,20 @@
 package com.gimlee.api.web
 
-import com.gimlee.api.web.dto.PaymentDetailsDto
-import com.gimlee.api.web.dto.PurchaseHistoryDto
-import com.gimlee.api.web.dto.PurchaseResponseDto
-import com.gimlee.api.web.dto.PurchaseStatusResponseDto
-import com.gimlee.api.web.dto.SalesOrderItemDto
-import com.gimlee.api.web.dto.SellerInfoDto
-import com.gimlee.api.web.dto.DeliveryAddressSnapshotDto
+import com.gimlee.api.service.UserSummaryAssembler
+import com.gimlee.api.web.dto.*
 import com.gimlee.auth.annotation.Privileged
 import com.gimlee.auth.service.UserService
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.common.domain.model.CommonOutcome
 import com.gimlee.common.domain.model.Outcome
+import com.gimlee.common.toMicros
 import com.gimlee.common.web.dto.StatusResponseDto
 import com.gimlee.payments.domain.PaymentService
 import com.gimlee.purchases.domain.PurchaseOutcome
 import com.gimlee.purchases.domain.PurchaseService
 import com.gimlee.purchases.domain.model.DeliveryAddressSnapshot
+import com.gimlee.purchases.domain.model.PurchaseFilters
+import com.gimlee.purchases.domain.model.PurchaseSorting
 import com.gimlee.purchases.web.dto.request.PurchaseRequestDto
 import com.gimlee.user.domain.DeliveryAddressService
 import com.gimlee.user.domain.UserPreferencesService
@@ -29,9 +27,11 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -50,6 +50,7 @@ class PurchaseFacadeController(
     private val purchaseService: PurchaseService,
     private val paymentService: PaymentService,
     private val userService: UserService,
+    private val userSummaryAssembler: UserSummaryAssembler,
     private val adService: com.gimlee.ads.domain.AdService,
     private val deliveryAddressService: DeliveryAddressService,
     private val userPreferencesService: UserPreferencesService,
@@ -166,39 +167,47 @@ class PurchaseFacadeController(
 
     @Operation(
         summary = "Get My Purchases",
-        description = "Fetches purchase history for the authenticated buyer."
+        description = "Fetches purchase history for the authenticated buyer. Supports filtering by status, " +
+                "date range, and seller username search. Supports sorting by date or amount."
     )
     @ApiResponse(responseCode = "200", description = "Paged list of purchases")
     @GetMapping("/")
     @Privileged(role = "USER")
-    fun getMyPurchases(
-        @RequestParam(name = "p", defaultValue = "0") page: Int
-    ): Page<PurchaseHistoryDto> {
+    fun getMyPurchases(@Valid @ParameterObject request: PurchasesRequestDto): Page<PurchaseHistoryDto> {
         val principal = HttpServletRequestAuthUtil.getPrincipal()
         val buyerId = ObjectId(principal.userId)
 
-        val purchasesPage = purchaseService.getPurchasesForBuyer(buyerId, PageRequest.of(page, PAGE_SIZE))
+        val filters = buildPurchaseFilters(request.status, request.q, request.from, request.to) { query ->
+            resolveUserIds(query)
+        }
+        val sorting = PurchaseSorting(by = request.by, direction = request.dir)
+
+        val purchasesPage = purchaseService.getPurchasesForBuyer(
+            buyerId, filters, sorting, PageRequest.of(request.p, PAGE_SIZE)
+        )
 
         val purchases = purchasesPage.content
         if (purchases.isEmpty()) {
-            return Page.empty(purchasesPage.pageable)
+            return PageImpl(emptyList(), purchasesPage.pageable, purchasesPage.totalElements)
         }
 
         val adIds = purchases.flatMap { it.items.map { item -> item.adId.toHexString() } }.distinct()
         val sellerIds = purchases.map { it.sellerId.toHexString() }.distinct()
 
         val adsMap = adService.getAds(adIds).associateBy { it.id }
-        val usernamesMap = userService.findUsernamesByIds(sellerIds)
+        val sellerSummaries = userSummaryAssembler.assemble(sellerIds)
         val paymentsMap = purchases.associate { it.id to paymentService.getPaymentByPurchaseId(it.id) }
 
         return purchasesPage.map { purchase ->
+            val firstItem = purchase.items.firstOrNull()
+            val firstAd = firstItem?.let { adsMap[it.adId.toHexString()] }
             PurchaseHistoryDto(
                 id = purchase.id.toHexString(),
                 status = purchase.status.name,
                 paymentStatus = paymentsMap[purchase.id]?.status?.name,
                 createdAt = purchase.createdAt,
                 totalAmount = purchase.totalAmount,
-                currency = purchase.items.firstOrNull()?.currency?.name ?: "UNKNOWN",
+                currency = firstItem?.currency?.name ?: "UNKNOWN",
                 items = purchase.items.map { item ->
                     SalesOrderItemDto(
                         adId = item.adId.toHexString(),
@@ -207,10 +216,10 @@ class PurchaseFacadeController(
                         unitPrice = item.unitPrice
                     )
                 },
-                seller = SellerInfoDto(
-                    id = purchase.sellerId.toHexString(),
-                    username = usernamesMap[purchase.sellerId.toHexString()] ?: "Unknown"
-                ),
+                seller = sellerSummaries[purchase.sellerId.toHexString()]
+                    ?: UserSummaryDto(username = "Unknown", avatarUrl = null),
+                primaryThumbnailPath = firstAd?.mainPhotoPath,
+                itemCount = purchase.items.size,
                 deliveryAddress = purchase.deliveryAddress?.let {
                     DeliveryAddressSnapshotDto(
                         name = it.name,
@@ -224,6 +233,86 @@ class PurchaseFacadeController(
                 }
             )
         }
+    }
+
+    @Operation(
+        summary = "Get Purchase Detail",
+        description = "Fetches full details for a specific purchase owned by the buyer, " +
+                "including status history, payment information, and item thumbnails."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Detailed purchase information",
+        content = [Content(schema = Schema(implementation = PurchaseDetailDto::class))]
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Purchase not found or not owned by the buyer. Possible status codes: PURCHASE_PURCHASE_NOT_FOUND",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @GetMapping("/{purchaseId}")
+    @Privileged(role = "USER")
+    fun getPurchaseDetail(
+        @Parameter(description = "Unique ID of the purchase")
+        @PathVariable purchaseId: String
+    ): ResponseEntity<Any> {
+        val principal = HttpServletRequestAuthUtil.getPrincipal()
+        val purchase = purchaseService.getPurchase(ObjectId(purchaseId))
+
+        if (purchase == null || purchase.buyerId.toHexString() != principal.userId) {
+            return handleOutcome(PurchaseOutcome.PURCHASE_NOT_FOUND)
+        }
+
+        val adIds = purchase.items.map { it.adId.toHexString() }.distinct()
+        val adsMap = adService.getAds(adIds).associateBy { it.id }
+        val sellerSummary = userSummaryAssembler.assemble(listOf(purchase.sellerId.toHexString()))
+        val payment = paymentService.getPaymentByPurchaseId(purchase.id)
+
+        val dto = PurchaseDetailDto(
+            id = purchase.id.toHexString(),
+            seller = sellerSummary[purchase.sellerId.toHexString()]
+                ?: UserSummaryDto(username = "Unknown", avatarUrl = null),
+            items = purchase.items.map { item ->
+                val ad = adsMap[item.adId.toHexString()]
+                OrderItemDetailDto(
+                    adId = item.adId.toHexString(),
+                    title = ad?.title ?: "Unknown Ad",
+                    thumbnailPath = ad?.mainPhotoPath,
+                    quantity = item.quantity,
+                    unitPrice = item.unitPrice
+                )
+            },
+            totalAmount = purchase.totalAmount,
+            currency = purchase.items.firstOrNull()?.currency?.name ?: "UNKNOWN",
+            status = purchase.status.name,
+            paymentStatus = payment?.status?.name,
+            deliveryAddress = purchase.deliveryAddress?.let {
+                DeliveryAddressSnapshotDto(
+                    name = it.name,
+                    fullName = it.fullName,
+                    street = it.street,
+                    city = it.city,
+                    postalCode = it.postalCode,
+                    country = it.country,
+                    phoneNumber = it.phoneNumber
+                )
+            },
+            payment = payment?.let {
+                PaymentSummaryDto(
+                    amount = it.amount,
+                    paidAmount = it.paidAmount,
+                    address = it.receivingAddress,
+                    memo = it.memo,
+                    deadline = it.deadline,
+                    qrCodeUri = it.qrCodeUri
+                )
+            },
+            statusHistory = purchase.statusHistory.map {
+                StatusChangeDto(status = it.status.name, timestamp = it.timestamp)
+            },
+            createdAt = purchase.createdAt
+        )
+        return ResponseEntity.ok(dto)
     }
 
     @Operation(
@@ -369,5 +458,45 @@ class PurchaseFacadeController(
             country = address.country,
             phoneNumber = address.phoneNumber
         ))
+    }
+
+    private fun buildPurchaseFilters(
+        statuses: List<com.gimlee.purchases.domain.model.PurchaseStatus>?,
+        query: String?,
+        from: java.time.Instant?,
+        to: java.time.Instant?,
+        resolveCounterpartyIds: (String) -> List<ObjectId>
+    ): PurchaseFilters {
+        var sellerIds: List<ObjectId>? = null
+        var purchaseId: ObjectId? = null
+
+        if (!query.isNullOrBlank()) {
+            if (isObjectIdHex(query)) {
+                purchaseId = ObjectId(query)
+            } else {
+                val resolved = resolveCounterpartyIds(query)
+                if (resolved.isEmpty()) {
+                    return PurchaseFilters(noResults = true)
+                }
+                sellerIds = resolved
+            }
+        }
+
+        return PurchaseFilters(
+            statuses = statuses,
+            purchaseId = purchaseId,
+            fromMicros = from?.toMicros(),
+            toMicros = to?.toMicros(),
+            sellerIds = sellerIds
+        )
+    }
+
+    private fun resolveUserIds(query: String): List<ObjectId> {
+        val users = userService.searchByUsernameContaining(query)
+        return users.mapNotNull { it.id }
+    }
+
+    private fun isObjectIdHex(value: String): Boolean {
+        return value.length == 24 && value.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
     }
 }

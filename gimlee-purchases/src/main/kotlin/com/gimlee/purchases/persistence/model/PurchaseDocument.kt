@@ -14,6 +14,7 @@ data class PurchaseDocument(
     val totalAmount: Decimal128,
     val status: Int,
     val deliveryAddress: DeliveryAddressSnapshotDocument? = null,
+    val statusHistory: List<StatusChangeDocument> = emptyList(),
     val createdAtMicros: Long
 ) {
     companion object {
@@ -24,7 +25,18 @@ data class PurchaseDocument(
         const val FIELD_TOTAL_AMOUNT = "tamt"
         const val FIELD_STATUS = "st"
         const val FIELD_DELIVERY_ADDRESS = "da"
+        const val FIELD_STATUS_HISTORY = "sh"
         const val FIELD_CREATED_AT = "ca"
+    }
+}
+
+data class StatusChangeDocument(
+    val status: Int,
+    val timestampMicros: Long
+) {
+    companion object {
+        const val FIELD_STATUS = "st"
+        const val FIELD_TIMESTAMP = "ts"
     }
 }
 

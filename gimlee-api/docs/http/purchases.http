@@ -125,11 +125,24 @@ Authorization: Bearer {{auth_token}}
 # HTTP/1.1 204 No Content
 
 
-### Get My Purchases
+### Get My Purchases (with filters)
 # Requires USER role authentication
 # Fetches purchase history for the authenticated buyer.
+# Supports filtering by status, date range, and seller username search.
 # @name /purchases/ [GET]
 GET {{host}}/api/purchases/?p=0
+Authorization: Bearer {{auth_token}}
+
+### Get My Purchases - Filter by Status
+GET {{host}}/api/purchases/?p=0&status=COMPLETE
+Authorization: Bearer {{auth_token}}
+
+### Get My Purchases - Search by Seller Username
+GET {{host}}/api/purchases/?p=0&q=seller_name
+Authorization: Bearer {{auth_token}}
+
+### Get My Purchases - Filter by Date Range, Sort by Amount
+GET {{host}}/api/purchases/?p=0&from=2024-01-01T00:00:00Z&to=2024-12-31T23:59:59Z&by=AMOUNT&dir=DESC
 Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
@@ -153,11 +166,69 @@ Authorization: Bearer {{auth_token}}
 #         }
 #       ],
 #       "seller": {
-#         "id": "5f8f8f8f8f8f8f8f8f8f8f8f",
-#         "username": "seller_username"
-#       }
+#         "username": "seller_username",
+#         "avatarUrl": "/media/avatars/5f8f.jpg"
+#       },
+#       "primaryThumbnailPath": "/media/ads/main-photo.jpg",
+#       "itemCount": 1
 #     }
 #   ],
 #   "totalPages": 1,
 #   "totalElements": 1
+# }
+
+###
+
+### Get Purchase Detail
+# Requires USER role authentication (buyer only)
+# Returns full details for a specific purchase including payment info and status history.
+# @name /purchases/{purchaseId} [GET]
+GET {{host}}/api/purchases/60f8f9b3a9d9e8f8a8b8c8d8
+Authorization: Bearer {{auth_token}}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "id": "60f8f9b3a9d9e8f8a8b8c8d8",
+#   "seller": {
+#     "username": "seller_username",
+#     "avatarUrl": "/media/avatars/5f8f.jpg"
+#   },
+#   "items": [
+#     {
+#       "adId": "60f8f9b3a9d9e8f8a8b8c8d7",
+#       "title": "Ad Title",
+#       "thumbnailPath": "/media/ads/main-photo.jpg",
+#       "quantity": 1,
+#       "unitPrice": 100.0
+#     }
+#   ],
+#   "totalAmount": 100.0,
+#   "currency": "ARRR",
+#   "status": "AWAITING_PAYMENT",
+#   "paymentStatus": "PENDING",
+#   "payment": {
+#     "amount": 100.0,
+#     "paidAmount": 0.0,
+#     "address": "zs1...",
+#     "memo": "gimlee:60f8f9b3a9d9e8f8a8b8c8d8",
+#     "deadline": "2023-01-01T10:30:00Z",
+#     "qrCodeUri": "ycash:zs1..."
+#   },
+#   "statusHistory": [
+#     { "status": "CREATED", "timestamp": "2023-01-01T09:59:00Z" },
+#     { "status": "AWAITING_PAYMENT", "timestamp": "2023-01-01T10:00:00Z" }
+#   ],
+#   "createdAt": "2023-01-01T10:00:00Z"
+# }
+
+### Expected Response (Error - 404 Not Found):
+# Purchase not found or not owned by the buyer.
+# Content-Type: application/json
+#
+# {
+#   "success": false,
+#   "status": "PURCHASE_PURCHASE_NOT_FOUND",
+#   "message": "Purchase not found."
 # }

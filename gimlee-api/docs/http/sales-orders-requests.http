@@ -1,8 +1,25 @@
-### Fetch My Orders
+### Fetch My Orders (with filters)
 # Requires USER role authentication
 # Fetches orders for the authenticated seller.
+# Supports filtering by status, date range, ad ID, and buyer username search.
 # @name /sales/orders/ [GET]
 GET {{host}}/api/sales/orders/?p=0
+Authorization: Bearer {{auth_token}}
+
+### Fetch My Orders - Filter by Status
+GET {{host}}/api/sales/orders/?p=0&status=AWAITING_PAYMENT&status=COMPLETE
+Authorization: Bearer {{auth_token}}
+
+### Fetch My Orders - Search by Buyer Username
+GET {{host}}/api/sales/orders/?p=0&q=john
+Authorization: Bearer {{auth_token}}
+
+### Fetch My Orders - Filter by Ad ID
+GET {{host}}/api/sales/orders/?p=0&adId=60f8f9b3a9d9e8f8a8b8c8d8
+Authorization: Bearer {{auth_token}}
+
+### Fetch My Orders - Filter by Date Range, Sort by Amount
+GET {{host}}/api/sales/orders/?p=0&from=2024-01-01T00:00:00Z&to=2024-12-31T23:59:59Z&by=AMOUNT&dir=DESC
 Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
@@ -26,12 +43,99 @@ Authorization: Bearer {{auth_token}}
 #         }
 #       ],
 #       "buyer": {
-#         "id": "5f8f8f8f8f8f8f8f8f8f8f8f",
-#         "username": "buyer_username"
-#       }
+#         "username": "buyer_username",
+#         "avatarUrl": "/media/avatars/5f8f.jpg"
+#       },
+#       "primaryThumbnailPath": "/media/ads/main-photo.jpg",
+#       "itemCount": 1
 #     }
 #   ],
 #   "totalPages": 1,
 #   "totalElements": 1,
 #   ...
+# }
+
+###
+
+### Fetch Single Order Detail
+# Requires USER role authentication (seller only)
+# Returns full details for a specific sales order.
+# @name /sales/orders/{purchaseId} [GET]
+GET {{host}}/api/sales/orders/60f8f9b3a9d9e8f8a8b8c8d8
+Authorization: Bearer {{auth_token}}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "id": "60f8f9b3a9d9e8f8a8b8c8d8",
+#   "buyer": {
+#     "username": "buyer_username",
+#     "avatarUrl": "/media/avatars/5f8f.jpg"
+#   },
+#   "items": [
+#     {
+#       "adId": "60f8f9b3a9d9e8f8a8b8c8d7",
+#       "title": "Ad Title",
+#       "thumbnailPath": "/media/ads/main-photo.jpg",
+#       "quantity": 1,
+#       "unitPrice": 100.0
+#     }
+#   ],
+#   "totalAmount": 100.0,
+#   "currency": "ARRR",
+#   "status": "AWAITING_PAYMENT",
+#   "paymentStatus": "PENDING",
+#   "deliveryAddress": {
+#     "name": "Home",
+#     "fullName": "John Doe",
+#     "street": "123 Main St",
+#     "city": "New York",
+#     "postalCode": "10001",
+#     "country": "US",
+#     "phoneNumber": "+1234567890"
+#   },
+#   "statusHistory": [
+#     { "status": "CREATED", "timestamp": "2023-01-01T09:59:00Z" },
+#     { "status": "AWAITING_PAYMENT", "timestamp": "2023-01-01T10:00:00Z" }
+#   ],
+#   "createdAt": "2023-01-01T10:00:00Z"
+# }
+
+### Expected Response (Error - 404 Not Found):
+# Order not found or not owned by the seller.
+# Content-Type: application/json
+#
+# {
+#   "success": false,
+#   "status": "PURCHASE_ORDER_NOT_FOUND",
+#   "message": "Order not found."
+# }
+
+###
+
+### Fetch Seller Dashboard Statistics
+# Requires USER role authentication
+# Returns aggregated statistics for the authenticated seller.
+# @name /sales/stats [GET]
+GET {{host}}/api/sales/stats?period=ALL_TIME
+Authorization: Bearer {{auth_token}}
+
+### Fetch Seller Dashboard Statistics - Monthly
+GET {{host}}/api/sales/stats?period=MONTHLY
+Authorization: Bearer {{auth_token}}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "revenue": [
+#     { "amount": 150.50, "currency": "ARRR" },
+#     { "amount": 25.00, "currency": "YEC" }
+#   ],
+#   "activeOrdersCount": 3,
+#   "completedOrdersCount": 12,
+#   "totalAdsCount": 8,
+#   "activeAdsCount": 5,
+#   "period": "ALL_TIME"
 # }

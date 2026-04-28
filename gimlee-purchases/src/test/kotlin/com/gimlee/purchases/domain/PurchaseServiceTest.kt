@@ -101,7 +101,8 @@ class PurchaseServiceTest : StringSpec({
         service.purchase(buyerId, listOf(PurchaseItemRequestDto(adId.toHexString(), 1, amount)), Currency.ARRR, testDeliveryAddress)
 
         verify { paymentService.initPayment(any(), buyerId, sellerId, amount, PaymentMethod.PIRATE_CHAIN) }
-        verify(exactly = 2) { purchaseRepository.save(any()) } 
+        verify(exactly = 1) { purchaseRepository.save(any()) }
+        verify(exactly = 1) { purchaseRepository.transitionStatus(any(), PurchaseStatus.AWAITING_PAYMENT, listOf(PurchaseStatus.CREATED), any()) }
         verify(exactly = 2) { eventPublisher.publishEvent(any<PurchaseEvent>()) }
     }
 
@@ -432,6 +433,6 @@ class PurchaseServiceTest : StringSpec({
 
         service.onPaymentEvent(event)
 
-        verify { purchaseRepository.save(match { it.status == PurchaseStatus.COMPLETE }) }
+        verify { purchaseRepository.transitionStatus(purchaseId, PurchaseStatus.COMPLETE, any(), any()) }
     }
 })

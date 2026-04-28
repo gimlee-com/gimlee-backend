@@ -617,4 +617,12 @@ class AdService(
         }
         return categoryService.resolveCategoryPathIds(categoryId)
     }
+
+    fun countAdsByUserId(userId: String): Long {
+        return adRepository.countByUserId(ObjectId(userId))
+    }
+
+    fun countAdsByUserIdAndStatus(userId: String, status: AdStatus): Long {
+        return adRepository.countByUserIdAndStatus(ObjectId(userId), status)
+    }
 }
