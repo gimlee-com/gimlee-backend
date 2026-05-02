@@ -4,6 +4,7 @@ import com.gimlee.common.domain.model.Outcome
 
 enum class LocationOutcome(override val httpCode: Int) : Outcome {
     CITY_NOT_FOUND(404),
+    CITY_SEARCH_UNAVAILABLE(503),
     GEOIP_COUNTRY_DETECTED(200),
     GEOIP_COUNTRY_UNKNOWN(404),
     GEOIP_UNAVAILABLE(503);

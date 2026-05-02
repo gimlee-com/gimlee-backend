@@ -19,7 +19,7 @@ import com.gimlee.common.toMicros
 import com.gimlee.events.AdStatusChangedEvent
 import com.gimlee.events.AdPriceChangedEvent
 import com.gimlee.events.AdRestockedEvent
-import com.gimlee.location.cities.data.cityDataById
+import com.gimlee.location.cities.service.CityService
 import com.gimlee.payments.domain.service.CurrencyConverterService
 import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
@@ -43,7 +43,8 @@ class AdService(
     private val adCurrencyService: AdCurrencyService,
     private val adPriceValidator: AdPriceValidator,
     private val userRoleRepository: UserRoleRepository,
-    private val eventPublisher: ApplicationEventPublisher
+    private val eventPublisher: ApplicationEventPublisher,
+    private val cityService: CityService
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -199,7 +200,7 @@ class AdService(
         var newGeoPoint = update.location?.let { GeoJsonPoint(it.point[0], it.point[1]) } ?: existing.location
 
         if (newCityId != null && newGeoPoint == null) {
-            newGeoPoint = cityDataById[newCityId]?.let { GeoJsonPoint(it.lon, it.lat) }
+            newGeoPoint = cityService.getCityById(newCityId)?.let { GeoJsonPoint(it.lon, it.lat) }
         }
 
         val newMediaPaths = update.mediaPaths ?: existing.mediaPaths ?: emptyList()

@@ -7,7 +7,6 @@ import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.PricingMode
 import com.gimlee.common.InstantUtils.fromMicros
 import com.gimlee.common.domain.model.Currency
-import com.gimlee.location.cities.data.cityDataById
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import java.math.BigDecimal
@@ -62,6 +61,7 @@ data class AdDocument(
     /**
      * Converts this persistence document to the domain Ad object.
      * Auto-migrates legacy FIXED_CRYPTO ads that have price/currency but no fixedPrices.
+     * City coordinate resolution is handled by the caller (AdService) via CityService.
      */
     fun toDomain(): Ad {
         val domainPrice = if (price != null && currency != null) CurrencyAmount(price, currency) else null
@@ -92,7 +92,6 @@ data class AdDocument(
             updatedAt = fromMicros(updatedAtMicros),
             location = if (cityId != null) {
                 val point = location?.let { doubleArrayOf(it.x, it.y) }
-                    ?: cityDataById[cityId]?.let { doubleArrayOf(it.lon, it.lat) }
                 point?.let { Location(cityId, it) }
             } else {
                 null

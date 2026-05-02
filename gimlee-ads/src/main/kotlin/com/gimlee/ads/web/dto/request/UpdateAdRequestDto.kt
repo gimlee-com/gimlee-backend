@@ -5,7 +5,7 @@ import com.gimlee.ads.domain.model.Location
 import com.gimlee.ads.domain.model.PricingMode
 import com.gimlee.ads.domain.model.UpdateAdRequest
 import com.gimlee.common.domain.model.Currency
-import com.gimlee.location.cities.data.cityDataById
+import com.gimlee.location.cities.service.CityService
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.DecimalMin
@@ -93,7 +93,7 @@ data class UpdateAdRequestDto(
     )
     val volatilityProtection: Boolean?
 ) {
-    fun toDomain(): UpdateAdRequest {
+    fun toDomain(cityService: CityService): UpdateAdRequest {
         return UpdateAdRequest(
             title = title,
             description = description,
@@ -105,7 +105,7 @@ data class UpdateAdRequestDto(
             fixedPrices = fixedPrices,
             settlementCurrencies = settlementCurrencies,
             location = location?.let { dto ->
-                val point = dto.point ?: cityDataById[dto.cityId]?.let { doubleArrayOf(it.lon, it.lat) }
+                val point = dto.point ?: cityService.getCityById(dto.cityId)?.let { doubleArrayOf(it.lon, it.lat) }
                 requireNotNull(point) { "Location point is mandatory and city ID '${dto.cityId}' is invalid." }
                 Location(cityId = dto.cityId, point = point)
             },

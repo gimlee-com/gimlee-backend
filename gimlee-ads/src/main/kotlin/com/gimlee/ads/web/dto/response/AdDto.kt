@@ -37,7 +37,8 @@ data class AdDto(
         fun fromDomain(
             ad: Ad,
             frozenCurrencies: List<Currency> = emptyList(),
-            categoryPath: List<CategoryPathElementDto>? = null
+            categoryPath: List<CategoryPathElementDto>? = null,
+            cityDocument: com.gimlee.location.cities.persistence.model.CityDocument? = null
         ): AdDto = with(ad) {
             val buyable = frozenCurrencies.size < settlementCurrencies.size || !volatilityProtection
             AdDto(
@@ -52,7 +53,7 @@ data class AdDto(
                 status = status,
                 createdAt = createdAt,
                 updatedAt = updatedAt,
-                location = LocationWithCityDetailsDto.fromDomain(ad.location),
+                location = LocationWithCityDetailsDto.fromDomain(ad.location, cityDocument),
                 categoryId = categoryId,
                 categoryPath = categoryPath,
                 mediaPaths = mediaPaths,

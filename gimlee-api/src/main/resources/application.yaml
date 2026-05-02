@@ -85,6 +85,30 @@ gimlee:
       # classpath-database: geoip/2026-04-11/GeoLite2-Country.mmdb  # Bundled database used as fallback when no license-key or database-path is set
       connect-timeout-ms: 10000
       read-timeout-ms: 60000
+    geonames:
+      enabled: true
+      base-url: https://download.geonames.org/export/dump
+      cities-file: cities500.zip
+      alternate-names-file: alternateNamesV2.zip
+      admin1-file: admin1CodesASCII.txt
+      admin2-file: admin2Codes.txt
+      index-path: ${java.io.tmpdir}/gimlee/geonames-index
+      sync-cron: "0 0 3 * * *"
+      download-timeout: 300s
+      connect-timeout: 30s
+      batch-size: 5000
+      max-suggestions: 10
+      supported-languages: en,es,fr,de,it,pt,nl,pl,ru,uk,ja,zh,ko,ar,hi,tr,sv,no,da,fi
+      population-boost-thresholds:
+        - threshold: 10000
+          boost: 1.5
+        - threshold: 100000
+          boost: 3.0
+        - threshold: 1000000
+          boost: 6.0
+      lock:
+        at-most: PT1H
+        at-least: PT5M
 
   # gimlee-analytics properties
   analytics:

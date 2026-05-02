@@ -42,7 +42,8 @@ class ManageAdController(
     private val adService: AdService,
     private val categoryService: CategoryService,
     private val messageSource: MessageSource,
-    private val volatilityStateService: VolatilityStateService
+    private val volatilityStateService: VolatilityStateService,
+    private val cityService: com.gimlee.location.cities.service.CityService
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -190,7 +191,7 @@ class ManageAdController(
         val updatedAdDomain = adService.updateAd(
             adId = adId,
             userId = principal.userId,
-            updateData = request.toDomain()
+            updateData = request.toDomain(cityService)
         )
         val frozenCurrencies = computeFrozenCurrencies(updatedAdDomain)
         return ResponseEntity.ok(AdDto.fromDomain(updatedAdDomain, frozenCurrencies, resolveCategoryPath(updatedAdDomain)))

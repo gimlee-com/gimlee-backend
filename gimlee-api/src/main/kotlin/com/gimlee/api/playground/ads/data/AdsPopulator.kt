@@ -13,7 +13,7 @@ import com.gimlee.api.playground.media.data.PlaygroundMediaRepository
 import com.gimlee.auth.domain.User
 import com.gimlee.auth.persistence.UserRepository
 import com.gimlee.common.domain.model.Currency
-import com.gimlee.location.cities.data.cityDataUnsorted
+import com.gimlee.location.cities.service.CityService
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import org.apache.logging.log4j.LogManager
@@ -34,7 +34,8 @@ class AdsPopulator(
     private val adService: AdService,
     private val categoryService: CategoryService, // Inject CategoryService
     private val userRepository: UserRepository, // To get all users
-    private val playgroundMediaRepository: PlaygroundMediaRepository // Inject PlaygroundMediaRepository
+    private val playgroundMediaRepository: PlaygroundMediaRepository, // Inject PlaygroundMediaRepository
+    private val cityService: CityService
 ) {
     companion object {
         private val log = LogManager.getLogger()
@@ -205,9 +206,9 @@ class AdsPopulator(
 
         repeat(count) {
             try {
-                val city = cityDataUnsorted.randomOrNull()
-                if (city == null) {
-                    log.error("Could not get a random city (city list might be empty). Skipping this ad creation.")
+                val cityResult = cityService.search("", null, null, 1).firstOrNull()
+                if (cityResult == null) {
+                    log.error("Could not get a random city (city index might be empty). Skipping this ad creation.")
                     return@repeat
                 }
 
@@ -234,7 +235,7 @@ class AdsPopulator(
                 }
 
                 val volatilityProtection = Random.nextBoolean()
-                val location = Location(city.id, doubleArrayOf(city.lon, city.lat))
+                val location = Location(cityResult.geonameId, doubleArrayOf(cityResult.longitude, cityResult.latitude))
                 val randomCategoryId = categoryService.getRandomLeafCategoryId()
 
                 // 1. Create inactive ad

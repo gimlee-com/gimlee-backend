@@ -20,12 +20,12 @@ data class AdDetailsDto(
     val availableStock: Int,
 ) {
     companion object {
-        fun fromAd(ad: Ad, categoryPath: List<CategoryPathElementDto>? = null): AdDetailsDto {
+        fun fromAd(ad: Ad, categoryPath: List<CategoryPathElementDto>? = null, cityDocument: com.gimlee.location.cities.persistence.model.CityDocument? = null): AdDetailsDto {
             return AdDetailsDto(
                 id = ad.id,
                 title = ad.title,
                 description = ad.description,
-                location = LocationWithCityDetailsDto.fromDomain(ad.location),
+                location = LocationWithCityDetailsDto.fromDomain(ad.location, cityDocument),
                 pricingMode = ad.pricingMode,
                 price = CurrencyAmountDto.fromDomain(ad.price),
                 fixedPrices = ad.fixedPrices.takeIf { it.isNotEmpty() }?.map { (c, a) -> CurrencyAmountDto(a, c) },

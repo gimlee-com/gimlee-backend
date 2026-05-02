@@ -20,6 +20,7 @@ MODULES=(
     "gimlee-ads"
     "gimlee-auth"
     "gimlee-chat"
+    "gimlee-location"
     "gimlee-media-store"
     "gimlee-payments"
     "gimlee-purchases"

@@ -17,7 +17,7 @@ data class AdPreviewDto(
     val location: LocationWithCityDetailsDto? = null,
 ) {
     companion object {
-        fun fromAd(ad: Ad, categoryPath: List<CategoryPathElementDto>? = null) = AdPreviewDto(
+        fun fromAd(ad: Ad, categoryPath: List<CategoryPathElementDto>? = null, cityDocument: com.gimlee.location.cities.persistence.model.CityDocument? = null) = AdPreviewDto(
             id = ad.id,
             title = ad.title,
             pricingMode = ad.pricingMode,
@@ -27,7 +27,7 @@ data class AdPreviewDto(
             mainPhotoPath = ad.mainPhotoPath,
             categoryId = ad.categoryId,
             categoryPath = categoryPath,
-            location = LocationWithCityDetailsDto.fromDomain(ad.location),
+            location = LocationWithCityDetailsDto.fromDomain(ad.location, cityDocument),
         )
     }
 }

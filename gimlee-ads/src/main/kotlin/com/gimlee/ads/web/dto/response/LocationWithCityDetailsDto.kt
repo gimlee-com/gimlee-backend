@@ -1,6 +1,6 @@
 package com.gimlee.ads.web.dto.response
 
-import com.gimlee.location.cities.data.cityDataById
+import com.gimlee.location.cities.persistence.model.CityDocument
 import com.gimlee.ads.domain.model.Location as DomainLocation
 
 data class LocationWithCityDetailsDto(
@@ -8,12 +8,13 @@ data class LocationWithCityDetailsDto(
     val point: DoubleArray?,
 ) {
     companion object {
-        fun fromDomain(domainLocation: DomainLocation?): LocationWithCityDetailsDto? {
+        fun fromDomain(
+            domainLocation: DomainLocation?,
+            cityDocument: CityDocument?
+        ): LocationWithCityDetailsDto? {
             if (domainLocation == null) return null
 
-            val cityDetails = domainLocation.cityId.let { cityId ->
-                cityDataById[cityId]?.let { city -> CityDetailsDto.fromCity(city) }
-            }
+            val cityDetails = cityDocument?.let { CityDetailsDto.fromCityDocument(it) }
 
             return LocationWithCityDetailsDto(
                 city = cityDetails,

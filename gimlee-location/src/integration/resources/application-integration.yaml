@@ -6,3 +6,6 @@ gimlee:
   location:
     geoip:
       enabled: false # GeoIP tests override this per-class via @DynamicPropertySource
+    geonames:
+      enabled: false # GeoNames tests override this per-class via @DynamicPropertySource
+      index-path: ${java.io.tmpdir}/gimlee/geonames-index-test

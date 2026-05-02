@@ -30,7 +30,7 @@ POST {{host}}/api/auth/login
 Content-Type: application/json
 
 {
-  "username": "pirate_seller",
+  "username": "playground_seller",
   "password": "Password1"
 }
 

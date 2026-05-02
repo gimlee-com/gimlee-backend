@@ -57,6 +57,19 @@ gimlee:
       # classpath-database: geoip/2026-04-11/GeoLite2-Country.mmdb  # Bundled database used as fallback — works out of the box
       connect-timeout-ms: 10000
       read-timeout-ms: 60000
+    geonames:
+      enabled: true
+      # base-url: https://download.geonames.org/export/dump  # GeoNames data source
+      # cities-file: cities500.zip  # Cities with population > 500
+      # alternate-names-file: alternateNamesV2.zip  # Multilingual city names
+      # admin1-file: admin1CodesASCII.txt  # Admin1 (state/province) code lookups
+      # admin2-file: admin2Codes.txt  # Admin2 (county/district) code lookups
+      index-path: ${java.io.tmpdir}/gimlee/geonames-index  # Lucene index storage
+      # sync-cron: "0 0 3 * * *"  # Daily sync at 3 AM
+      # download-timeout: 300s
+      # connect-timeout: 30s
+      # batch-size: 5000
+      # max-suggestions: 10
 
   # gimlee-chat properties
   chat:

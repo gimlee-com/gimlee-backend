@@ -10,11 +10,18 @@ dependencies {
     implementation(libs.spring.boot.starter.jetty)
     implementation(libs.spring.boot.starter.data.mongodb)
 
+    // Search
+    implementation(libs.lucene.core)
+    implementation(libs.lucene.queryparser)
+    implementation(libs.lucene.analysis.common)
+
+    // Scheduling & locks
+    implementation(libs.shedlock.spring)
+    implementation(libs.shedlock.provider.mongo)
+
     // Other dependencies
-    implementation(libs.simmetrics.core)
     implementation(libs.caffeine)
     implementation(libs.jakarta.validation)
-    implementation(libs.jackson.dataformat.csv)
     implementation(libs.springdoc.openapi.starter.webmvc.api)
     implementation(libs.maxmind.geoip2)
 

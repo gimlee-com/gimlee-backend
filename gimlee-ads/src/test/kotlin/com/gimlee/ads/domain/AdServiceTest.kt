@@ -31,7 +31,8 @@ class AdServiceTest : StringSpec({
     val adCurrencyService = AdCurrencyService()
     val adCurrencyValidator = AdCurrencyValidator(adCurrencyService)
     val adPriceValidator = mockk<AdPriceValidator>(relaxed = true)
-    val adService = AdService(adRepository, adStockService, categoryService, currencyConverterService, adCurrencyValidator, adCurrencyService, adPriceValidator, userRoleRepository, eventPublisher)
+    val cityService = mockk<com.gimlee.location.cities.service.CityService>(relaxed = true)
+    val adService = AdService(adRepository, adStockService, categoryService, currencyConverterService, adCurrencyValidator, adCurrencyService, adPriceValidator, userRoleRepository, eventPublisher, cityService)
 
     "updateAd should fail if using ARRR without PIRATE role" {
         val adId = ObjectId()

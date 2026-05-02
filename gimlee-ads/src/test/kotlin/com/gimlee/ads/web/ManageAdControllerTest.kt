@@ -27,7 +27,8 @@ class ManageAdControllerTest : StringSpec({
     val categoryService = mockk<CategoryService>(relaxed = true)
     val messageSource = mockk<MessageSource>()
     val volatilityStateService = mockk<VolatilityStateService>(relaxed = true)
-    val controller = ManageAdController(adService, categoryService, messageSource, volatilityStateService)
+    val cityService = mockk<com.gimlee.location.cities.service.CityService>(relaxed = true)
+    val controller = ManageAdController(adService, categoryService, messageSource, volatilityStateService, cityService)
 
     beforeTest {
         mockkStatic(RequestContextHolder::class)

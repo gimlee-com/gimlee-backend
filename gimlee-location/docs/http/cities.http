@@ -1,8 +1,9 @@
-### Get City Suggestions
-# Searches for cities matching the provided phrase.
-# Returns a list of city suggestions including their IDs and names.
+### Search City Suggestions
+# Searches for cities matching the provided query.
+# Returns a list of city suggestions ranked by relevance and population.
+# Supports country filtering and localized city names.
 # @name getCitySuggestions
-GET {{host}}/api/cities/suggestions/?p=New%20York
+GET {{host}}/api/cities/suggestions?q=Lubi&cc=PL&lang=en-US&limit=10
 Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
@@ -10,27 +11,55 @@ Authorization: Bearer {{auth_token}}
 #
 # [
 #   {
-#     "id": "city-123",
-#     "name": "New York, NY"
+#     "id": "756135",
+#     "name": "Warsaw",
+#     "countryCode": "PL",
+#     "region": "Masovian Voivodeship",
+#     "district": "Warsaw",
+#     "population": 1790658,
+#     "latitude": 52.2298,
+#     "longitude": 21.0118
 #   }
 # ]
 
+### Search City Suggestions (No Country Filter)
+# Search globally across all countries.
+# @name getCitySuggestionsGlobal
+GET {{host}}/api/cities/suggestions?q=Paris&limit=5
+Authorization: Bearer {{auth_token}}
+
+### Search City Suggestions (Localized)
+# Search with Polish localization for city names.
+# @name getCitySuggestionsLocalized
+GET {{host}}/api/cities/suggestions?q=War&lang=pl-PL&limit=5
+Authorization: Bearer {{auth_token}}
 
 ### Get City by ID
-# Retrieves detailed information about a specific city by its ID.
+# Retrieves detailed information about a specific city by its GeoNames ID.
 # @name getCityById
-GET {{host}}/api/cities/city-123
+GET {{host}}/api/cities/756135?lang=en-US
 Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json
 #
 # {
-#   "id": "city-123",
-#   "name": "New York",
-#   "location": [ -74.006, 40.7128 ]
+#   "id": "756135",
+#   "name": "Warsaw",
+#   "countryCode": "PL",
+#   "adminDivision": "78",
+#   "region": "Masovian Voivodeship",
+#   "district": "Warsaw",
+#   "population": 1790658,
+#   "latitude": 52.2298,
+#   "longitude": 21.0118,
+#   "timezone": "Europe/Warsaw"
 # }
 
 ### Expected Response (Error - 404 Not Found):
 # If the city ID does not exist.
 # HTTP/1.1 404 Not Found
+
+### Expected Response (Error - 503 Service Unavailable):
+# If city data is being synchronized (first startup).
+# HTTP/1.1 503 Service Unavailable
