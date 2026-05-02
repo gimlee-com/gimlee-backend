@@ -5,7 +5,7 @@
 const collectionName = "gimlee-chat-conversations";
 
 // Create the collection if it doesn't exist
-if (!db.getCollectionNames().contains(collectionName)) {
+if (db.getCollectionNames().indexOf(collectionName) === -1) {
     db.createCollection(collectionName);
 }
 
