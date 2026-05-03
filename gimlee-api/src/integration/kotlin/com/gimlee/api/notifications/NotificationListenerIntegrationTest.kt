@@ -328,6 +328,7 @@ class NotificationListenerIntegrationTest(
             eventPublisher.publishEvent(
                 AdStatusChangedEvent(
                     adId = adId,
+                    adTitle = "Test Ad",
                     sellerId = sellerId,
                     oldStatus = "ACTIVE",
                     newStatus = "INACTIVE",
@@ -340,6 +341,8 @@ class NotificationListenerIntegrationTest(
                 val notifications = findNotificationsByType(sellerId, NotificationType.AD_STOCK_DEPLETED)
                 notifications shouldHaveSize 1
                 notifications[0].metadata?.get("adId") shouldBe adId
+                notifications[0].message shouldContain "Test Ad"
+                notifications[0].message shouldNotContain "{0}"
             }
         }
 
@@ -350,6 +353,7 @@ class NotificationListenerIntegrationTest(
             eventPublisher.publishEvent(
                 AdStatusChangedEvent(
                     adId = adId,
+                    adTitle = "Hidden Category Ad",
                     sellerId = sellerId,
                     oldStatus = "ACTIVE",
                     newStatus = "INACTIVE",
@@ -359,7 +363,10 @@ class NotificationListenerIntegrationTest(
             )
 
             Then("seller should receive AD_CATEGORY_HIDDEN notification") {
-                findNotificationsByType(sellerId, NotificationType.AD_CATEGORY_HIDDEN) shouldHaveSize 1
+                val notifications = findNotificationsByType(sellerId, NotificationType.AD_CATEGORY_HIDDEN)
+                notifications shouldHaveSize 1
+                notifications[0].message shouldContain "Hidden Category Ad"
+                notifications[0].message shouldNotContain "{0}"
             }
         }
     }
@@ -383,6 +390,7 @@ class NotificationListenerIntegrationTest(
             eventPublisher.publishEvent(
                 AdStatusChangedEvent(
                     adId = adId,
+                    adTitle = "Watched Ad",
                     sellerId = sellerId.toHexString(),
                     oldStatus = "ACTIVE",
                     newStatus = "INACTIVE",
@@ -392,7 +400,10 @@ class NotificationListenerIntegrationTest(
             )
 
             Then("watchers should receive AD_WATCHLIST_DEACTIVATED (excluding seller)") {
-                findNotificationsByType(watcher1, NotificationType.AD_WATCHLIST_DEACTIVATED) shouldHaveSize 1
+                val w1Notifications = findNotificationsByType(watcher1, NotificationType.AD_WATCHLIST_DEACTIVATED)
+                w1Notifications shouldHaveSize 1
+                w1Notifications[0].message shouldContain "Watched Ad"
+                w1Notifications[0].message shouldNotContain "{0}"
                 findNotificationsByType(watcher2, NotificationType.AD_WATCHLIST_DEACTIVATED) shouldHaveSize 1
                 findNotificationsByType(sellerId, NotificationType.AD_WATCHLIST_DEACTIVATED) shouldHaveSize 0
             }
@@ -536,6 +547,7 @@ class NotificationListenerIntegrationTest(
                 TicketReplyEvent(
                     ticketId = ticketId,
                     ticketCreatorId = creatorId,
+                    ticketSubject = "Login Issue",
                     messageId = ObjectId.get().toHexString(),
                     authorId = ObjectId.get().toHexString(),
                     authorRole = "SUPPORT"
@@ -546,6 +558,8 @@ class NotificationListenerIntegrationTest(
                 val notifications = findNotificationsByType(creatorId, NotificationType.TICKET_REPLY)
                 notifications shouldHaveSize 1
                 notifications[0].metadata?.get("ticketId") shouldBe ticketId
+                notifications[0].message shouldContain "Login Issue"
+                notifications[0].message shouldNotContain "{0}"
             }
         }
 
@@ -558,6 +572,7 @@ class NotificationListenerIntegrationTest(
                 TicketReplyEvent(
                     ticketId = ticketId,
                     ticketCreatorId = creatorId,
+                    ticketSubject = "Some Subject",
                     messageId = ObjectId.get().toHexString(),
                     authorId = creatorId,
                     authorRole = "USER"
@@ -578,13 +593,17 @@ class NotificationListenerIntegrationTest(
                 TicketUpdatedEvent(
                     ticketId = ticketId,
                     ticketCreatorId = creatorId,
+                    ticketSubject = "Awaiting Ticket",
                     updatedBy = ObjectId.get().toHexString(),
                     changes = mapOf("status" to "AWAITING_USER")
                 )
             )
 
             Then("creator should receive TICKET_AWAITING_USER notification") {
-                findNotificationsByType(creatorId, NotificationType.TICKET_AWAITING_USER) shouldHaveSize 1
+                val notifications = findNotificationsByType(creatorId, NotificationType.TICKET_AWAITING_USER)
+                notifications shouldHaveSize 1
+                notifications[0].message shouldContain "Awaiting Ticket"
+                notifications[0].message shouldNotContain "{0}"
             }
         }
 
@@ -597,6 +616,7 @@ class NotificationListenerIntegrationTest(
                 TicketUpdatedEvent(
                     ticketId = ticketId,
                     ticketCreatorId = creatorId,
+                    ticketSubject = "Resolved Ticket",
                     updatedBy = ObjectId.get().toHexString(),
                     changes = mapOf("status" to "RESOLVED")
                 )
@@ -606,6 +626,8 @@ class NotificationListenerIntegrationTest(
                 val notifications = findNotificationsByType(creatorId, NotificationType.TICKET_STATUS_CHANGE)
                 notifications shouldHaveSize 1
                 notifications[0].metadata?.get("status") shouldBe "RESOLVED"
+                notifications[0].message shouldContain "Resolved Ticket"
+                notifications[0].message shouldNotContain "{0}"
             }
         }
 
@@ -618,6 +640,7 @@ class NotificationListenerIntegrationTest(
                 TicketUpdatedEvent(
                     ticketId = ticketId,
                     ticketCreatorId = creatorId,
+                    ticketSubject = "Priority Ticket",
                     updatedBy = ObjectId.get().toHexString(),
                     changes = mapOf("priority" to "HIGH")
                 )

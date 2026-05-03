@@ -64,6 +64,7 @@ class AdNotificationListener(
             userId = sellerId,
             type = NotificationType.AD_STOCK_DEPLETED,
             language = languageProvider.getLanguage(sellerId),
+            messageArgs = arrayOf(event.adTitle),
             suggestedAction = SuggestedAction(SuggestedActionType.SELLER_AD_DETAILS, event.adId),
             metadata = mapOf("adId" to event.adId)
         )
@@ -74,6 +75,7 @@ class AdNotificationListener(
             userId = sellerId,
             type = NotificationType.AD_CATEGORY_HIDDEN,
             language = languageProvider.getLanguage(sellerId),
+            messageArgs = arrayOf(event.adTitle),
             suggestedAction = SuggestedAction(SuggestedActionType.AD_EDIT, event.adId),
             metadata = mapOf("adId" to event.adId)
         )
@@ -87,6 +89,7 @@ class AdNotificationListener(
                 userId = watcherId,
                 type = NotificationType.AD_WATCHLIST_DEACTIVATED,
                 language = languageProvider.getLanguage(watcherId),
+                messageArgs = arrayOf(event.adTitle),
                 suggestedAction = SuggestedAction(SuggestedActionType.AD_DETAILS, event.adId),
                 metadata = mapOf("adId" to event.adId)
             )

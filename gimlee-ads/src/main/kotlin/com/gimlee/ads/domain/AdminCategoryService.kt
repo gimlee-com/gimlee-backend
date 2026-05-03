@@ -195,6 +195,7 @@ class AdminCategoryService(
             affectedAdDocs.forEach { adDoc ->
                 eventPublisher.publishEvent(AdStatusChangedEvent(
                     adId = adDoc.id.toHexString(),
+                    adTitle = adDoc.title,
                     sellerId = adDoc.userId.toHexString(),
                     oldStatus = "ACTIVE",
                     newStatus = "INACTIVE",

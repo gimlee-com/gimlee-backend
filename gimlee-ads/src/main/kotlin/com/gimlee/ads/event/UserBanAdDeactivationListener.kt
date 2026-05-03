@@ -35,6 +35,7 @@ class UserBanAdDeactivationListener(
         for (ad in deactivatedAds) {
             eventPublisher.publishEvent(AdStatusChangedEvent(
                 adId = ad.id.toHexString(),
+                adTitle = ad.title,
                 sellerId = event.userId,
                 oldStatus = "ACTIVE",
                 newStatus = "INACTIVE",

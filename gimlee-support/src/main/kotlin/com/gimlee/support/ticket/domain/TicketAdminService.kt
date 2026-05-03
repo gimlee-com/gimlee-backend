@@ -74,6 +74,7 @@ class TicketAdminService(
             TicketReplyEvent(
                 ticketId = ticketId,
                 ticketCreatorId = ticket.creatorId.toHexString(),
+                ticketSubject = ticket.subject,
                 messageId = msgDoc.id!!.toHexString(),
                 authorId = supportUserId,
                 authorRole = TicketMessageRole.SUPPORT.name
@@ -123,6 +124,7 @@ class TicketAdminService(
             TicketUpdatedEvent(
                 ticketId = ticketId,
                 ticketCreatorId = ticket.creatorId.toHexString(),
+                ticketSubject = ticket.subject,
                 updatedBy = performedBy,
                 changes = changes
             )

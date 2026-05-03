@@ -43,6 +43,7 @@ data class TicketCreatedEvent(
 data class TicketReplyEvent(
     val ticketId: String,
     val ticketCreatorId: String,
+    val ticketSubject: String,
     val messageId: String,
     val authorId: String,
     val authorRole: String,
@@ -52,6 +53,7 @@ data class TicketReplyEvent(
 data class TicketUpdatedEvent(
     val ticketId: String,
     val ticketCreatorId: String,
+    val ticketSubject: String,
     val updatedBy: String,
     val changes: Map<String, String>,
     val timestamp: Instant = Instant.now()

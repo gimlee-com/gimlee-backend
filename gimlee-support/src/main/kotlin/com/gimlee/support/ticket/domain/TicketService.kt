@@ -119,6 +119,7 @@ class TicketService(
             TicketReplyEvent(
                 ticketId = ticketId,
                 ticketCreatorId = ticket.creatorId.toHexString(),
+                ticketSubject = ticket.subject,
                 messageId = msgDoc.id!!.toHexString(),
                 authorId = userId,
                 authorRole = TicketMessageRole.USER.name

@@ -7,6 +7,7 @@ import java.time.Instant
  */
 data class AdStatusChangedEvent(
     val adId: String,
+    val adTitle: String,
     val sellerId: String? = null,
     val oldStatus: String?,
     val newStatus: String,

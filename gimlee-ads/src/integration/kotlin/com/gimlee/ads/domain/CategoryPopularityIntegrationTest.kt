@@ -68,6 +68,7 @@ class CategoryPopularityIntegrationTest(
             
             eventPublisher.publishEvent(com.gimlee.events.AdStatusChangedEvent(
                 adId = ad.id,
+                adTitle = "Test Laptop",
                 oldStatus = AdStatus.INACTIVE.name,
                 newStatus = AdStatus.ACTIVE.name,
                 categoryIds = activatedDoc.categoryIds ?: emptyList()
@@ -114,6 +115,7 @@ class CategoryPopularityIntegrationTest(
             adRepository.save(activatedDoc)
             eventPublisher.publishEvent(com.gimlee.events.AdStatusChangedEvent(
                 adId = ad.id,
+                adTitle = "Another Laptop",
                 oldStatus = AdStatus.INACTIVE.name,
                 newStatus = AdStatus.ACTIVE.name,
                 categoryIds = activatedDoc.categoryIds ?: emptyList()

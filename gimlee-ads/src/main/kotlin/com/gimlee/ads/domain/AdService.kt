@@ -513,6 +513,7 @@ class AdService(
 
         eventPublisher.publishEvent(AdStatusChangedEvent(
             adId = adId,
+            adTitle = activatedAdDoc.title,
             oldStatus = existingAdDoc.status.name,
             newStatus = activatedAdDoc.status.name,
             categoryIds = activatedAdDoc.categoryIds ?: emptyList()
@@ -550,6 +551,7 @@ class AdService(
 
         eventPublisher.publishEvent(AdStatusChangedEvent(
             adId = adId,
+            adTitle = existingAdDoc.title,
             oldStatus = existingAdDoc.status.name,
             newStatus = deactivatedAdDoc.status.name,
             categoryIds = deactivatedAdDoc.categoryIds ?: emptyList()

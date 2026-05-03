@@ -29,6 +29,7 @@ class TicketNotificationListener(
                 userId = creatorId,
                 type = NotificationType.TICKET_REPLY,
                 language = languageProvider.getLanguage(creatorId),
+                messageArgs = arrayOf(event.ticketSubject),
                 suggestedAction = SuggestedAction(SuggestedActionType.TICKET_DETAILS, event.ticketId),
                 metadata = mapOf("ticketId" to event.ticketId)
             )
@@ -49,6 +50,7 @@ class TicketNotificationListener(
                     userId = creatorId,
                     type = NotificationType.TICKET_AWAITING_USER,
                     language = languageProvider.getLanguage(creatorId),
+                    messageArgs = arrayOf(event.ticketSubject),
                     suggestedAction = SuggestedAction(SuggestedActionType.TICKET_DETAILS, event.ticketId),
                     metadata = mapOf("ticketId" to event.ticketId)
                 )
@@ -56,7 +58,7 @@ class TicketNotificationListener(
                     userId = creatorId,
                     type = NotificationType.TICKET_STATUS_CHANGE,
                     language = languageProvider.getLanguage(creatorId),
-                    messageArgs = arrayOf(newStatus.lowercase().replace('_', ' ')),
+                    messageArgs = arrayOf(event.ticketSubject),
                     suggestedAction = SuggestedAction(SuggestedActionType.TICKET_DETAILS, event.ticketId),
                     metadata = mapOf("ticketId" to event.ticketId, "status" to newStatus)
                 )
