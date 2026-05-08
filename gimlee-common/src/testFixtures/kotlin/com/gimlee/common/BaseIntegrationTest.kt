@@ -101,6 +101,7 @@ abstract class BaseIntegrationTest(body: BaseIntegrationTest.() -> Unit) : Behav
         fun setProperties(registry: DynamicPropertyRegistry) {
             registry.add("spring.data.mongodb.uri") { mongodb.replicaSetUrl }
             registry.add("wiremock.server.port") { wireMockServer.port() }
+            registry.add("gimlee.payments.exchange.initial-delay-ms") { "999999999" }
             registry.add("gimlee.payments.exchange.cache.expire-after-write-seconds") { "0" }
             registry.add("gimlee.auth.rest.jwt.key") { "test-key-must-be-at-least-32-chars-long-!!!-123456" }
             registry.add("gimlee.auth.rest.jwt.issuer") { "test-issuer" }

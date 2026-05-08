@@ -14,7 +14,10 @@ class ExchangeRateService(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(fixedDelayString = "\${gimlee.payments.exchange.update-interval-ms:60000}")
+    @Scheduled(
+        fixedDelayString = "\${gimlee.payments.exchange.update-interval-ms:60000}",
+        initialDelayString = "\${gimlee.payments.exchange.initial-delay-ms:0}"
+    )
     fun updateRates() {
         log.info("Starting exchange rates update...")
         val rates = exchangeRateFetcher.fetchAllLatestRates()
