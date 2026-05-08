@@ -35,6 +35,7 @@ dependencies {
     testFixturesImplementation(project(":gimlee-payments"))
     testFixturesImplementation(project(":gimlee-auth"))
     testFixturesImplementation(project(":gimlee-support"))
+    testFixturesImplementation(project(":gimlee-location"))
     testFixturesImplementation(libs.mockk)
 
     testImplementation(libs.spring.boot.starter.test)

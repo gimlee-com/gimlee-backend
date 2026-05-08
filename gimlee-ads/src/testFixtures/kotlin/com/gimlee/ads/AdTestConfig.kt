@@ -1,6 +1,7 @@
 package com.gimlee.ads
 
 import com.gimlee.auth.persistence.UserRoleRepository
+import com.gimlee.location.cities.service.CityService
 import com.gimlee.payments.domain.service.CurrencyConverterService
 import com.gimlee.payments.domain.service.VolatilityStateService
 import com.gimlee.support.report.persistence.ReportRepository
@@ -21,4 +22,7 @@ class AdTestConfig {
 
     @Bean
     fun reportRepository(): ReportRepository = mockk(relaxed = true)
+
+    @Bean
+    fun cityService(): CityService = mockk(relaxed = true)
 }
