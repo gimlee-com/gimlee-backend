@@ -68,6 +68,8 @@
 ### 4. Scheduling & Async Processing
 *   **Shared Scheduler:** All `@Scheduled` tasks run on the shared `ThreadPoolTaskScheduler` bean defined in `SchedulingConfig` (`gimlee-common`). Its pool size is controlled via `gimlee.scheduling.pool-size`.
 *   **Async Executor:** All `@Async` methods run on the explicit `applicationTaskExecutor` bean (also in `SchedulingConfig`). Its pool size is controlled via `gimlee.async.pool-size`.
+*   **Global Platform — No "Off-Peak" Hours:** Gimlee serves users across all time zones. There is no universally quiet period. **Do NOT** schedule large batch operations at a fixed time (e.g., "daily at 03:00") — that time is peak hours for some regions. Instead, use **frequent small-batch processing** with a configurable interval and batch size limit (e.g., every 5 minutes, max 10,000 documents per run). This spreads the load evenly and avoids sudden resource spikes.
+*   **Batch Job Observability:** All scheduled batch operations must log at INFO level when they start (including the configured batch size) and when they complete (including the number of items processed). This allows operators to detect when the batch size is insufficient for the accumulation rate and adjust accordingly.
 *   **Graceful Shutdown:** The application uses `server.shutdown=graceful` with a 30s timeout. All thread pools **must** be shutdown-aware:
     *   `ThreadPoolTaskScheduler` and `ThreadPoolTaskExecutor` beans must set `setWaitForTasksToCompleteOnShutdown(true)` and `setAwaitTerminationSeconds(...)`.
     *   Raw `ExecutorService` beans (e.g., `Executors.newFixedThreadPool(...)`) **must** declare `@Bean(destroyMethod = "shutdown")` so Spring invokes `shutdown()` on context close.
