@@ -15,7 +15,7 @@ enum class Currency(val type: CurrencyType, val decimalPlaces: Int, val isSettle
     YEC(CurrencyType.CRYPTO, 8, true, "YCASH"),
 
     /** Tether */
-    USDT(CurrencyType.CRYPTO, 8, false),
+    USDT(CurrencyType.CRYPTO, 2, false),
 
     /** US Dollar */
     USD(CurrencyType.FIAT, 2, false),

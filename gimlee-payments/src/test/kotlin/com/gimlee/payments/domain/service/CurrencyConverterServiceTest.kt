@@ -44,7 +44,7 @@ class CurrencyConverterServiceTest : StringSpec({
 
         val result = service.convert(amount, Currency.YEC, Currency.USDT)
         result.targetAmount.stripTrailingZeros() shouldBe BigDecimal("3").stripTrailingZeros()
-        result.targetAmount.scale() shouldBe 8
+        result.targetAmount.scale() shouldBe 2
         result.steps.size shouldBe 1
     }
 
