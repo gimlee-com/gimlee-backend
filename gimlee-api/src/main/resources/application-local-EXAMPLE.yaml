@@ -35,7 +35,8 @@ gimlee:
     token:
       access-ttl-minutes: 15           # Access token TTL in minutes (short-lived)
       refresh-ttl-days: 30             # Refresh token TTL in days
-      refresh-cleanup-cron: "0 0 3 * * *"  # Cron for cleaning expired refresh tokens
+      cleanup-interval-ms: 300000      # How often cleanup runs (ms) — default 5 min
+      cleanup-batch-size: 10000        # Max tokens removed per cleanup run
       max-sessions-per-user: 10        # Maximum concurrent sessions per user
       revoked-retention-days: 7        # How long revoked tokens are kept for reuse detection
     ban:

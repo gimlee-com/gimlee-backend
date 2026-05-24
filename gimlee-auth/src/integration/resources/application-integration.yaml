@@ -23,7 +23,8 @@ gimlee:
     token:
       access-ttl-minutes: 15
       refresh-ttl-days: 30
-      refresh-cleanup-cron: "0 0 3 * * *"
+      cleanup-interval-ms: 300000
+      cleanup-batch-size: 10000
       max-sessions-per-user: 10
       revoked-retention-days: 7
     rest:

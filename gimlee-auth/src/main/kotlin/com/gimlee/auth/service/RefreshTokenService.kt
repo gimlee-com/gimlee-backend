@@ -27,7 +27,10 @@ class RefreshTokenService(
     private val maxSessionsPerUser: Int,
 
     @Value("\${gimlee.auth.token.revoked-retention-days:7}")
-    private val revokedRetentionDays: Long
+    private val revokedRetentionDays: Long,
+
+    @Value("\${gimlee.auth.token.cleanup-batch-size:10000}")
+    private val cleanupBatchSize: Int
 ) {
     companion object {
         private val log = LogManager.getLogger()
@@ -124,20 +127,17 @@ class RefreshTokenService(
         refreshTokenRepository.revokeAllForUser(userId)
     }
 
-    @Scheduled(cron = "\${gimlee.auth.token.refresh-cleanup-cron:0 0 3 * * *}")
+    @Scheduled(fixedRateString = "\${gimlee.auth.token.cleanup-interval-ms:300000}")
     fun cleanupExpired() {
-        val expiredCutoff = Instant.now().toMicros()
-        val deleted = refreshTokenRepository.deleteExpired(expiredCutoff)
-        if (deleted > 0) {
-            log.info("Cleaned up $deleted expired refresh tokens")
-        }
+        log.info("Refresh token cleanup started (batch size: $cleanupBatchSize)")
 
-        // Also clean revoked tokens older than the retention window
+        val expiredCutoff = Instant.now().toMicros()
+        val deletedExpired = refreshTokenRepository.deleteExpired(expiredCutoff, cleanupBatchSize)
+
         val revokedCutoff = Instant.now().minus(revokedRetentionDays, ChronoUnit.DAYS).toMicros()
-        val deletedRevoked = refreshTokenRepository.deleteRevokedBefore(revokedCutoff)
-        if (deletedRevoked > 0) {
-            log.info("Cleaned up $deletedRevoked old revoked refresh tokens")
-        }
+        val deletedRevoked = refreshTokenRepository.deleteRevokedBefore(revokedCutoff, cleanupBatchSize)
+
+        log.info("Refresh token cleanup completed: $deletedExpired expired, $deletedRevoked revoked removed")
     }
 
     private fun enforceSessionLimit(userId: String) {

@@ -128,9 +128,12 @@ This prevents stolen tokens from being used on a different device.
 Each user is limited to a configurable maximum of concurrent sessions (default: 10). When a new login exceeds this limit, the oldest sessions are automatically revoked.
 
 #### Cleanup Strategy
-A scheduled job (daily at 03:00) performs two cleanup operations:
-1. **Expired tokens**: Delete all tokens past their 30-day TTL.
-2. **Revoked tokens**: Delete revoked tokens older than the retention window (7 days). This window is the maximum time frame for reuse detection.
+A scheduled job runs every 5 minutes (configurable) and processes tokens in bounded batches to avoid large database operations that could impact service performance during peak hours across global time zones:
+
+1. **Expired tokens**: Delete up to `cleanup-batch-size` (default: 10,000) tokens past their 30-day TTL.
+2. **Revoked tokens**: Delete up to `cleanup-batch-size` revoked tokens older than the retention window (7 days).
+
+Each run logs the batch size at start and the number of records removed at completion, allowing operators to monitor whether the batch size is sufficient for the token accumulation rate.
 
 ### 4. Request Authentication Pipeline
 
@@ -312,7 +315,8 @@ gimlee:
     token:
       access-ttl-minutes: 15                 # JWT access token lifetime
       refresh-ttl-days: 30                   # Refresh token lifetime
-      refresh-cleanup-cron: "0 0 3 * * *"    # Daily cleanup schedule
+      cleanup-interval-ms: 300000            # Cleanup runs every 5 min (ms)
+      cleanup-batch-size: 10000              # Max tokens removed per cleanup run
       max-sessions-per-user: 10              # Max concurrent sessions
       revoked-retention-days: 7              # Keep revoked tokens for reuse detection
     rest:

@@ -64,19 +64,31 @@ class RefreshTokenRepository(
         mongoTemplate.updateMulti(query, update, COLLECTION_NAME)
     }
 
-    fun deleteExpired(beforeMicros: Long): Long {
+    fun deleteExpired(beforeMicros: Long, limit: Int): Long {
         val query = Query(
             Criteria.where(RefreshToken.FIELD_EXPIRES_AT).lt(beforeMicros)
-        )
-        return mongoTemplate.remove(query, COLLECTION_NAME).deletedCount
+        ).limit(limit)
+
+        val docs = mongoTemplate.find(query, Document::class.java, COLLECTION_NAME)
+        if (docs.isEmpty()) return 0
+
+        val ids = docs.map { it.getString(RefreshToken.FIELD_ID) }
+        val deleteQuery = Query(Criteria.where(RefreshToken.FIELD_ID).`in`(ids))
+        return mongoTemplate.remove(deleteQuery, COLLECTION_NAME).deletedCount
     }
 
-    fun deleteRevokedBefore(beforeMicros: Long): Long {
+    fun deleteRevokedBefore(beforeMicros: Long, limit: Int): Long {
         val query = Query(
             Criteria.where(RefreshToken.FIELD_REVOKED).`is`(true)
                 .and(RefreshToken.FIELD_REVOKED_AT).lt(beforeMicros)
-        )
-        return mongoTemplate.remove(query, COLLECTION_NAME).deletedCount
+        ).limit(limit)
+
+        val docs = mongoTemplate.find(query, Document::class.java, COLLECTION_NAME)
+        if (docs.isEmpty()) return 0
+
+        val ids = docs.map { it.getString(RefreshToken.FIELD_ID) }
+        val deleteQuery = Query(Criteria.where(RefreshToken.FIELD_ID).`in`(ids))
+        return mongoTemplate.remove(deleteQuery, COLLECTION_NAME).deletedCount
     }
 
     fun findActiveSessionsByUser(userId: String): List<RefreshToken> {
