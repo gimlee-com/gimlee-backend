@@ -10,6 +10,7 @@ import io.swagger.v3.oas.models.responses.ApiResponse
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 import org.springdoc.core.customizers.OperationCustomizer
+import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -43,6 +44,53 @@ class OpenApiConfig(
                     )
             )
     }
+
+    @Bean
+    fun authGroup(): GroupedOpenApi = buildGroup("auth", "Authentication", "/auth/**")
+
+    @Bean
+    fun adsGroup(): GroupedOpenApi = buildGroup("ads", "Ads & Discovery", "/ads/**", "/qa/**")
+
+    @Bean
+    fun paymentsGroup(): GroupedOpenApi = buildGroup("payments", "Payments & Currency", "/payments/**")
+
+    @Bean
+    fun userGroup(): GroupedOpenApi = buildGroup("user", "User & Profile", "/user/**", "/spaces/**")
+
+    @Bean
+    fun chatGroup(): GroupedOpenApi = buildGroup("chat", "Chat & Conversations", "/chat/**", "/conversations/**")
+
+    @Bean
+    fun locationGroup(): GroupedOpenApi = buildGroup("location", "Location", "/location/**", "/cities/**")
+
+    @Bean
+    fun mediaGroup(): GroupedOpenApi = buildGroup("media", "Media", "/media/**")
+
+    @Bean
+    fun supportGroup(): GroupedOpenApi = buildGroup("support", "Support & Reports", "/tickets/**", "/reports/**")
+
+    @Bean
+    fun adminGroup(): GroupedOpenApi = buildGroup("admin", "Admin", "/admin/**")
+
+    @Bean
+    fun marketplaceGroup(): GroupedOpenApi = buildGroup("marketplace", "Marketplace (Sales & Purchases)", "/sales/**", "/purchases/**")
+
+    @Bean
+    fun notificationsGroup(): GroupedOpenApi = buildGroup("notifications", "Notifications", "/notifications/**")
+
+    @Bean
+    fun sessionGroup(): GroupedOpenApi = buildGroup("session", "Session", "/session/**")
+
+    @Bean
+    fun playgroundGroup(): GroupedOpenApi = buildGroup("playground", "Playground (Dev)", "/playground/**")
+
+    private fun buildGroup(group: String, displayName: String, vararg paths: String): GroupedOpenApi =
+        GroupedOpenApi.builder()
+            .group(group)
+            .displayName(displayName)
+            .pathsToMatch(*paths)
+            .addOperationCustomizer(operationCustomizer())
+            .build()
 
     @Bean
     fun operationCustomizer(): OperationCustomizer {
