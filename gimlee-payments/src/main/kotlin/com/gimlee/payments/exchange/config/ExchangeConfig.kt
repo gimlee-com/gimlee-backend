@@ -1,6 +1,7 @@
 package com.gimlee.payments.exchange.config
 
 import org.apache.hc.client5.http.classic.HttpClient
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder
 import org.springframework.context.annotation.Bean
@@ -13,8 +14,8 @@ class ExchangeConfig {
         const val EXCHANGE_HTTP_CLIENT = "exchangeHttpClient"
     }
 
-    @Bean(EXCHANGE_HTTP_CLIENT)
-    fun exchangeHttpClient(): HttpClient {
+    @Bean(EXCHANGE_HTTP_CLIENT, destroyMethod = "close")
+    fun exchangeHttpClient(): CloseableHttpClient {
         return HttpClients.custom()
             .setConnectionManager(
                 PoolingHttpClientConnectionManagerBuilder.create()

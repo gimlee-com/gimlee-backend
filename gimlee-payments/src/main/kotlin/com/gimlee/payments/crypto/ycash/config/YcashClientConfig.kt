@@ -5,6 +5,7 @@ import org.apache.hc.client5.http.auth.UsernamePasswordCredentials
 import org.apache.hc.client5.http.classic.HttpClient
 import org.apache.hc.client5.http.config.RequestConfig
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder
 import org.apache.hc.core5.util.TimeValue
@@ -36,9 +37,9 @@ class YcashClientConfig(
         const val DEFAULT_KEEP_ALIVE_MINUTES = 3L
     }
 
-    @Bean
+    @Bean(destroyMethod = "close")
     @Qualifier(YCASH_HTTP_CLIENT)
-    fun ycashHttpClient(): HttpClient = with(properties) {
+    fun ycashHttpClient(): CloseableHttpClient = with(properties) {
         HttpClients.custom()
             .setConnectionManager(
                 PoolingHttpClientConnectionManagerBuilder.create()
@@ -70,7 +71,7 @@ class YcashClientConfig(
         @Qualifier(YCASH_HTTP_CLIENT) httpClient: HttpClient
     ) = YcashRpcClient(httpClient, properties, environment.activeProfiles.contains("prod"))
 
-    @Bean(name = [YCASH_MONITOR_EXECUTOR])
+    @Bean(name = [YCASH_MONITOR_EXECUTOR], destroyMethod = "shutdown")
     fun ycashMonitorExecutor(): ExecutorService {
         val threads = paymentProperties.ycash.monitorThreads
         return Executors.newFixedThreadPool(threads, object : ThreadFactory {

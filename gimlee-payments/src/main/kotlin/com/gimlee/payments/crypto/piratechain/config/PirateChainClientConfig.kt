@@ -5,6 +5,7 @@ import org.apache.hc.client5.http.auth.UsernamePasswordCredentials
 import org.apache.hc.client5.http.classic.HttpClient
 import org.apache.hc.client5.http.config.RequestConfig
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder
 import org.apache.hc.core5.util.TimeValue
@@ -35,9 +36,9 @@ class PirateChainClientConfig(
         const val DEFAULT_KEEP_ALIVE_MINUTES = 3L
     }
 
-    @Bean
+    @Bean(destroyMethod = "close")
     @Qualifier(PIRATE_CHAIN_HTTP_CLIENT)
-    fun httpClient(): HttpClient = with(properties) {
+    fun httpClient(): CloseableHttpClient = with(properties) {
         HttpClients.custom()
             .setConnectionManager(
                 PoolingHttpClientConnectionManagerBuilder.create()
@@ -69,7 +70,7 @@ class PirateChainClientConfig(
         @Qualifier(PIRATE_CHAIN_HTTP_CLIENT) httpClient: HttpClient
     ) = PirateChainRpcClient(httpClient, properties)
 
-    @Bean(name = [PIRATE_CHAIN_MONITOR_EXECUTOR])
+    @Bean(name = [PIRATE_CHAIN_MONITOR_EXECUTOR], destroyMethod = "shutdown")
     fun pirateChainMonitorExecutor(): ExecutorService {
         val threads = paymentProperties.pirateChain.monitorThreads
         return Executors.newFixedThreadPool(threads, object : ThreadFactory {

@@ -127,7 +127,17 @@ class ChatEventBroadcaster {
 
     @PreDestroy
     fun onShutdown() {
-        log.info("Flushing remaining chat events to emitters before shutdown...")
+        log.info("Completing all chat SSE emitters and flushing buffers before shutdown...")
         flushBuffers()
+        emitters.values.forEach { chatEmitters ->
+            chatEmitters.forEach { userEmitter ->
+                try {
+                    userEmitter.emitter.complete()
+                } catch (_: Exception) {
+                    // Already closed
+                }
+            }
+        }
+        emitters.clear()
     }
 }

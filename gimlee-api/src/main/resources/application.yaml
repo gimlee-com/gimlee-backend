@@ -1,5 +1,6 @@
 server:
   port: 12060
+  shutdown: graceful
   servlet:
     context-path: /api
     encoding:
@@ -22,6 +23,8 @@ management:
       application: ${spring.application.name}
 
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   servlet:
     multipart:
       max-file-size: 15MB
