@@ -32,6 +32,16 @@ dependencies {
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.property)
     testImplementation(libs.mockk)
+
+    // Integration test dependencies
+    integrationImplementation(libs.spring.boot.starter.test)
+    integrationImplementation(platform(libs.kotest.bom))
+    integrationImplementation(libs.kotest.runner.junit5)
+    integrationImplementation(libs.kotest.assertions.core)
+    integrationImplementation(libs.kotest.extensions.spring)
+    integrationImplementation(platform(libs.testcontainers.bom))
+    integrationImplementation(libs.testcontainers.mongodb)
+    integrationImplementation(testFixtures(project(":gimlee-common")))
 }
 
 sourceSets {

@@ -3,6 +3,7 @@ package com.gimlee.auth.user
 import org.apache.commons.codec.binary.Hex
 import org.springframework.stereotype.Service
 import com.gimlee.auth.service.JwtTokenService
+import com.gimlee.auth.service.RefreshTokenService
 import com.gimlee.auth.util.createHexPasswordHash
 import com.gimlee.auth.domain.AuthOutcome
 import com.gimlee.auth.domain.User
@@ -21,9 +22,10 @@ class LoginService(
     private val userRepository: UserRepository,
     private val userRoleRepository: UserRoleRepository,
     private val jwtTokenService: JwtTokenService,
+    private val refreshTokenService: RefreshTokenService,
     private val messageSource: MessageSource
 ) {
-    fun login(username: String, plaintextPassword: String): IdentityVerificationResponse {
+    fun login(username: String, plaintextPassword: String, deviceId: String): IdentityVerificationResponse {
         val user = userRepository.findOneByField(FIELD_USERNAME, username, includeCredentials = true)
 
         return if (user == null || user.status == UserStatus.SUSPENDED) {
@@ -39,16 +41,17 @@ class LoginService(
             val accessToken = jwtTokenService.generateToken(
                 user.id.toString(),
                 user.username!!,
-                userRoleRepository.getAll(user.id!!),
-                longLived = true
+                userRoleRepository.getAll(user.id!!)
             )
+            val issued = refreshTokenService.issueRefreshToken(user.id.toString(), deviceId)
             userRepository.save(user.copy(lastLogin = LocalDateTime.now()))
             val outcome = CommonOutcome.SUCCESS
             IdentityVerificationResponse(
                 success = true,
                 status = outcome.code,
                 message = messageSource.getMessage(outcome.messageKey, null, LocaleContextHolder.getLocale()),
-                accessToken = accessToken
+                accessToken = accessToken,
+                refreshToken = issued.plaintextToken
             )
         } else {
             val outcome = AuthOutcome.INCORRECT_CREDENTIALS

@@ -31,7 +31,13 @@ gimlee:
   auth:
     rest:
       jwt:
-        key: "iamnotmeantforproduction" # JWT tokens will be signed with this key
+        key: "this-must-be-at-least-32-characters-long-for-security" # JWT tokens will be signed with this key
+    token:
+      access-ttl-minutes: 15           # Access token TTL in minutes (short-lived)
+      refresh-ttl-days: 30             # Refresh token TTL in days
+      refresh-cleanup-cron: "0 0 3 * * *"  # Cron for cleaning expired refresh tokens
+      max-sessions-per-user: 10        # Maximum concurrent sessions per user
+      revoked-retention-days: 7        # How long revoked tokens are kept for reuse detection
     ban:
       cache:
         ttl-seconds: 300          # How long banned user status is cached (seconds)

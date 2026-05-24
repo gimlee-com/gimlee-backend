@@ -58,6 +58,21 @@
           traefik.http.middlewares.gimlee-cors.headers.accesscontrolallowheaders: "Content-Type,Authorization"
           traefik.http.middlewares.gimlee-cors.headers.accesscontrolmaxage: "100"
 
-          # Attach middleware to the router
+          # Rate Limit Middleware for token refresh endpoint (10 req/min per IP)
+          traefik.http.middlewares.refresh-rate-limit.ratelimit.average: "10"
+          traefik.http.middlewares.refresh-rate-limit.ratelimit.period: "1m"
+          traefik.http.middlewares.refresh-rate-limit.ratelimit.burst: "15"
+          traefik.http.middlewares.refresh-rate-limit.ratelimit.sourcecriterion.ipstrategy.depth: "1"
+
+          # Router for rate-limited refresh endpoint
+          traefik.http.routers.gimlee-refresh.rule: "Host(`{{ domain }}`) && Path(`/api/auth/token/refresh`)"
+          traefik.http.routers.gimlee-refresh.entrypoints: "websecure"
+          traefik.http.routers.gimlee-refresh.tls: "true"
+          traefik.http.routers.gimlee-refresh.tls.certresolver: "myresolver"
+          traefik.http.routers.gimlee-refresh.service: "gimlee-service"
+          traefik.http.routers.gimlee-refresh.middlewares: "gimlee-cors,refresh-rate-limit"
+          traefik.http.routers.gimlee-refresh.priority: "100"
+
+          # Attach middleware to the main router
           traefik.http.routers.gimlee-secure.middlewares: "gimlee-cors"
 

@@ -2,16 +2,12 @@ package com.gimlee.auth.service
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import jakarta.annotation.PostConstruct
 import java.io.UnsupportedEncodingException
 import java.util.Date
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import com.gimlee.auth.model.Role
-
-const val EXPIRES_MINUTES = 30
-const val EXPIRES_MILLIS = EXPIRES_MINUTES * 1000 * 60
-const val LONG_LIVED_EXPIRES_DAYS = 14
-const val LONG_LIVED_EXPIRES_MILLIS = LONG_LIVED_EXPIRES_DAYS * 1000 * 60 * 60 * 24
 
 @Service
 class JwtTokenService(
@@ -19,22 +15,34 @@ class JwtTokenService(
     private val issuer: String,
 
     @Value("\${gimlee.auth.rest.jwt.key:}")
-    private val jwtKey: String
+    private val jwtKey: String,
+
+    @Value("\${gimlee.auth.token.access-ttl-minutes:15}")
+    private val accessTtlMinutes: Long
 ) {
 
     companion object {
         private const val ROLES_CLAIM = "roles"
         private const val USERNAME_CLAIM = "username"
+        private const val MIN_KEY_LENGTH = 32
     }
 
-    fun generateToken(subject: String, username: String, roles: List<Role>, longLived: Boolean): String {
-        val expires = if (longLived) LONG_LIVED_EXPIRES_MILLIS else EXPIRES_MILLIS
+    @PostConstruct
+    fun validateConfiguration() {
+        require(jwtKey.isNotBlank()) { "JWT signing key (gimlee.auth.rest.jwt.key) must not be blank" }
+        require(jwtKey.length >= MIN_KEY_LENGTH) {
+            "JWT signing key (gimlee.auth.rest.jwt.key) must be at least $MIN_KEY_LENGTH characters, got ${jwtKey.length}"
+        }
+    }
+
+    fun generateToken(subject: String, username: String, roles: List<Role>): String {
+        val expiresMillis = accessTtlMinutes * 60 * 1000
 
         try {
             return JWT.create()
                 .withIssuer(issuer)
                 .withIssuedAt(Date())
-                .withExpiresAt(Date(System.currentTimeMillis() + expires))
+                .withExpiresAt(Date(System.currentTimeMillis() + expiresMillis))
                 .withSubject(subject)
                 .withArrayClaim(ROLES_CLAIM, roles.map { it.toString() }.toTypedArray())
                 .withClaim(USERNAME_CLAIM, username)

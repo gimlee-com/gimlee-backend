@@ -5,6 +5,7 @@ import com.gimlee.auth.persistence.UserRepository
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.auth.persistence.VerificationCodeRepository
 import com.gimlee.auth.service.JwtTokenService
+import com.gimlee.auth.service.RefreshTokenService
 import com.gimlee.notifications.email.EmailService
 import io.kotest.core.spec.style.StringSpec
 import io.mockk.every
@@ -24,6 +25,7 @@ class UserVerificationServiceTest : StringSpec({
     val userRepository = mockk<UserRepository>()
     val emailService = mockk<EmailService>()
     val jwtTokenService = mockk<JwtTokenService>()
+    val refreshTokenService = mockk<RefreshTokenService>()
     val resourceLoader = mockk<ResourceLoader>()
     val messageSource = mockk<MessageSource>()
 
@@ -46,6 +48,7 @@ class UserVerificationServiceTest : StringSpec({
         userRepository,
         emailService,
         jwtTokenService,
+        refreshTokenService,
         resourceLoader,
         messageSource
     )

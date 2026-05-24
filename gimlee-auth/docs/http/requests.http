@@ -23,21 +23,25 @@ Content-Type: application/json
 
 
 ### Login User
-# Authenticates a user and returns an authorization token.
-# If the user is unverified, the response will indicate that verification is required.
+# Authenticates a user and returns an access token and refresh token.
+# The access token is short-lived (default 15 min). Use the refresh token to obtain new access tokens.
 # @name login
 POST {{host}}/api/auth/login
 Content-Type: application/json
 
 {
   "username": "playground_seller",
-  "password": "Password1"
+  "password": "Password1",
+  "deviceId": "web-browser-abc123"
 }
 
 > {%
     if (response.body.accessToken) {
         client.global.set("auth_token", response.body.accessToken);
         client.global.set("access_token", response.body.accessToken);
+    }
+    if (response.body.refreshToken) {
+        client.global.set("refresh_token", response.body.refreshToken);
     }
 %}
 
@@ -48,7 +52,8 @@ Content-Type: application/json
 #   "success": true,
 #   "status": "SUCCESS",
 #   "message": "Operation completed successfully.",
-#   "accessToken": "..."
+#   "accessToken": "eyJ...",
+#   "refreshToken": "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4..."
 # }
 
 
@@ -61,13 +66,17 @@ Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
 {
-  "code": "123456"
+  "code": "123456",
+  "deviceId": "web-browser-abc123"
 }
 
 > {%
     if (response.body.accessToken) {
         client.global.set("auth_token", response.body.accessToken);
         client.global.set("access_token", response.body.accessToken);
+    }
+    if (response.body.refreshToken) {
+        client.global.set("refresh_token", response.body.refreshToken);
     }
 %}
 
@@ -78,7 +87,8 @@ Authorization: Bearer {{auth_token}}
 #   "success": true,
 #   "status": "SUCCESS",
 #   "message": "Operation completed successfully.",
-#   "accessToken": "..."
+#   "accessToken": "eyJ...",
+#   "refreshToken": "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4..."
 # }
 
 
@@ -151,6 +161,113 @@ Authorization: Bearer {{auth_token}}
   "oldPassword": "OldPassword123!",
   "newPassword": "NewPassword456!"
 }
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "success": true,
+#   "status": "SUCCESS",
+#   "message": "Operation completed successfully."
+# }
+
+
+### Refresh Access Token
+# Exchanges a valid refresh token for a new access token and a rotated refresh token.
+# The old refresh token is invalidated after use (token rotation).
+# If a previously-rotated token is reused, all sessions in that token family are revoked.
+# This endpoint does not require an Authorization header.
+# @name refreshToken
+POST {{host}}/api/auth/token/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refresh_token}}",
+  "deviceId": "web-browser-abc123"
+}
+
+> {%
+    if (response.body.accessToken) {
+        client.global.set("auth_token", response.body.accessToken);
+        client.global.set("access_token", response.body.accessToken);
+    }
+    if (response.body.refreshToken) {
+        client.global.set("refresh_token", response.body.refreshToken);
+    }
+%}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "success": true,
+#   "status": "SUCCESS",
+#   "message": "Operation completed successfully.",
+#   "accessToken": "eyJ...",
+#   "refreshToken": "bmV3IHJlZnJlc2ggdG9rZW4..."
+# }
+
+### Expected Response (Reuse Detected - 401 Unauthorized):
+# Content-Type: application/json
+#
+# {
+#   "success": false,
+#   "status": "AUTH_REFRESH_TOKEN_REUSE_DETECTED",
+#   "message": "A security issue was detected with your session. All sessions have been revoked. Please log in again."
+# }
+
+
+### Logout (Revoke Current Session)
+# Logs out the current device by revoking the provided refresh token.
+# Requires a valid access token in the Authorization header.
+# @name logout
+POST {{host}}/api/auth/logout
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "refreshToken": "{{refresh_token}}"
+}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "success": true,
+#   "status": "SUCCESS",
+#   "message": "Operation completed successfully."
+# }
+
+
+### Revoke Specific Session
+# Revokes a specific refresh token, ending that device session.
+# Requires a valid access token.
+# @name revokeSession
+POST {{host}}/api/auth/sessions/revoke
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "refreshToken": "{{refresh_token}}"
+}
+
+### Expected Response (Success - 200 OK):
+# Content-Type: application/json
+#
+# {
+#   "success": true,
+#   "status": "SUCCESS",
+#   "message": "Operation completed successfully."
+# }
+
+
+### Revoke All Sessions
+# Revokes all refresh tokens for the authenticated user, logging out from all devices.
+# Requires a valid access token.
+# @name revokeAllSessions
+POST {{host}}/api/auth/sessions/revoke-all
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 ### Expected Response (Success - 200 OK):
 # Content-Type: application/json

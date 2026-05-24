@@ -4,5 +4,6 @@ data class IdentityVerificationResponse(
     val success: Boolean,
     val status: String? = null,
     val message: String? = null,
-    val accessToken: String? = null
+    val accessToken: String? = null,
+    val refreshToken: String? = null
 )

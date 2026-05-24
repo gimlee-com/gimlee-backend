@@ -9,6 +9,7 @@ import com.gimlee.auth.persistence.UserRepository
 import com.gimlee.auth.persistence.UserRoleRepository
 import com.gimlee.auth.persistence.VerificationCodeRepository
 import com.gimlee.auth.service.JwtTokenService
+import com.gimlee.auth.service.RefreshTokenService
 import com.gimlee.notifications.email.EmailService
 import com.github.mustachejava.DefaultMustacheFactory
 import com.github.mustachejava.Mustache
@@ -29,6 +30,7 @@ class UserVerificationService(
     private val userRepository: UserRepository,
     private val emailService: EmailService,
     private val jwtTokenService: JwtTokenService,
+    private val refreshTokenService: RefreshTokenService,
     private val resourceLoader: ResourceLoader,
     private val messageSource: MessageSource
 ) {
@@ -56,10 +58,11 @@ class UserVerificationService(
         emailService.sendEmail(user.email!!, emailData["title"]!!, emailWriter.toString())
     }
 
-    fun verifyCode(userId: ObjectId, code: String): IdentityVerificationResponse {
+    fun verifyCode(userId: ObjectId, code: String, deviceId: String): IdentityVerificationResponse {
         return if (verificationCodeRepository.existsAndIsNotExpired(userId, code)) {
             val user = activateUser(userId)
             val outcome = com.gimlee.common.domain.model.CommonOutcome.SUCCESS
+            val issued = refreshTokenService.issueRefreshToken(userId.toHexString(), deviceId)
             IdentityVerificationResponse(
                 success = true,
                 status = outcome.code,
@@ -67,9 +70,9 @@ class UserVerificationService(
                 accessToken = jwtTokenService.generateToken(
                     userId.toHexString(),
                     user.username!!,
-                    userRoleRepository.getAll(userId),
-                    true
-                )
+                    userRoleRepository.getAll(userId)
+                ),
+                refreshToken = issued.plaintextToken
             )
         } else {
             val outcome = com.gimlee.auth.domain.AuthOutcome.INVALID_VERIFICATION_CODE

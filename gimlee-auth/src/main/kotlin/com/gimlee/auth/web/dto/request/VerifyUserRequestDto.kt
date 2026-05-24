@@ -4,5 +4,6 @@ import jakarta.validation.constraints.Pattern
 
 data class VerifyUserRequestDto(
     @get:Pattern(regexp = "[0-9]{6}")
-    val code: String
+    val code: String,
+    val deviceId: String = "unknown"
 )

@@ -1,0 +1,38 @@
+server:
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+  messages:
+    basename: i18n/messages,i18n/common/messages,i18n/auth/messages
+    encoding: UTF-8
+
+gimlee:
+  scheduling:
+    pool-size: 2
+  auth:
+    jwt:
+      enabled: true
+    token:
+      access-ttl-minutes: 15
+      refresh-ttl-days: 30
+      refresh-cleanup-cron: "0 0 3 * * *"
+      max-sessions-per-user: 10
+      revoked-retention-days: 7
+    rest:
+      unsecured-paths: /auth/login,/auth/register,/auth/register/**,/auth/token/refresh
+      jwt:
+        issuer: test-issuer
+        key: test-key-must-be-at-least-32-chars-long-!!!-123456
+    ban:
+      cache:
+        ttl-seconds: 300
+        max-size: 1000
+      expiry-check-interval-ms: 999999999

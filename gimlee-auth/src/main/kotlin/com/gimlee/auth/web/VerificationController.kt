@@ -43,7 +43,8 @@ class VerificationController(
 
         return userVerificationService.verifyCode(
             ObjectId(principal.userId),
-            verificationData.code
+            verificationData.code,
+            verificationData.deviceId
         )
     }
 }
