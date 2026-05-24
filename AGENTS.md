@@ -65,7 +65,18 @@
     *   Each cache must be configured via properties to ensure resource visibility.
 *   **Thread Pools:** All thread pools must have the same core and maximum pool size to ensure consistent performance and avoid unexpected overhead. This should be configurable via a single application property.
 
-### 4. Architecture (`docs/development/architecture-guidelines.md`)
+### 4. Scheduling & Async Processing
+*   **Shared Scheduler:** All `@Scheduled` tasks run on the shared `ThreadPoolTaskScheduler` bean defined in `SchedulingConfig` (`gimlee-common`). Its pool size is controlled via `gimlee.scheduling.pool-size`.
+*   **Async Executor:** All `@Async` methods run on the explicit `applicationTaskExecutor` bean (also in `SchedulingConfig`). Its pool size is controlled via `gimlee.async.pool-size`.
+*   **Graceful Shutdown:** The application uses `server.shutdown=graceful` with a 30s timeout. All thread pools **must** be shutdown-aware:
+    *   `ThreadPoolTaskScheduler` and `ThreadPoolTaskExecutor` beans must set `setWaitForTasksToCompleteOnShutdown(true)` and `setAwaitTerminationSeconds(...)`.
+    *   Raw `ExecutorService` beans (e.g., `Executors.newFixedThreadPool(...)`) **must** declare `@Bean(destroyMethod = "shutdown")` so Spring invokes `shutdown()` on context close.
+    *   `HttpClient` beans **must** be declared as `CloseableHttpClient` with `@Bean(destroyMethod = "close")` to release connection pool threads.
+*   **SSE Emitters:** Any component managing `SseEmitter` instances **must** call `emitter.complete()` on all open emitters in a `@PreDestroy` method. Failing to do so keeps Jetty request threads alive and blocks shutdown.
+*   **No Daemon Workarounds:** Do **not** mark pool threads as daemon to "fix" shutdown. Instead, ensure proper lifecycle management so that in-flight work completes gracefully.
+*   **New Executor Beans:** When introducing a new `ExecutorService` or thread pool bean, always include the appropriate `destroyMethod` and configure pool sizes via `application.yaml` properties.
+
+### 5. Architecture (`docs/development/architecture-guidelines.md`)
 *   **SOLID Principles:** Adhere strictly to SOLID principles. Specifically, ensure the **Dependency Inversion Principle** is followed by designing repositories to be generic and not tied to specific implementations and business logic.
 *   **SRP:** Maintain strict separation between the modules and avoid circular dependencies.
 *   **Self-Documenting Code:** Prefer extracting complex logic into well-named private methods over using inline comments. This makes the high-level flow of a method clear and self-explanatory.
@@ -81,11 +92,11 @@
 *   **Configurable Enrichment Services:** When implementing services that transform raw domain objects into rich DTOs (e.g., `AdEnrichmentService`), design them to be configurable via a set of "Enrichment Type" enums (e.g., `AdEnrichmentType`). This allows consumers to request only the specific expensive operations they need (e.g., currency conversion, user details, recursive fetching) in a single method call, avoiding code duplication and over-fetching.
 *   **Ad Pricing & Volatility Strategy:** Ads use a dual-mode pricing logic (`FIXED_CRYPTO` or `PEGGED`) allowing multi-currency settlement per ad. Volatility tracking runs globally per **settlement currency** (not per isolated ad), calculating `frozenCurrencies` on the fly to partially disable specific payment options without taking down the entire ad.
 
-### 5. Configuration (`docs/development/configuration-guidelines.md`)
+### 6. Configuration (`docs/development/configuration-guidelines.md`)
 *   **Externalize Everything:** Timeouts, prefixes, retention periods, and monitoring delays must be configurable via `application.yaml`.
 *   **Documentation:** Maintain `application-local-EXAMPLE.yaml` with all available properties.
 
-### 6. API Documentation (`docs/development/api-documentation-guidelines.md`)
+### 7. API Documentation (`docs/development/api-documentation-guidelines.md`)
 For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ HTTP Client format) and OpenAPI annotations to document and test the API.
 *   **Supplement Controllers:** Every Controller must be supplemented with `.http` files that explore its full functionality with example requests.
 *   **OpenAPI Annotations:** All controller methods must be documented with OpenAPI annotations (`@Operation`, `@ApiResponse`, `@Parameter`, etc.).
@@ -97,12 +108,12 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **DTO Schema Annotations:** All DTO classes and non-obvious fields must carry `@Schema(description = ...)` annotations. Class-level descriptions explain the DTO's purpose; field-level descriptions clarify semantics, usage context, and relationships to sibling fields (e.g., when two fields serve related but distinct purposes, each should cross-reference the other).
 *   **Dynamic Response Documentation:** For controllers using dynamic response structures (e.g., Jackson's `@JsonAnyGetter`), create a dedicated "Documentation DTO". Use this DTO in the `@ApiResponse`'s `implementation` attribute to ensure the OpenAPI schema accurately reflects all possible decorator fields.
 
-### 7. Docker & Infrastructure
+### 8. Docker & Infrastructure
 *   **Module Synchronization:** This is a multi-module Gradle project where the `Dockerfile` explicitly copies each module's source directory to maintain a clean build context.
 *   **Stay in Sync:** When adding a new module to the project, you **MUST** update the `Dockerfile` by adding a corresponding `COPY` command for that module before the build step.
 *   **CI/CD Awareness:** Always verify that Docker builds succeed locally after project structure changes, as the GitHub Actions pipeline relies on the `Dockerfile` being perfectly in sync with the module list.
 
-### 8. Standards & Internationalization
+### 9. Standards & Internationalization
 *   **Country Codes:** Always use **ISO 3166-1 alpha-2** codes (e.g., `US`, `PL`).
 *   **Language Tags:** Strictly apply the **IETF standard** (ISO 639-1 language code combined with ISO 3166-1 alpha-2 country code, e.g., `en-US`, `pl-PL`).
 *   **Validation:** Use `@IsoCountryCode` and `@IetfLanguageTag` annotations from `gimlee-common` for DTO validation.
@@ -112,7 +123,7 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **Authoritative Timestamps:** When fetching data from external providers (e.g., exchange APIs), prioritize the authoritative timestamp provided by the source over the local fetch time to ensure data freshness is accurately represented in the system.
 *   **Check Existing Languages:** When adding new messages to `messages.properties`, check for other existing language bundles (e.g., `messages_pl.properties`) and add the corresponding translations to maintain consistency across supported languages.
 
-### 9. Unified API Status responses and Outcome System
+### 10. Unified API Status responses and Outcome System
 *   **Outcome Interface:** Operations must return or report results using the `Outcome` interface from `gimlee-common`. Each module defines its own implementation (e.g., `AuthOutcome`, `AdOutcome`).
 *   **Descriptive Slugs:** Use descriptive, machine-readable string slugs as codes (e.g., `AUTH_INCORRECT_CREDENTIALS`) instead of numeric status codes.
 *   **Response Format:** Use `StatusResponseDto` for a unified response structure. It includes `success` (Boolean), `status` (String slug), `message` (Localized human-readable string), and optional `data` (Any).
