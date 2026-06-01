@@ -38,6 +38,18 @@ GET {{host}}/api/admin/users?search=pirate&status=ACTIVE&sort=lastLogin&directio
 Accept-Language: en-US
 Authorization: Bearer {{admin_token}}
 
+### List users (filter by single role)
+# Fetches only users with the PIRATE role.
+GET {{host}}/api/admin/users?role=PIRATE
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
+### List users (filter by multiple roles)
+# Fetches users who have ANY of the specified roles (OR logic).
+GET {{host}}/api/admin/users?role=PIRATE,YCASH
+Accept-Language: en-US
+Authorization: Bearer {{admin_token}}
+
 ### Get user details
 # Fetches detailed information about a specific user including profile, preferences, and statistics.
 GET {{host}}/api/admin/users/{{user_id}}

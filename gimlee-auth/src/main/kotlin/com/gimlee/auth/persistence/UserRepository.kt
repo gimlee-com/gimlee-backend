@@ -94,7 +94,7 @@ class UserRepository(
     fun findAllPaginated(
         search: String?,
         status: UserStatus?,
-        role: String?,
+        roles: List<String>?,
         sortField: String?,
         sortDirection: String?,
         pageable: org.springframework.data.domain.Pageable
@@ -113,8 +113,8 @@ class UserRepository(
             criteria.add(Criteria.where("status").`is`(status))
         }
 
-        if (role != null) {
-            val roleQuery = Query(Criteria.where(UserRole.FIELD_ROLE).`is`(role))
+        if (!roles.isNullOrEmpty()) {
+            val roleQuery = Query(Criteria.where(UserRole.FIELD_ROLE).`in`(roles))
             val userIds = mongoTemplate.find(roleQuery, UserRole::class.java, USER_ROLES_COLLECTION_NAME)
                 .map { it.userId }
             criteria.add(Criteria.where(User.FIELD_ID).`in`(userIds))

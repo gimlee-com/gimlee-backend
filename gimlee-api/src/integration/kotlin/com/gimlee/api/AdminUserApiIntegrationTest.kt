@@ -32,6 +32,7 @@ class AdminUserApiIntegrationTest(
     val user1Id = ObjectId.get()
     val user2Id = ObjectId.get()
     val user3Id = ObjectId.get()
+    val user4Id = ObjectId.get()
 
     fun adminHeaders() = restClient.createAuthHeader(
         subject = adminId.toHexString(),
@@ -57,6 +58,10 @@ class AdminUserApiIntegrationTest(
         userRepository.save(User(id = user3Id, username = "adm_pirate_king", displayName = "Pirate King", email = "adm_pirate@example.com", status = UserStatus.ACTIVE))
         userRoleRepository.add(user3Id, Role.USER)
         userRoleRepository.add(user3Id, Role.PIRATE)
+
+        userRepository.save(User(id = user4Id, username = "adm_ycash_fan", displayName = "YCash Fan", email = "adm_ycash@example.com", status = UserStatus.ACTIVE))
+        userRoleRepository.add(user4Id, Role.USER)
+        userRoleRepository.add(user4Id, Role.YCASH)
     }
 
     Given("admin user list endpoint") {
@@ -68,7 +73,7 @@ class AdminUserApiIntegrationTest(
                 response.statusCode shouldBe 200
                 val body = response.bodyAs<Map<String, Any>>()!!
                 val content = body["content"] as List<*>
-                content.size shouldBe 4
+                content.size shouldBe 5
             }
         }
 
@@ -82,7 +87,7 @@ class AdminUserApiIntegrationTest(
                 content.size shouldBe 2
                 @Suppress("UNCHECKED_CAST")
                 val page = body["page"] as Map<String, Any>
-                (page["totalElements"] as Number).toInt() shouldBe 4
+                (page["totalElements"] as Number).toInt() shouldBe 5
             }
         }
 
@@ -135,6 +140,42 @@ class AdminUserApiIntegrationTest(
                 @Suppress("UNCHECKED_CAST")
                 val content = body["content"] as List<Map<String, Any>>
                 content.first()["username"] shouldBe "adm_admin"
+            }
+        }
+
+        When("admin filters users by single role") {
+            val response = restClient.get("/admin/users?role=PIRATE", adminHeaders())
+
+            Then("it should return only users with that role") {
+                response.statusCode shouldBe 200
+                val body = response.bodyAs<Map<String, Any>>()!!
+                val content = body["content"] as List<*>
+                content.size shouldBe 1
+                response.body shouldContain "adm_pirate_king"
+            }
+        }
+
+        When("admin filters users by multiple comma-separated roles") {
+            val response = restClient.get("/admin/users?role=PIRATE,YCASH", adminHeaders())
+
+            Then("it should return users matching any of the roles") {
+                response.statusCode shouldBe 200
+                val body = response.bodyAs<Map<String, Any>>()!!
+                val content = body["content"] as List<*>
+                content.size shouldBe 2
+                response.body shouldContain "adm_pirate_king"
+                response.body shouldContain "adm_ycash_fan"
+            }
+        }
+
+        When("admin filters users by invalid role") {
+            val response = restClient.get("/admin/users?role=NONEXISTENT", adminHeaders())
+
+            Then("it should return all users (filter ignored)") {
+                response.statusCode shouldBe 200
+                val body = response.bodyAs<Map<String, Any>>()!!
+                val content = body["content"] as List<*>
+                content.size shouldBe 5
             }
         }
     }

@@ -43,14 +43,18 @@ class AdminUserService(
     fun listUsers(
         search: String?,
         status: com.gimlee.auth.domain.UserStatus?,
-        role: Role?,
+        role: String?,
         sort: String?,
         direction: String?,
         page: Int,
         size: Int
     ): Page<AdminUserListItemDto> {
         val pageable = PageRequest.of(page, size)
-        val usersPage = userRepository.findAllPaginated(search, status, role?.name, sort, direction, pageable)
+        val roles = role?.split(",")
+            ?.map { it.trim().uppercase() }
+            ?.filter { name -> Role.entries.any { it.name == name } }
+            ?.ifEmpty { null }
+        val usersPage = userRepository.findAllPaginated(search, status, roles, sort, direction, pageable)
 
         val userIds = usersPage.content.mapNotNull { it.id?.toHexString() }
         val avatars = profileService.getAvatarsByUserIds(userIds)
