@@ -110,5 +110,20 @@ class OpenApiIntegrationTest(
                 content shouldContain "MEDIA_FILE_NOT_FOUND"
             }
         }
+
+        When("GET /v3/api-docs/ratings") {
+            Then("it should return the ratings group with resolvable StatusResponseDto schema") {
+                val result = mockMvc.get("/v3/api-docs/ratings").andReturn()
+
+                result.response.status shouldBe 200
+
+                val content = result.response.contentAsString
+
+                content shouldContain "/ratings/public/{ratingId}"
+                content shouldContain "\"401\":{\"description\":\"Unauthorized - Missing or invalid credentials\",\"content\":{\"application/json\":{\"schema\":{\"\$ref\":\"#/components/schemas/StatusResponseDto\"}}}}"
+                content shouldContain "\"403\":{\"description\":\"Forbidden - Insufficient privileges\",\"content\":{\"application/json\":{\"schema\":{\"\$ref\":\"#/components/schemas/StatusResponseDto\"}}}}"
+                content shouldContain "\"StatusResponseDto\":{\"type\":\"object\""
+            }
+        }
     }
 })

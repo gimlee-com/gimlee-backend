@@ -21,6 +21,7 @@ import org.springframework.scheduling.annotation.EnableAsync
 	"com.gimlee.chat",
 	"com.gimlee.analytics",
 	"com.gimlee.support",
+	"com.gimlee.ratings",
 	"com.gimlee.api",
 ])
 class GimleeApiApplication

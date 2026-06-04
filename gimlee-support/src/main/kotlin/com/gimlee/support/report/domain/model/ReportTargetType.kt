@@ -5,7 +5,8 @@ enum class ReportTargetType(val shortName: String) {
     USER("U"),
     MESSAGE("M"),
     QUESTION("Q"),
-    ANSWER("AN");
+    ANSWER("AN"),
+    RATING("R");
 
     companion object {
         private val map = entries.associateBy { it.shortName }

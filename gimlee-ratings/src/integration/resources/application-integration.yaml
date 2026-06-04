@@ -1,0 +1,27 @@
+spring:
+  messages:
+    basename: i18n/common/messages,i18n/auth/messages,i18n/ratings/messages
+    encoding: UTF-8
+
+gimlee:
+  auth:
+    jwt:
+      enabled: true
+    ban:
+      cache:
+        ttl-seconds: 300
+        max-size: 10000
+      expiry-check-interval-ms: 60000
+  ratings:
+    edit-window-minutes: 30
+    supplement-cooldown-days: 7
+    max-supplements: 4
+    max-body-length: 5000
+    max-title-length: 200
+    max-photos: 5
+    eligibility:
+      dwell-days: 7
+      window-days: 60
+    sweeper:
+      interval-ms: 300000
+      batch-size: 500

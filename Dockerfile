@@ -24,6 +24,7 @@ COPY gimlee-user gimlee-user
 COPY gimlee-chat gimlee-chat
 COPY gimlee-analytics gimlee-analytics
 COPY gimlee-support gimlee-support
+COPY gimlee-ratings gimlee-ratings
 COPY gimlee-api gimlee-api
 
 # Build the application

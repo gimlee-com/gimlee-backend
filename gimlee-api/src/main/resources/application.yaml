@@ -30,7 +30,7 @@ spring:
       max-file-size: 15MB
       max-request-size: 51MB
   messages:
-    basename: i18n/messages,i18n/common/messages,i18n/auth/messages,i18n/purchases/messages,i18n/ads/messages,i18n/user/messages,i18n/payments/messages,i18n/location/messages,i18n/media/messages,i18n/chat/messages,i18n/support/messages,i18n/notifications/messages
+    basename: i18n/messages,i18n/common/messages,i18n/auth/messages,i18n/purchases/messages,i18n/ads/messages,i18n/user/messages,i18n/payments/messages,i18n/location/messages,i18n/media/messages,i18n/chat/messages,i18n/support/messages,i18n/notifications/messages,i18n/ratings/messages
     encoding: UTF-8
 
 gimlee:
@@ -70,7 +70,10 @@ gimlee:
         /playground/**,
         /qa/ads/**,
         /location/geoip/**,
-        /location/countries/**
+        /location/countries/**,
+        /ratings/public/**,
+        /ratings/user/**,
+        /ratings/aggregate/**
     ban:
       cache:
         ttl-seconds: 300
@@ -181,6 +184,21 @@ gimlee:
   # gimlee-purchases properties
   purchases:
     price-tolerance-pct: 0.05
+
+  # gimlee-ratings properties
+  ratings:
+    edit-window-minutes: 30
+    supplement-cooldown-days: 7
+    max-supplements: 4
+    max-body-length: 5000
+    max-title-length: 200
+    max-photos: 5
+    eligibility:
+      dwell-days: 7
+      window-days: 60
+    sweeper:
+      interval-ms: 300000
+      batch-size: 500
 
   # gimlee-notifications properties
   notifications:

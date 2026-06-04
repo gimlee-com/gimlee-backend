@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":gimlee-chat"))
     implementation(project(":gimlee-analytics"))
     implementation(project(":gimlee-notifications"))
+    implementation(project(":gimlee-ratings"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)

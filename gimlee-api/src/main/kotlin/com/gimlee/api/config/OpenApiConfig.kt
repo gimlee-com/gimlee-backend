@@ -1,6 +1,7 @@
 package com.gimlee.api.config
 
 import com.gimlee.auth.annotation.Privileged
+import com.gimlee.common.web.dto.StatusResponseDto
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.media.Content
@@ -9,6 +10,8 @@ import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.responses.ApiResponse
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
+import io.swagger.v3.core.converter.ModelConverters
+import org.springdoc.core.customizers.GlobalOpenApiCustomizer
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.beans.factory.annotation.Value
@@ -77,6 +80,9 @@ class OpenApiConfig(
 
     @Bean
     fun notificationsGroup(): GroupedOpenApi = buildGroup("notifications", "Notifications", "/notifications/**")
+
+    @Bean
+    fun ratingsGroup(): GroupedOpenApi = buildGroup("ratings", "Ratings & Reputation", "/ratings/**")
 
     @Bean
     fun sessionGroup(): GroupedOpenApi = buildGroup("session", "Session", "/session/**")
@@ -161,6 +167,19 @@ class OpenApiConfig(
             }
 
             operation
+        }
+    }
+
+    @Bean
+    fun statusResponseSchemaCustomizer(): GlobalOpenApiCustomizer = GlobalOpenApiCustomizer { openApi ->
+        val resolvedSchemas = ModelConverters.getInstance().read(StatusResponseDto::class.java)
+        if (resolvedSchemas.isNotEmpty()) {
+            val components = openApi.components ?: io.swagger.v3.oas.models.Components().also { openApi.components = it }
+            resolvedSchemas.forEach { (name, schema) ->
+                if (components.schemas == null || !components.schemas.containsKey(name)) {
+                    components.addSchemas(name, schema)
+                }
+            }
         }
     }
 
