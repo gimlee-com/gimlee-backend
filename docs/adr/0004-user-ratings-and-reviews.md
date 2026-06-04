@@ -1,4 +1,4 @@
-# ADR 0003: User Ratings & Reviews
+# ADR 0004: User Ratings & Reviews
 
 ## Status
 Proposed
