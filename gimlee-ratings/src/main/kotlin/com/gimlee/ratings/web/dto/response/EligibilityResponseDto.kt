@@ -11,29 +11,29 @@ data class EligibilityResponseDto(
     @Schema(description = "Context type (e.g., ORDER)")
     val contextType: String,
 
-    @Schema(description = "Context ID")
+    @Schema(description = "Context ID (e.g., purchase ID)")
     val contextId: String,
 
-    @Schema(description = "Who may rate")
+    @Schema(description = "Who may rate (user ID)")
     val raterId: String,
 
-    @Schema(description = "Who will be rated")
+    @Schema(description = "Who will be rated (user ID)")
     val rateeId: String,
 
-    @Schema(description = "Reputation kind (SEL / BUY)")
+    @Schema(description = "Reputation kind (SEL = seller, BUY = buyer)")
     val repKind: String,
 
-    @Schema(description = "Eligibility status (PND / CSD)")
+    @Schema(description = "Eligibility status (PND = pending, CSD = consumed)")
     val status: String,
 
-    @Schema(description = "Earliest submission time (epoch micros, dwell end)")
+    @Schema(description = "Earliest submission time (epoch micros, dwell end). Before this time, POST /ratings is rejected with RATING_DWELL_NOT_ELAPSED.")
     val activeFrom: Long,
 
-    @Schema(description = "Eligibility expiry time (epoch micros)")
+    @Schema(description = "Eligibility expiry time (epoch micros). After this time, the eligibility is hard-deleted.")
     val expiresAt: Long,
 
-    @Schema(description = "Item snapshot for context display")
-    val snapshot: SnapshotResponseDto?,
+    @Schema(description = "Immutable item snapshot at transaction time — provides context for what is being rated")
+    val snapshot: RatingSnapshotDto?,
 
     @Schema(description = "Creation timestamp (epoch micros)")
     val createdAt: Long
@@ -49,50 +49,8 @@ data class EligibilityResponseDto(
             status = eligibility.status.shortName,
             activeFrom = eligibility.activeFrom,
             expiresAt = eligibility.expiresAt,
-            snapshot = SnapshotResponseDto.fromDomain(eligibility.snapshot),
+            snapshot = eligibility.snapshot?.let { RatingSnapshotDto.fromDomain(it) },
             createdAt = eligibility.createdAt
         )
-    }
-}
-
-@Schema(description = "Immutable snapshot of transacted items at the time of the transaction")
-data class SnapshotResponseDto(
-    @Schema(description = "Snapshot reference type")
-    val refType: String,
-
-    @Schema(description = "Snapshotted items")
-    val items: List<SnapshotItemResponseDto>
-) {
-    companion object {
-        fun fromDomain(snapshot: com.gimlee.ratings.domain.model.RatingSubjectSnapshot): SnapshotResponseDto =
-            SnapshotResponseDto(
-                refType = snapshot.refType,
-                items = snapshot.items.map { SnapshotItemResponseDto.fromDomain(it) }
-            )
-    }
-}
-
-@Schema(description = "A snapshotted item from a transaction")
-data class SnapshotItemResponseDto(
-    @Schema(description = "Ad ID")
-    val adId: String,
-
-    @Schema(description = "Item name at transaction time")
-    val name: String,
-
-    @Schema(description = "Quantity purchased")
-    val quantity: Int,
-
-    @Schema(description = "Thumbnail media path")
-    val thumbPath: String?
-) {
-    companion object {
-        fun fromDomain(item: com.gimlee.ratings.domain.model.RatingSnapshotItem): SnapshotItemResponseDto =
-            SnapshotItemResponseDto(
-                adId = item.adId,
-                name = item.name,
-                quantity = item.quantity,
-                thumbPath = item.thumbPath
-            )
     }
 }

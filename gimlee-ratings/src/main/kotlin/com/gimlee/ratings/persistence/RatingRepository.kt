@@ -110,6 +110,29 @@ class RatingRepository(private val mongoTemplate: MongoTemplate) {
         return PageImpl(docs, pageable, total)
     }
 
+    fun findByRaterPublishedPaginated(raterId: String, pageable: Pageable): Page<RatingDocument> {
+        val criteria = Criteria.where(FIELD_RATER_ID).`is`(raterId)
+            .and(FIELD_STATUS).`is`("PUB")
+        val query = Query(criteria)
+        val total = mongoTemplate.count(query, RatingDocument.COLLECTION_NAME)
+        query.with(Sort.by(Sort.Direction.DESC, FIELD_PUBLISHED_AT)).with(pageable)
+        val docs = mongoTemplate.find(query, Document::class.java, RatingDocument.COLLECTION_NAME)
+            .map { fromDocument(it) }
+        return PageImpl(docs, pageable, total)
+    }
+
+    fun findReportedRatings(pageable: Pageable): Page<RatingDocument> {
+        val criteria = Criteria.where(FIELD_REPORT_COUNT).gt(0)
+        val query = Query(criteria)
+        val total = mongoTemplate.count(query, RatingDocument.COLLECTION_NAME)
+        query.with(Sort.by(Sort.Direction.DESC, FIELD_REPORT_COUNT))
+            .with(Sort.by(Sort.Direction.DESC, FIELD_CREATED_AT))
+            .with(pageable)
+        val docs = mongoTemplate.find(query, Document::class.java, RatingDocument.COLLECTION_NAME)
+            .map { fromDocument(it) }
+        return PageImpl(docs, pageable, total)
+    }
+
     fun updateRating(
         id: String,
         score: Int,

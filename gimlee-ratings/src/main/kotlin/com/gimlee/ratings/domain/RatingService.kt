@@ -242,6 +242,39 @@ class RatingService(
         return RatingOutcome.RATING_DELETED to updated.toDomain()
     }
 
+    fun hideRating(ratingId: String): Pair<RatingOutcome, Rating?> {
+        val existing = ratingRepository.findById(ratingId) ?: return RatingOutcome.RATING_NOT_FOUND to null
+        if (existing.status == RatingStatus.HIDDEN.shortName) return RatingOutcome.RATING_ALREADY_HIDDEN to null
+
+        val nowMicros = Instant.now().toMicros()
+        ratingRepository.updateStatus(ratingId, RatingStatus.HIDDEN.shortName, null, nowMicros)
+
+        aggregateService.onRatingHidden(existing.rateeId, existing.repKind, existing.score)
+
+        log.info("Rating hidden by admin: id={}", ratingId)
+        val updated = ratingRepository.findById(ratingId)!!
+        return RatingOutcome.RATING_HIDDEN to updated.toDomain()
+    }
+
+    fun restoreRating(ratingId: String): Pair<RatingOutcome, Rating?> {
+        val existing = ratingRepository.findById(ratingId) ?: return RatingOutcome.RATING_NOT_FOUND to null
+        if (existing.status == RatingStatus.PUBLISHED.shortName) return RatingOutcome.RATING_NOT_FOUND to null
+
+        val nowMicros = Instant.now().toMicros()
+        ratingRepository.updateStatus(ratingId, RatingStatus.PUBLISHED.shortName, nowMicros, nowMicros)
+
+        aggregateService.onRatingRestored(
+            rateeId = existing.rateeId,
+            repKind = existing.repKind,
+            score = existing.score,
+            ratingAt = nowMicros
+        )
+
+        log.info("Rating restored by admin: id={}", ratingId)
+        val updated = ratingRepository.findById(ratingId)!!
+        return RatingOutcome.RATING_RESTORED to updated.toDomain()
+    }
+
     fun findById(id: String): Rating? = ratingRepository.findById(id)?.toDomain()
 
     fun findByRateePaginated(rateeId: String, repKind: String, pageable: Pageable): Page<Rating> =
@@ -249,6 +282,12 @@ class RatingService(
 
     fun findByRaterPaginated(raterId: String, pageable: Pageable): Page<Rating> =
         ratingRepository.findByRaterPaginated(raterId, pageable).map { it.toDomain() }
+
+    fun findByRaterPublishedPaginated(raterId: String, pageable: Pageable): Page<Rating> =
+        ratingRepository.findByRaterPublishedPaginated(raterId, pageable).map { it.toDomain() }
+
+    fun findReportedRatings(pageable: Pageable): Page<Rating> =
+        ratingRepository.findReportedRatings(pageable).map { it.toDomain() }
 
     private fun lastSupplementOrFreezeTime(
         existing: RatingDocument,

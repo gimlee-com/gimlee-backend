@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.Instant
@@ -67,6 +68,7 @@ class RatingEligibilityService(
     fun consume(id: String, ratingId: String): Boolean =
         eligibilityRepository.consumeEligibility(id, ratingId)
 
+    @Scheduled(fixedDelayString = "\${gimlee.ratings.sweeper.interval-ms:300000}")
     fun sweepExpired() {
         val now = Instant.now().toMicros()
         log.info("Starting eligibility expiry sweep, batchSize={}", sweeperBatchSize)
