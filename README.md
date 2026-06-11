@@ -74,6 +74,17 @@ This section guides developers looking to contribute or run a local instance for
     transaction verification during development. (*Note: By default, this node will connect to the PirateChain mainnet.*)
 *   **YCash Full Node:** A running [YCash](https://ycash.xyz) full node wallet is required for 
     transaction verification during development. (*Note: By default, this node will connect to the YCash mainnet.*)
+*   **Local Regtest Wallets (Recommended for Development):** Instead of running nodes connected to the mainnet, you can use the provided scripts to launch local PirateChain and Ycash wallets in Regtest Mode. This provides a private, isolated blockchain that mines blocks automatically:
+    *   `scripts/run_piratechain_regtest_local.sh up`
+    *   `scripts/run_ycash_regtest_local.sh up`
+    These scripts use Docker to spin up the nodes, lightwalletd (for both Ycash and PirateChain), and a heartbeat miner.
+    *   **Default lightwalletd ports (gRPC, no TLS):**
+        *   **PirateChain:** `45467`
+        *   **Ycash:** `19067`
+    *   **Note on Regtest Addresses:** In regtest mode, addresses use different prefixes than mainnet. When using the faucet or connecting a wallet, ensure you use:
+        *   **PirateChain:** Addresses starting with `zregtestsapling`
+        *   **Ycash:** Addresses starting with `yregtestsapling`
+    *   To connect from a mobile wallet, ensure the port is exposed via the script's `expose` command.
 *   **SMTP Server:** A configured SMTP server is necessary for the application to send emails (e.g., notifications,
     confirmations).
 *   **Open Exchange Rates API Account:** An API key from [Open Exchange Rates](https://openexchangerates.org/)
@@ -87,12 +98,7 @@ Before running the application for the first time:
 2.  Create a copy of `application-local-EXAMPLE.yaml`.
 3.  Rename the copy to `application-local.yaml`.
 4.  Edit `application-local.yaml` and replace all `<fillme>` placeholders with the appropriate configuration values:
-    *   **PirateChain RPC:** The `rpc-url`, `user`, and `password` values for the `gimlee.payments.piratechain` section
-        can typically be found in the PirateChain full node's configuration file (usually located
-        at `~/.komodo/PIRATE/PIRATE.conf`).
-    *   **YCash RPC:** The `rpc-url`, `user`, and `password` values for the `gimlee.payments.ycash` section
-        can typically be found in the YCash full node's configuration file (usually located
-        at `~/.ycash/ycash.conf`).
+    *   **PirateChain & YCash RPC:** By default, `application-local-EXAMPLE.yaml` is pre-configured to connect to the local regtest wallets started via the scripts mentioned above. If you are using your own nodes, update the `rpc-url`, `user`, and `password` values in the `gimlee.payments.piratechain` and `gimlee.payments.ycash` sections.
     *   **Media Storage:** The application supports two media storage backends: local filesystem and S3-compatible object storage. This is controlled by the `gimlee.media.store.storage-type` property.
         *   **For local storage (default):** Set `gimlee.media.store.storage-type` to `LOCAL` (or omit it). Then, configure `gimlee.media.store.local.directory` with the absolute path where files should be saved.
         *   **For S3-compatible storage:** Set `gimlee.media.store.storage-type` to `S3`. Then, configure the properties under `gimlee.media.store.s3`, including `endpoint`, `region`, `bucket`, `access-key`, and `secret-key`.

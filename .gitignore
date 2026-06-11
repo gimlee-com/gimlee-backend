@@ -46,3 +46,9 @@ _override.tf.json
 .terraform.lock.hcl
 /infrastructure/ansible/inventory.ini
 /infrastructure/docker/monitoring/prometheus.yml
+
+### Local Ycash regtest wallet (scripts/run_ycash_regtest_local.sh) ###
+/.ycash-regtest-local/
+
+### Local PirateChain regtest wallet (scripts/run_piratechain_regtest_local.sh) ###
+/.piratechain-regtest-local/

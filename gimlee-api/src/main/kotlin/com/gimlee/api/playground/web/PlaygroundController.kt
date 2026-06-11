@@ -7,6 +7,7 @@ import com.gimlee.api.playground.media.data.MediaPopulator
 import com.gimlee.api.playground.support.data.SupportPopulator
 import com.gimlee.api.playground.users.data.UsersPopulator
 import com.gimlee.api.playground.payments.service.YcashFaucetService
+import com.gimlee.api.playground.payments.service.PirateChainFaucetService
 import com.gimlee.api.playground.web.dto.CreateUsersRequest
 import com.gimlee.api.playground.web.dto.FaucetRequest
 import com.gimlee.common.domain.model.CommonOutcome
@@ -32,7 +33,8 @@ class PlaygroundController(
     @Lazy private val qaPopulator: QaPopulator,
     @Lazy private val supportPopulator: SupportPopulator,
     @Lazy private val databaseCleaner: DatabaseCleaner,
-    @Lazy private val ycashFaucetService: YcashFaucetService
+    @Lazy private val ycashFaucetService: YcashFaucetService,
+    @Lazy private val pirateChainFaucetService: PirateChainFaucetService
 ) {
     @Operation(summary = "Create Playground Users", description = "Populates the database with a set of test users. If view keys are provided, a single 'playground_seller' user is created/updated.")
     @ApiResponse(
@@ -55,6 +57,18 @@ class PlaygroundController(
     @PostMapping("/playground/ycash/faucet")
     fun ycashFaucet(@RequestBody request: FaucetRequest): StatusResponseDto {
         val operationId = ycashFaucetService.sendCoins(request.address, request.amount)
+        return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS, data = mapOf("operationId" to operationId))
+    }
+
+    @Operation(summary = "PirateChain Faucet", description = "Sends some ARRR coins to the specified address.")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Coins sent successfully. Possible status codes: SUCCESS",
+        content = [Content(schema = Schema(implementation = StatusResponseDto::class))]
+    )
+    @PostMapping("/playground/pirate/faucet")
+    fun pirateFaucet(@RequestBody request: FaucetRequest): StatusResponseDto {
+        val operationId = pirateChainFaucetService.sendCoins(request.address, request.amount)
         return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS, data = mapOf("operationId" to operationId))
     }
 

@@ -17,6 +17,9 @@ import com.gimlee.payments.crypto.client.model.CryptoInfo
 import com.gimlee.payments.crypto.client.model.RawReceivedTransaction
 import com.gimlee.payments.client.model.RpcRequest
 import com.gimlee.payments.client.model.RpcResponse
+import com.gimlee.payments.crypto.piratechain.client.model.UnspentOutput
+import com.gimlee.payments.crypto.piratechain.client.model.ShieldedUnspentOutput
+import com.gimlee.payments.crypto.piratechain.client.model.ZSendManyAmount
 import com.gimlee.payments.crypto.piratechain.config.PirateChainClientProperties
 import java.io.IOException
 import java.lang.reflect.Type
@@ -36,6 +39,9 @@ class PirateChainRpcClient(
         private const val NO_RESCAN = "no"
 
         private const val RPC_GET_INFO = "getinfo"
+        private const val RPC_Z_SEND_MANY = "z_sendmany"
+        private const val RPC_LIST_UNSPENT = "listunspent"
+        private const val RPC_Z_LIST_UNSPENT = "z_listunspent"
         private const val RPC_IMPORT_VIEWING_KEY = "z_importviewingkey"
         private const val RPC_LIST_RECEIVED_BY_ADDRESS = "z_listreceivedbyaddress"
     }
@@ -123,6 +129,18 @@ class PirateChainRpcClient(
     @Throws(IOException::class, PirateChainRpcException::class)
     fun getInfo(): RpcResponse<CryptoInfo> =
         callRpc(RPC_GET_INFO, emptyList())
+
+    @Throws(IOException::class, PirateChainRpcException::class)
+    fun zSendMany(fromAddress: String, amounts: List<ZSendManyAmount>): RpcResponse<String> =
+        callRpc(RPC_Z_SEND_MANY, listOf(fromAddress, amounts))
+
+    @Throws(IOException::class, PirateChainRpcException::class)
+    fun listUnspent(minConfs: Int = 1, maxConfs: Int = 9999999): RpcResponse<List<UnspentOutput>> =
+        callRpc(RPC_LIST_UNSPENT, listOf(minConfs, maxConfs))
+
+    @Throws(IOException::class, PirateChainRpcException::class)
+    fun zListUnspent(minConfs: Int = 1, maxConfs: Int = 9999999): RpcResponse<List<ShieldedUnspentOutput>> =
+        callRpc(RPC_Z_LIST_UNSPENT, listOf(minConfs, maxConfs))
 
     @Throws(IOException::class, PirateChainRpcException::class)
     override fun importViewingKey(viewKey: String): RpcResponse<Address> =

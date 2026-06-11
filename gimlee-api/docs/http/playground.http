@@ -82,3 +82,19 @@ Content-Type: application/json
 
 ### Expected Response (Success - 200 OK):
 # { "success": true, "status": "SUCCESS", "message": "Success", "data": { "operationId": "opid-..." } }
+
+
+### PirateChain Faucet
+# Sends some ARRR coins to the specified address.
+# Only available in local, dev, or test profiles.
+# @name pirateFaucet
+POST {{host}}/api/playground/pirate/faucet
+Content-Type: application/json
+
+{
+  "address": "zregtestsapling...",
+  "amount": 2.0
+}
+
+### Expected Response (Success - 200 OK):
+# { "success": true, "status": "SUCCESS", "message": "Success", "data": { "operationId": "opid-..." } }

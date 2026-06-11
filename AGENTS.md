@@ -135,6 +135,9 @@ For any module that exposes REST endpoints, we maintain `.http` files (IntelliJ 
 *   **Exception Handling:** The `WebExceptionHandler` in `gimlee-api` automatically converts common security exceptions (`AuthenticationException`, `AuthorizationException`) into appropriate `Outcome`-based `StatusResponseDto` responses.
 
 ## Setup & Configuration
-*   **Local Config:** Copy `gimlee-api/src/main/resources/application-local-EXAMPLE.yaml` to `application-local.yaml` and fill in details (PirateChain RPC, SMTP, etc.).
+*   **Local Config:** Copy `gimlee-api/src/main/resources/application-local-EXAMPLE.yaml` to `application-local.yaml` and fill in details (SMTP, JWT key, etc.).
+*   **Local Wallets (Regtest):** Use the following scripts to run local PirateChain and Ycash wallets for development. They are pre-configured in `application-local-EXAMPLE.yaml`:
+    *   `scripts/run_piratechain_regtest_local.sh up`
+    *   `scripts/run_ycash_regtest_local.sh up`
 *   **Run Command:** `./gradlew :gimlee-api:bootRun --args='--spring.profiles.active=local'`
 *   **API Docs:** Reference `.http` files in `docs/http/` directories within modules.
