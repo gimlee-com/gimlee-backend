@@ -15,11 +15,28 @@ class PirateChainFaucetService(
     fun sendCoins(address: String, amount: BigDecimal): String {
         log.info("Sending {} ARRR to {}", amount, address)
 
+        // For regtest, shielding directly to the address is the most reliable way to distribute funds
+        // especially when the wallet's existing shielded funds might be in a bad state.
+        if (address.startsWith("z")) {
+            try {
+                log.info("Attempting direct shielding to {}", address)
+                val shieldResponse = pirateChainRpcClient.zShieldCoinbase("*", address)
+                val opId = shieldResponse.result?.opid
+                if (opId != null) {
+                    log.info("Direct shielding initiated to {}, operation ID: {}", address, opId)
+                    return opId
+                }
+            } catch (e: Exception) {
+                log.warn("Direct shielding failed, falling back to z_sendmany: {}", e.message)
+            }
+        }
+
         val fromAddress = findFromAddress() ?: throw RuntimeException("No source address with funds found in PirateChain wallet")
 
         val response = pirateChainRpcClient.zSendMany(
             fromAddress = fromAddress,
-            amounts = listOf(ZSendManyAmount(address = address, amount = amount))
+            amounts = listOf(ZSendManyAmount(address = address, amount = amount)),
+            minConf = 1
         )
 
         val operationId = response.result ?: throw RuntimeException("Failed to initiate z_sendmany: ${response.error}")
@@ -29,7 +46,7 @@ class PirateChainFaucetService(
 
     private fun findFromAddress(): String? {
         // First try to find shielded funds
-        val shieldedResponse = pirateChainRpcClient.zListUnspent()
+        val shieldedResponse = pirateChainRpcClient.zListUnspent(minConfs = 0)
         val shieldedAddress = shieldedResponse.result
             ?.filter { it.spendable && it.amount > BigDecimal.ZERO }
             ?.maxByOrNull { it.amount }
@@ -40,7 +57,7 @@ class PirateChainFaucetService(
         }
 
         // Fallback to transparent funds (might fail in ARRR if strictly shielded)
-        val response = pirateChainRpcClient.listUnspent()
+        val response = pirateChainRpcClient.listUnspent(minConfs = 0)
 
         return response.result
             ?.filter { it.spendable && it.amount > BigDecimal.ZERO }

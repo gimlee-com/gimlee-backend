@@ -20,6 +20,7 @@ import com.gimlee.payments.client.model.RpcResponse
 import com.gimlee.payments.crypto.piratechain.client.model.UnspentOutput
 import com.gimlee.payments.crypto.piratechain.client.model.ShieldedUnspentOutput
 import com.gimlee.payments.crypto.piratechain.client.model.ZSendManyAmount
+import com.gimlee.payments.crypto.piratechain.client.model.ShieldCoinbaseResponse
 import com.gimlee.payments.crypto.piratechain.config.PirateChainClientProperties
 import java.io.IOException
 import java.lang.reflect.Type
@@ -42,8 +43,13 @@ class PirateChainRpcClient(
         private const val RPC_Z_SEND_MANY = "z_sendmany"
         private const val RPC_LIST_UNSPENT = "listunspent"
         private const val RPC_Z_LIST_UNSPENT = "z_listunspent"
+        private const val RPC_Z_SHIELD_COINBASE = "z_shieldcoinbase"
         private const val RPC_IMPORT_VIEWING_KEY = "z_importviewingkey"
         private const val RPC_LIST_RECEIVED_BY_ADDRESS = "z_listreceivedbyaddress"
+
+        private const val ALREADY_CONTAINS_PRIVATE_KEY_ERROR_CODE = -4
+        private const val ALREADY_CONTAINS_PRIVATE_KEY_ERROR_MSG_PART = "The wallet already contains the private key for this viewing key"
+        private val ADDRESS_REGEX = Regex("address: ([a-zA-Z0-9]+)")
     }
 
     @Throws(IOException::class, PirateChainRpcException::class)
@@ -131,8 +137,8 @@ class PirateChainRpcClient(
         callRpc(RPC_GET_INFO, emptyList())
 
     @Throws(IOException::class, PirateChainRpcException::class)
-    fun zSendMany(fromAddress: String, amounts: List<ZSendManyAmount>): RpcResponse<String> =
-        callRpc(RPC_Z_SEND_MANY, listOf(fromAddress, amounts))
+    fun zSendMany(fromAddress: String, amounts: List<ZSendManyAmount>, minConf: Int = 1): RpcResponse<String> =
+        callRpc(RPC_Z_SEND_MANY, listOf(fromAddress, amounts, minConf))
 
     @Throws(IOException::class, PirateChainRpcException::class)
     fun listUnspent(minConfs: Int = 1, maxConfs: Int = 9999999): RpcResponse<List<UnspentOutput>> =
@@ -143,8 +149,26 @@ class PirateChainRpcClient(
         callRpc(RPC_Z_LIST_UNSPENT, listOf(minConfs, maxConfs))
 
     @Throws(IOException::class, PirateChainRpcException::class)
+    fun zShieldCoinbase(fromAddress: String, toAddress: String): RpcResponse<ShieldCoinbaseResponse> =
+        callRpc(RPC_Z_SHIELD_COINBASE, listOf(fromAddress, toAddress))
+
+    @Throws(IOException::class, PirateChainRpcException::class)
     override fun importViewingKey(viewKey: String): RpcResponse<Address> =
-        callRpc(RPC_IMPORT_VIEWING_KEY, listOf(viewKey, NO_RESCAN))
+        try {
+            callRpc(RPC_IMPORT_VIEWING_KEY, listOf(viewKey, NO_RESCAN))
+        } catch (e: PirateChainRpcException) {
+            if (e.errorCode == ALREADY_CONTAINS_PRIVATE_KEY_ERROR_CODE &&
+                e.errorMsg?.contains(ALREADY_CONTAINS_PRIVATE_KEY_ERROR_MSG_PART) == true
+            ) {
+                val address = e.errorMsg.let { msg ->
+                    ADDRESS_REGEX.find(msg)?.groupValues?.get(1) ?: "unknown"
+                }
+                log.info("Viewing key already has a private key in the wallet for address: {}. Ignoring error.", address)
+                RpcResponse(result = Address(type = "sapling", address = address), error = null, id = null)
+            } else {
+                throw e
+            }
+        }
 
     @Throws(IOException::class, PirateChainRpcException::class)
     override fun getReceivedByAddress(address: String, minConfirmations: Int): RpcResponse<List<RawReceivedTransaction>> =

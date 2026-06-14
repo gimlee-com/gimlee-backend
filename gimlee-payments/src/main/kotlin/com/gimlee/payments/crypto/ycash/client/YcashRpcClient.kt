@@ -19,6 +19,7 @@ import com.gimlee.payments.crypto.client.model.RawReceivedTransaction
 import com.gimlee.payments.crypto.ycash.client.model.UnspentOutput
 import com.gimlee.payments.crypto.ycash.config.YcashClientProperties
 import com.gimlee.payments.crypto.ycash.client.model.ZSendManyAmount
+import com.gimlee.payments.crypto.ycash.client.model.ShieldCoinbaseResponse
 import java.io.IOException
 import java.lang.reflect.Type
 import kotlin.reflect.javaType
@@ -43,6 +44,7 @@ class YcashRpcClient(
         private const val RPC_GET_NEW_ADDRESS = "getnewaddress"
         private const val RPC_LIST_ADDRESSES = "listaddressgroupings"
         private const val RPC_LIST_UNSPENT = "listunspent"
+        private const val RPC_Z_SHIELD_COINBASE = "z_shieldcoinbase"
         private const val RPC_IMPORT_VIEWING_KEY = "z_importviewingkey"
         private const val RPC_LIST_RECEIVED_BY_ADDRESS = "z_listreceivedbyaddress"
 
@@ -126,8 +128,8 @@ class YcashRpcClient(
         callRpc(RPC_GET_INFO, emptyList())
 
     @Throws(IOException::class, YcashRpcException::class)
-    fun zSendMany(fromAddress: String, amounts: List<ZSendManyAmount>): RpcResponse<String> =
-        callRpc(RPC_Z_SEND_MANY, listOf(fromAddress, amounts))
+    fun zSendMany(fromAddress: String, amounts: List<ZSendManyAmount>, minConf: Int = 1): RpcResponse<String> =
+        callRpc(RPC_Z_SEND_MANY, listOf(fromAddress, amounts, minConf))
 
     @Throws(IOException::class, YcashRpcException::class)
     fun zGetNewAddress(): RpcResponse<String> =
@@ -144,6 +146,10 @@ class YcashRpcClient(
     @Throws(IOException::class, YcashRpcException::class)
     fun listUnspent(minConfs: Int = 1, maxConfs: Int = 9999999): RpcResponse<List<UnspentOutput>> =
         callRpc(RPC_LIST_UNSPENT, listOf(minConfs, maxConfs))
+
+    @Throws(IOException::class, YcashRpcException::class)
+    fun zShieldCoinbase(fromAddress: String, toAddress: String): RpcResponse<ShieldCoinbaseResponse> =
+        callRpc(RPC_Z_SHIELD_COINBASE, listOf(fromAddress, toAddress))
 
     @Throws(IOException::class, YcashRpcException::class)
     override fun importViewingKey(viewKey: String): RpcResponse<Address> =
