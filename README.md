@@ -85,6 +85,14 @@ This section guides developers looking to contribute or run a local instance for
         *   **PirateChain:** Addresses starting with `zregtestsapling`
         *   **Ycash:** Addresses starting with `yregtestsapling`
     *   To connect from a mobile wallet, ensure the port is exposed via the script's `expose` command.
+
+#### Generating Test Wallets
+For development and testing, you can use the `scripts/generate_test_wallets.sh` script to generate a CSV file with multiple test wallet records (seed phrase, address, viewing keys). This is useful for populating the playground with many seller users.
+
+```bash
+./scripts/generate_test_wallets.sh --currency pirate --count 20 --output sellers.csv
+```
+
 *   **SMTP Server:** A configured SMTP server is necessary for the application to send emails (e.g., notifications,
     confirmations).
 *   **Open Exchange Rates API Account:** An API key from [Open Exchange Rates](https://openexchangerates.org/)

@@ -116,7 +116,10 @@ abstract class CryptoAddressService(
                 anonymize(addressInfo.zAddress),
                 userId
             )
-            userRoleRepository.add(ObjectId(userId), requiredRole)
+            val existingRoles = userRoleRepository.getAll(ObjectId(userId))
+            if (requiredRole !in existingRoles) {
+                userRoleRepository.add(ObjectId(userId), requiredRole)
+            }
         } catch (e: Exception) {
             log.error(
                 "Failed to add/update {} address info for user {} (zAddress {}): {}",

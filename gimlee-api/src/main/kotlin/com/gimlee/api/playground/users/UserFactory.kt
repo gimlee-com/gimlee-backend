@@ -13,7 +13,7 @@ import java.time.LocalDateTime
 
 private const val PASSWORD = "Password1"
 private const val PHONE = "123456789"
-private const val EMAIL = "playground-user@gimlee.com"
+private const val EMAIL_TEMPLATE = "playground-user-%s@gimlee.com"
 
 private val usersResource: InputStream = (object {}).javaClass.classLoader.getResourceAsStream("playground/users.csv")!!
 private val mapper: CsvMapper = CsvMapper().enable(CsvParser.Feature.WRAP_AS_ARRAY)
@@ -30,7 +30,7 @@ fun createUsers() = users.map { user ->
             username = user.username,
             displayName = user.username,
             phone = PHONE,
-            email = EMAIL,
+            email = EMAIL_TEMPLATE.format(user.username),
             password = passwordHash,
             passwordSalt = salt,
             status = UserStatus.ACTIVE,

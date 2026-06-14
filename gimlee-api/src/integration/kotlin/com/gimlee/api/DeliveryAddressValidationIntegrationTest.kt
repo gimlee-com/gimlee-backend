@@ -46,7 +46,7 @@ class DeliveryAddressValidationIntegrationTest(
 
         val addressInfo = WalletAddressInfo(
             type = Currency.ARRR,
-            addressType = WalletShieldedAddressType.SAPLING,
+            addressType = WalletShieldedAddressType.Z_SAPLING,
             zAddress = "zs1testaddress",
             viewKeyHash = "hash",
             viewKeySalt = "salt",

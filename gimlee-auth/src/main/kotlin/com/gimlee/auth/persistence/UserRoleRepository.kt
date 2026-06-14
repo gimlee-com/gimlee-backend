@@ -4,6 +4,7 @@ import org.bson.types.ObjectId
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Component
 import com.gimlee.auth.model.Role
 import com.gimlee.auth.domain.UserRole
@@ -43,10 +44,17 @@ class UserRoleRepository(
     }
 
 
-    fun add(userId: ObjectId, role: Role) = mongoTemplate.save(
-        UserRole(userId, role),
-        USER_ROLES_COLLECTION_NAME
-    )
+    fun add(userId: ObjectId, role: Role) {
+        val query = Query.query(
+            Criteria.where(FIELD_USERID).`is`(userId)
+                .and(FIELD_ROLE).`is`(role)
+        )
+        val update = Update()
+            .setOnInsert(FIELD_USERID, userId)
+            .setOnInsert(FIELD_ROLE, role)
+
+        mongoTemplate.upsert(query, update, UserRole::class.java, USER_ROLES_COLLECTION_NAME)
+    }
 
     fun remove(userId: ObjectId, role: Role) = mongoTemplate.remove(
         Query(Criteria

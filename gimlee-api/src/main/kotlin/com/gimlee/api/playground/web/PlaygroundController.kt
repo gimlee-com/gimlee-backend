@@ -36,7 +36,7 @@ class PlaygroundController(
     @Lazy private val ycashFaucetService: YcashFaucetService,
     @Lazy private val pirateChainFaucetService: PirateChainFaucetService
 ) {
-    @Operation(summary = "Create Playground Users", description = "Populates the database with a set of test users. If view keys are provided, a single 'playground_seller' user is created/updated.")
+    @Operation(summary = "Create Playground Users", description = "Populates the database with a set of test users and sellers with wallets.")
     @ApiResponse(
         responseCode = "200",
         description = "Users created successfully. Possible status codes: SUCCESS",
@@ -44,7 +44,7 @@ class PlaygroundController(
     )
     @PostMapping("/playground/createUsers")
     fun createUsers(@RequestBody request: CreateUsersRequest? = null): StatusResponseDto {
-        usersPopulator.populateUsers(request?.pirateViewKey, request?.ycashViewKey)
+        usersPopulator.populateUsers()
         return StatusResponseDto.fromOutcome(CommonOutcome.SUCCESS)
     }
 

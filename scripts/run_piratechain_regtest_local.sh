@@ -144,10 +144,11 @@ rpcallowip=0.0.0.0/0
 regtest=1
 gen=0
 lightwalletd=1
-# Force Sapling activation at block 1 (ID:Height)
+# Force Overwinter/Sapling activation at block 1 (ID:Height)
 # Overwinter: 5ba81b19, Sapling: 76b809bb
 nuparams=5ba81b19:1
 nuparams=76b809bb:1
+ac_sapling=1
 EOF
     chmod 600 "$CONF_FILE"
 }
@@ -188,7 +189,7 @@ start_stack() {
         -v "$NODE_DATA_DIR:/root/.komodo/PIRATE" \
         -v "$CONF_FILE:/root/.komodo/PIRATE/PIRATE.conf:ro" \
         -v "$PARAMS_DIR:/root/.zcash-params:ro" \
-        "$PIRATE_IMAGE" ./pirated -printtoconsole -ac_name=PIRATE -regtest >/dev/null
+        "$PIRATE_IMAGE" ./pirated -printtoconsole -ac_name=PIRATE -regtest -nuparams=5ba81b19:1 -nuparams=76b809bb:1 -ac_sapling=1 >/dev/null
 
     echo "⏳ Waiting for PirateChain RPC to be ready..."
     local attempt=1
@@ -205,14 +206,39 @@ start_stack() {
     local current_height
     current_height=$("$REPO_ROOT/scripts/run_piratechain_regtest_local.sh" cli getblockcount 2>/dev/null || echo "0")
     if [ "$current_height" -eq 0 ]; then
-        echo "⛏️  Fresh chain detected. Mining initial blocks (101)..."
-        # Generate 101 blocks so coinbase is mature and spendable
-        "$REPO_ROOT/scripts/run_piratechain_regtest_local.sh" cli generate 101 >/dev/null
+        echo "⛏️  Fresh chain detected. Mining initial blocks (200)..."
+        # Generate 200 blocks so coinbase is mature and we are well into Sapling
+        # Using a loop to avoid RPC timeouts on some systems
+        for i in {1..200}; do
+            "$REPO_ROOT/scripts/run_piratechain_regtest_local.sh" cli generate 1 >/dev/null
+        done
 
         echo "🛡️  Shielding coinbase funds..."
         local zaddr
         zaddr=$("$REPO_ROOT/scripts/run_piratechain_regtest_local.sh" cli z_getnewaddress)
-        "$REPO_ROOT/scripts/run_piratechain_regtest_local.sh" cli z_shieldcoinbase "*" "$zaddr" >/dev/null
+        local opid
+        opid=$("$REPO_ROOT/scripts/run_piratechain_regtest_local.sh" cli z_shieldcoinbase "*" "$zaddr" | jq -r .opid)
+        
+        # Wait for shielding to complete
+        echo "⏳ Waiting for shielding operation $opid..."
+        local shield_attempt=1
+        while true; do
+            local status
+            status=$("$REPO_ROOT/scripts/run_piratechain_regtest_local.sh" cli z_getoperationstatus "[\"$opid\"]" | jq -r '.[0].status')
+            if [ "$status" == "success" ]; then
+                break
+            fi
+            if [ "$status" == "failed" ]; then
+                echo "❌ Shielding failed"
+                break
+            fi
+            if [ $shield_attempt -gt 30 ]; then
+                echo "❌ Shielding timed out"
+                break
+            fi
+            sleep 1
+            shield_attempt=$((shield_attempt + 1))
+        done
 
         echo "⛏️  Mining 1 block to confirm shielding..."
         "$REPO_ROOT/scripts/run_piratechain_regtest_local.sh" cli generate 1 >/dev/null
@@ -229,6 +255,8 @@ start_stack() {
         --grpc-bind-addr "0.0.0.0:$PIRATE_LWD_PORT" \
         --data-dir /root/lwd-data \
         --log-file /dev/stdout \
+        --log-level 7 \
+        --grpc-logging-insecure \
         --no-tls-very-insecure >/dev/null
 
     echo "⛏️  Starting heartbeat miner ($MINER_CONTAINER, 1 block / ${PIRATE_MINE_INTERVAL}s)..."
@@ -329,6 +357,14 @@ case "$COMMAND" in
         require_docker
         shift
         run_cli "$@"
+        ;;
+    mine)
+        require_docker
+        count="${2:-1}"
+        echo "⛏️  Mining $count block(s)..."
+        for i in $(seq 1 "$count"); do
+            run_cli generate 1 >/dev/null
+        done
         ;;
     expose)
         expose_firewall

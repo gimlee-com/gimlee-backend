@@ -42,7 +42,7 @@ class QaFacadeControllerIntegrationTest(
         userRepository.save(User(id = sellerId, username = "seller_${sellerId.toHexString().take(6)}"))
         userWalletAddressRepository.addAddressToUser(sellerId, WalletAddressInfo(
             type = Currency.ARRR,
-            addressType = WalletShieldedAddressType.SAPLING,
+            addressType = WalletShieldedAddressType.Z_SAPLING,
             zAddress = "zs1test${sellerId.toHexString().take(8)}",
             viewKeyHash = "hash", viewKeySalt = "salt",
             lastUpdateTimestamp = Instant.now().toMicros()

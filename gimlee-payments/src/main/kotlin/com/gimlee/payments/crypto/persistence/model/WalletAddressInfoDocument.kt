@@ -28,6 +28,7 @@ data class WalletAddressInfo(
 enum class WalletShieldedAddressType(val rpcName: String) {
     SPROUT("sprout"),
     SAPLING("sapling"),
+    Z_SAPLING("z-sapling"),
     ORCHARD("z-orchard");
 
     companion object {
