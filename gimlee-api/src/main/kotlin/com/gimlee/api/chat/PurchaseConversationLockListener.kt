@@ -7,6 +7,8 @@ import com.gimlee.purchases.domain.model.PurchaseStatus
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * Locks order conversations when the purchase reaches a terminal state.
@@ -50,10 +52,16 @@ class PurchaseConversationLockListener(
             return
         }
 
-        val locked = conversationService.lockConversation(conversation.id)
-        if (locked) {
-            log.info("Locked conversation {} for completed purchase {}", conversation.id, purchaseId)
-            chatEventBroadcaster.closeEmittersForConversation(conversation.id)
+        if (event.status == PurchaseStatus.COMPLETE.id && properties.lockDelayDays > 0) {
+            val autoLockAt = Instant.now().plus(properties.lockDelayDays, ChronoUnit.DAYS)
+            conversationService.setAutoLockAt(conversation.id, autoLockAt)
+            log.info("Scheduled conversation {} to lock at {} for completed purchase {}", conversation.id, autoLockAt, purchaseId)
+        } else {
+            val locked = conversationService.lockConversation(conversation.id)
+            if (locked) {
+                log.info("Locked conversation {} for purchase {}", conversation.id, purchaseId)
+                chatEventBroadcaster.closeEmittersForConversation(conversation.id)
+            }
         }
     }
 }

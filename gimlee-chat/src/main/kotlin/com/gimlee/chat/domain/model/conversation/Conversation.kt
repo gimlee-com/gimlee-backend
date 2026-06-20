@@ -11,7 +11,8 @@ data class Conversation(
     val status: ConversationStatus,
     val createdAt: Instant,
     val updatedAt: Instant,
-    val lastActivityAt: Instant
+    val lastActivityAt: Instant,
+    val autoLockAt: Instant? = null
 ) {
     companion object {
         val EMPTY = Conversation(
@@ -21,7 +22,8 @@ data class Conversation(
             status = ConversationStatus.ARCHIVED,
             createdAt = Instant.EPOCH,
             updatedAt = Instant.EPOCH,
-            lastActivityAt = Instant.EPOCH
+            lastActivityAt = Instant.EPOCH,
+            autoLockAt = null
         )
     }
 

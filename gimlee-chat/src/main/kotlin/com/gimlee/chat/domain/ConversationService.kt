@@ -145,6 +145,12 @@ class ConversationService(
     fun lockConversation(conversationId: String): Boolean =
         conversationRepository.updateStatus(conversationId, ConversationStatus.LOCKED)
 
+    fun setAutoLockAt(conversationId: String, until: Instant?): Boolean =
+        conversationRepository.setAutoLockAt(conversationId, until?.toMicros())
+
+    fun findExpiredLocks(limit: Int): List<Conversation> =
+        conversationRepository.findExpiredLocks(Instant.now().toMicros(), limit)
+
     fun archiveConversation(conversationId: String): Boolean =
         conversationRepository.updateStatus(conversationId, ConversationStatus.ARCHIVED)
 }

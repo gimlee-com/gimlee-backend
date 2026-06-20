@@ -8,7 +8,8 @@ import org.springframework.context.annotation.Configuration
 data class OrderConversationProperties(
     val lockOnComplete: Boolean = true,
     val lockOnFailed: Boolean = true,
-    val systemMessagesEnabled: Boolean = true
+    val systemMessagesEnabled: Boolean = true,
+    val lockDelayDays: Long = 14
 )
 
 @Configuration

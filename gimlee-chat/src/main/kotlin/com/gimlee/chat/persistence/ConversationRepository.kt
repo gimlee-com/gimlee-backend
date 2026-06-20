@@ -77,14 +77,46 @@ class ConversationRepository(mongoDatabase: MongoDatabase) {
 
     fun updateStatus(conversationId: String, status: ConversationStatus): Boolean {
         val now = Instant.now().toMicros()
+        val updates = mutableListOf(
+            Updates.set(ConversationDocument.FIELD_STATUS, status.shortName),
+            Updates.set(ConversationDocument.FIELD_UPDATED_AT, now)
+        )
+        if (status == ConversationStatus.LOCKED) {
+            updates.add(Updates.unset(ConversationDocument.FIELD_AUTO_LOCK_AT))
+        }
+        val result = collection.updateOne(
+            Filters.eq(ConversationDocument.FIELD_ID, ObjectId(conversationId)),
+            Updates.combine(updates)
+        )
+        return result.modifiedCount > 0
+    }
+
+    fun setAutoLockAt(conversationId: String, timestampMicros: Long?): Boolean {
+        val now = Instant.now().toMicros()
+        val update = if (timestampMicros != null) {
+            Updates.set(ConversationDocument.FIELD_AUTO_LOCK_AT, timestampMicros)
+        } else {
+            Updates.unset(ConversationDocument.FIELD_AUTO_LOCK_AT)
+        }
         val result = collection.updateOne(
             Filters.eq(ConversationDocument.FIELD_ID, ObjectId(conversationId)),
             Updates.combine(
-                Updates.set(ConversationDocument.FIELD_STATUS, status.shortName),
+                update,
                 Updates.set(ConversationDocument.FIELD_UPDATED_AT, now)
             )
         )
         return result.modifiedCount > 0
+    }
+
+    fun findExpiredLocks(nowMicros: Long, limit: Int): List<Conversation> {
+        val filter = Filters.and(
+            Filters.eq(ConversationDocument.FIELD_STATUS, ConversationStatus.ACTIVE.shortName),
+            Filters.lte(ConversationDocument.FIELD_AUTO_LOCK_AT, nowMicros)
+        )
+        return collection.find(filter)
+            .limit(limit)
+            .map { mapToConversationDocument(it).toDomain() }
+            .toList()
     }
 
     fun updateLastActivity(conversationId: String, timestampMicros: Long): Boolean {
@@ -122,6 +154,9 @@ class ConversationRepository(mongoDatabase: MongoDatabase) {
             .append(ConversationDocument.FIELD_CREATED_AT, doc.createdAtMicros)
             .append(ConversationDocument.FIELD_UPDATED_AT, doc.updatedAtMicros)
             .append(ConversationDocument.FIELD_LAST_ACTIVITY_AT, doc.lastActivityAtMicros)
+            .apply {
+                if (doc.autoLockAtMicros != null) append(ConversationDocument.FIELD_AUTO_LOCK_AT, doc.autoLockAtMicros)
+            }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -143,7 +178,8 @@ class ConversationRepository(mongoDatabase: MongoDatabase) {
             status = doc.getString(ConversationDocument.FIELD_STATUS),
             createdAtMicros = doc.getLong(ConversationDocument.FIELD_CREATED_AT),
             updatedAtMicros = doc.getLong(ConversationDocument.FIELD_UPDATED_AT),
-            lastActivityAtMicros = doc.getLong(ConversationDocument.FIELD_LAST_ACTIVITY_AT)
+            lastActivityAtMicros = doc.getLong(ConversationDocument.FIELD_LAST_ACTIVITY_AT),
+            autoLockAtMicros = doc.getLong(ConversationDocument.FIELD_AUTO_LOCK_AT)
         )
     }
 }

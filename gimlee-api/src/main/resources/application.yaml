@@ -176,10 +176,13 @@ gimlee:
       # batch-size: 100
     conversation:
       default-max-participants: 50
+    lock-sweep-interval-ms: 60000
+    lock-sweep-batch-size: 100
     order:
       lock-on-complete: true
       lock-on-failed: true
       system-messages-enabled: true
+      lock-delay-days: 14
 
   # gimlee-purchases properties
   purchases:

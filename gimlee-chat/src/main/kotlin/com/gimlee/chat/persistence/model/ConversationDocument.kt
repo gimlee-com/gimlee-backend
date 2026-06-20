@@ -17,7 +17,8 @@ data class ConversationDocument(
     val status: String,
     val createdAtMicros: Long,
     val updatedAtMicros: Long,
-    val lastActivityAtMicros: Long
+    val lastActivityAtMicros: Long,
+    val autoLockAtMicros: Long? = null
 ) {
     companion object {
         const val COLLECTION_NAME = "gimlee-chat-conversations"
@@ -34,6 +35,7 @@ data class ConversationDocument(
         const val FIELD_CREATED_AT = "cat"
         const val FIELD_UPDATED_AT = "uat"
         const val FIELD_LAST_ACTIVITY_AT = "lat"
+        const val FIELD_AUTO_LOCK_AT = "alat"
 
         fun fromDomain(domain: Conversation): ConversationDocument = ConversationDocument(
             id = ObjectId(domain.id),
@@ -44,7 +46,8 @@ data class ConversationDocument(
             status = ConversationStatus.entries.first { it == domain.status }.shortName,
             createdAtMicros = domain.createdAt.toMicros(),
             updatedAtMicros = domain.updatedAt.toMicros(),
-            lastActivityAtMicros = domain.lastActivityAt.toMicros()
+            lastActivityAtMicros = domain.lastActivityAt.toMicros(),
+            autoLockAtMicros = domain.autoLockAt?.toMicros()
         )
     }
 
@@ -57,7 +60,8 @@ data class ConversationDocument(
         status = ConversationStatus.fromShortName(status),
         createdAt = fromMicros(createdAtMicros),
         updatedAt = fromMicros(updatedAtMicros),
-        lastActivityAt = fromMicros(lastActivityAtMicros)
+        lastActivityAt = fromMicros(lastActivityAtMicros),
+        autoLockAt = autoLockAtMicros?.let { fromMicros(it) }
     )
 }
 
