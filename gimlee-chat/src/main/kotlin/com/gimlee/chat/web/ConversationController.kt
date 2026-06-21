@@ -6,6 +6,7 @@ import com.gimlee.chat.domain.ChatOutcome
 import com.gimlee.chat.domain.model.ChatPrincipalProvider
 import com.gimlee.chat.web.dto.response.ConversationListResponseDto
 import com.gimlee.chat.web.dto.response.ConversationResponseDto
+import com.gimlee.chat.web.dto.response.ConversationResponseMapper
 import com.gimlee.common.domain.model.CommonOutcome
 import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.toMicros
@@ -24,6 +25,7 @@ import java.time.Instant
 @RequestMapping("/conversations")
 class ConversationController(
     private val conversationService: ConversationService,
+    private val conversationResponseMapper: ConversationResponseMapper,
     private val principalProvider: ChatPrincipalProvider,
     private val messageSource: MessageSource
 ) {
@@ -49,7 +51,10 @@ class ConversationController(
         if (accessOutcome != null) return handleOutcome(accessOutcome)
 
         val conversation = conversationService.findById(conversationId)!!
-        return handleOutcome(CommonOutcome.SUCCESS, ConversationResponseDto.from(conversation))
+        return handleOutcome(
+            CommonOutcome.SUCCESS,
+            conversationResponseMapper.toResponseDto(conversation, userId, LocaleContextHolder.getLocale())
+        )
     }
 
     @Operation(
@@ -67,9 +72,11 @@ class ConversationController(
         val beforeMicros = beforeActivityAt?.toMicros()
 
         val conversations = conversationService.findByParticipant(userId, limit, beforeMicros)
-        val response = ConversationListResponseDto(
-            hasMore = conversations.size >= limit,
-            conversations = conversations.map { ConversationResponseDto.from(it) }
+        val response = conversationResponseMapper.toListResponseDto(
+            conversations,
+            conversations.size >= limit,
+            userId,
+            LocaleContextHolder.getLocale()
         )
         return handleOutcome(CommonOutcome.SUCCESS, response)
     }

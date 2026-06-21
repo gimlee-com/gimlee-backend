@@ -99,6 +99,12 @@ class PurchaseRepository(
         return collection.find(filter).firstOrNull()?.toPurchase()
     }
 
+    fun findByIds(ids: List<ObjectId>): List<Purchase> {
+        if (ids.isEmpty()) return emptyList()
+        val filter = Filters.`in`(FIELD_ID, ids)
+        return collection.find(filter).map { it.toPurchase() }.toList()
+    }
+
     fun findAllBySellerId(sellerId: ObjectId, pageable: Pageable): Page<Purchase> {
         return findByField(FIELD_SELLER_ID, sellerId, pageable)
     }

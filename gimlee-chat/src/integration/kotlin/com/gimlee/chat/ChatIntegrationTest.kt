@@ -178,6 +178,31 @@ class ChatIntegrationTest(
     }
 
     // =========================================================
+    // CONVERSATION TITLE
+    // =========================================================
+
+    Given("a conversation between user A and user B") {
+        mongoTemplate.remove(Query(), ConversationDocument.COLLECTION_NAME)
+        val conversationId = createTestConversation(listOf(userAId, userBId))
+
+        When("user A retrieves the conversation details") {
+            val response = restClient.get(
+                "/conversations/$conversationId",
+                userHeaders(userAId)
+            )
+
+            Then("a dynamic title should be included in the response") {
+                response.statusCode shouldBe 200
+                val body = response.bodyAs<Map<String, Any>>()!!
+                val data = body["data"] as Map<String, Any>
+                data["title"] shouldNotBe null
+                // Since users aren't in DB, fallback is "Conversation with Unknown"
+                data["title"].toString() shouldContain "Conversation with"
+            }
+        }
+    }
+
+    // =========================================================
     // LOCKED CONVERSATION: WRITE DENIED, READ ALLOWED
     // =========================================================
 

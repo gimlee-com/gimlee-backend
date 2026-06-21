@@ -6,6 +6,7 @@ import com.gimlee.chat.domain.ChatService
 import com.gimlee.chat.domain.ConversationService
 import com.gimlee.chat.domain.ChatOutcome
 import com.gimlee.chat.web.dto.response.ConversationResponseDto
+import com.gimlee.chat.web.dto.response.ConversationResponseMapper
 import com.gimlee.common.domain.model.CommonOutcome
 import com.gimlee.common.domain.model.Outcome
 import com.gimlee.common.web.dto.StatusResponseDto
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*
 class OrderConversationFacadeController(
     private val conversationService: ConversationService,
     private val chatService: ChatService,
+    private val conversationResponseMapper: ConversationResponseMapper,
     private val messageSource: MessageSource
 ) {
 
@@ -54,9 +56,14 @@ class OrderConversationFacadeController(
         }
 
         val recentMessages = chatService.getHistory(conversation.id, recentMessagesLimit, null)
+        val conversationDto = conversationResponseMapper.toResponseDto(
+            conversation,
+            userId,
+            LocaleContextHolder.getLocale()
+        )
 
         val response = mapOf(
-            "conversation" to ConversationResponseDto.from(conversation),
+            "conversation" to conversationDto,
             "recentMessages" to recentMessages
         )
 

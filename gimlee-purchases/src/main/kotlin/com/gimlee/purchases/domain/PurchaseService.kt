@@ -387,6 +387,8 @@ class PurchaseService(
     
     fun getPurchase(purchaseId: ObjectId): Purchase? = purchaseRepository.findById(purchaseId)
 
+    fun getPurchases(purchaseIds: List<ObjectId>): List<Purchase> = purchaseRepository.findByIds(purchaseIds)
+
     fun getPurchasesForSeller(sellerId: ObjectId, pageable: Pageable): Page<Purchase> {
         return purchaseRepository.findAllBySellerId(sellerId, pageable)
     }
