@@ -529,9 +529,9 @@ class ChatIntegrationTest(
         val conversationId = createTestConversation(listOf(userAId, userBId))
 
         When("a system message is sent") {
-            chatService.sendSystemMessage(conversationId, "STATUS_CHANGED", mapOf("status" to "COMPLETE"))
+            chatService.sendSystemMessage(conversationId, "PURCHASE_STATUS_CHANGED", mapOf("status" to "COMPLETE"))
 
-            Then("it should appear in history with proper structure") {
+            Then("it should appear in history with localized text") {
                 val response = restClient.get(
                     "/chat/$conversationId/messages?limit=20",
                     userHeaders(userAId)
@@ -542,12 +542,24 @@ class ChatIntegrationTest(
                 messages shouldHaveSize 1
                 @Suppress("UNCHECKED_CAST")
                 val msg = messages[0] as Map<String, Any>
-                msg["text"] shouldBe null
+                msg["text"] shouldBe "The purchase has been completed successfully."
                 msg["messageType"] shouldBe "SYSTEM"
-                msg["systemCode"] shouldBe "STATUS_CHANGED"
+                msg["systemCode"] shouldBe null
+                msg["systemArgs"] shouldBe null
+            }
+
+            Then("it should appear in history with Polish localized text") {
+                val response = restClient.get(
+                    "/chat/$conversationId/messages?limit=20",
+                    userHeaders(userAId) + ("Accept-Language" to "pl-PL")
+                )
+                response.statusCode shouldBe 200
+                val body = response.bodyAs<Map<String, Any>>()!!
+                val messages = body["messages"] as List<*>
+                messages shouldHaveSize 1
                 @Suppress("UNCHECKED_CAST")
-                val args = msg["systemArgs"] as Map<String, String>
-                args["status"] shouldBe "COMPLETE"
+                val msg = messages[0] as Map<String, Any>
+                msg["text"] shouldBe "Zamówienie zostało pomyślnie zakończone."
             }
         }
     }

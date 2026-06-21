@@ -35,6 +35,7 @@ class ChatService(
             data = text,
             authorId = authorId,
             author = authorName,
+            messageType = MessageType.REGULAR,
             timestamp = message.timestamp
         ))
 
@@ -67,8 +68,10 @@ class ChatService(
         eventPublisher.publishEvent(InternalChatEvent(
             chatId = chatId,
             type = ChatEventType.MESSAGE.name,
-            data = systemCode,
             author = "system",
+            messageType = MessageType.SYSTEM,
+            systemCode = systemCode,
+            systemArgs = systemArgs,
             timestamp = message.timestamp
         ))
 

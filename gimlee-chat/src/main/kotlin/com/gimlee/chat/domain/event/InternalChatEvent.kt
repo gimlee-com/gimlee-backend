@@ -1,5 +1,6 @@
 package com.gimlee.chat.domain.event
 
+import com.gimlee.chat.domain.model.MessageType
 import java.time.Instant
 
 /**
@@ -12,5 +13,8 @@ data class InternalChatEvent(
     val data: String? = null,
     val authorId: String? = null,
     val author: String,
+    val messageType: MessageType = MessageType.REGULAR,
+    val systemCode: String? = null,
+    val systemArgs: Map<String, String>? = null,
     val timestamp: Instant = Instant.now()
 )

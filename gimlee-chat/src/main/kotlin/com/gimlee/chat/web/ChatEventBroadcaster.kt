@@ -1,13 +1,17 @@
 package com.gimlee.chat.web
 
 import com.gimlee.chat.domain.event.InternalChatEvent
+import com.gimlee.chat.domain.model.MessageType
+import com.gimlee.chat.web.dto.response.LocalizedChatEventDto
 import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
+import org.springframework.context.MessageSource
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.io.IOException
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -21,10 +25,12 @@ import java.util.concurrent.CopyOnWriteArrayList
  * See gimlee-chat/docs/architecture.md for details.
  */
 @Component
-class ChatEventBroadcaster {
+class ChatEventBroadcaster(
+    private val messageSource: MessageSource
+) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    data class UserEmitter(val userId: String, val emitter: SseEmitter)
+    data class UserEmitter(val userId: String, val emitter: SseEmitter, val locale: Locale)
 
     // chatId -> List of user emitters
     private val emitters = ConcurrentHashMap<String, CopyOnWriteArrayList<UserEmitter>>()
@@ -32,9 +38,9 @@ class ChatEventBroadcaster {
     // chatId -> Buffer of events
     private val eventBuffer = ConcurrentHashMap<String, MutableList<InternalChatEvent>>()
 
-    fun createEmitter(chatId: String, userId: String? = null): SseEmitter {
+    fun createEmitter(chatId: String, userId: String? = null, locale: Locale = Locale.ENGLISH): SseEmitter {
         val emitter = SseEmitter(0L) // Infinite timeout
-        val userEmitter = UserEmitter(userId = userId ?: "", emitter = emitter)
+        val userEmitter = UserEmitter(userId = userId ?: "", emitter = emitter, locale = locale)
         val chatEmitters = emitters.computeIfAbsent(chatId) { CopyOnWriteArrayList() }
         chatEmitters.add(userEmitter)
 
@@ -90,10 +96,31 @@ class ChatEventBroadcaster {
             val deadEmitters = mutableListOf<UserEmitter>()
             for (userEmitter in chatEmitters) {
                 try {
+                    val localizedEvents = events.map { event ->
+                        val data = if (event.messageType == MessageType.SYSTEM && event.systemCode != null) {
+                            val key = "gimlee.chat.system.${event.systemCode}"
+                            val status = event.systemArgs?.get("status")
+                            val localizedKey = if (status != null) "$key.$status" else key
+                            messageSource.getMessage(localizedKey, event.systemArgs?.values?.toTypedArray(), userEmitter.locale)
+                        } else {
+                            event.data
+                        }
+
+                        LocalizedChatEventDto(
+                            chatId = event.chatId,
+                            type = event.type,
+                            data = data,
+                            authorId = event.authorId,
+                            author = event.author,
+                            messageType = event.messageType,
+                            timestamp = event.timestamp
+                        )
+                    }
+
                     userEmitter.emitter.send(
                         SseEmitter.event()
                             .name("chat-event")
-                            .data(events)
+                            .data(localizedEvents)
                     )
                 } catch (e: IOException) {
                     deadEmitters.add(userEmitter)

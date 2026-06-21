@@ -6,6 +6,7 @@ import com.gimlee.chat.domain.ChatOutcome
 import com.gimlee.chat.domain.ConversationService
 import com.gimlee.chat.domain.model.ChatPrincipalProvider
 import com.gimlee.chat.web.dto.request.NewMessageRequestDto
+import com.gimlee.chat.web.dto.response.ArchivedMessageDto
 import com.gimlee.chat.web.dto.response.ArchivedMessagesResponseDto
 import com.gimlee.common.domain.model.CommonOutcome
 import com.gimlee.common.domain.model.Outcome
@@ -99,10 +100,11 @@ class ChatController(
         val accessOutcome = conversationService.verifyReadAccess(conversationId, userId)
         if (accessOutcome != null) return handleOutcome(accessOutcome)
 
+        val locale = LocaleContextHolder.getLocale()
         val messages = chatService.getHistory(conversationId, limit, beforeId)
         val response = ArchivedMessagesResponseDto(
             hasMore = messages.size >= limit,
-            messages = messages
+            messages = messages.map { ArchivedMessageDto.from(it, messageSource, locale) }
         )
         return ResponseEntity.ok(response)
     }
@@ -123,6 +125,7 @@ class ChatController(
             return emitter
         }
 
-        return chatEventBroadcaster.createEmitter(conversationId, userId)
+        val locale = LocaleContextHolder.getLocale()
+        return chatEventBroadcaster.createEmitter(conversationId, userId, locale)
     }
 }
