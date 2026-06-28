@@ -1,5 +1,6 @@
 package com.gimlee.api.web.dto
 
+import com.gimlee.payments.crypto.web.dto.CryptoTransactionDto
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 import java.time.Instant
@@ -24,6 +25,8 @@ data class SalesOrderDetailDto(
     val deliveryAddress: DeliveryAddressSnapshotDto?,
     @field:Schema(description = "Chronological history of status changes")
     val statusHistory: List<StatusChangeDto>,
+    @field:Schema(description = "Cryptocurrency transactions associated with this order")
+    val cryptoTransactions: List<CryptoTransactionDto> = emptyList(),
     @field:Schema(description = "Timestamp when the order was created")
     val createdAt: Instant
 )

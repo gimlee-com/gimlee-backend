@@ -57,8 +57,9 @@ abstract class CryptoPaymentService(
                     log.debug("Found {} transactions for {} address {}", transactions.size, cryptoCurrency, zAddress)
                     allTransactions.addAll(transactions.map { tx ->
                         CryptoTransactionDto.fromReceivedTransaction(
-                            tx.toReceivedTransaction(),
-                            zAddress
+                            receivedTransaction = tx.toReceivedTransaction(),
+                            currency = cryptoCurrency.name,
+                            address = zAddress
                         )
                     })
                 } ?: log.warn("Received null result for {} transactions call for address {} user {}", cryptoCurrency, zAddress, userId)

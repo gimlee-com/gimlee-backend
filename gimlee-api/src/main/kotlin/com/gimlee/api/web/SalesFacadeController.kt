@@ -150,6 +150,7 @@ class SalesFacadeController(
         val adsMap = adService.getAds(adIds).associateBy { it.id }
         val buyerSummary = userSummaryAssembler.assemble(listOf(purchase.buyerId.toHexString()))
         val payment = paymentService.getPaymentByPurchaseId(purchase.id)
+        val cryptoTransactions = paymentService.getTransactionsByPurchaseId(purchase.id)
 
         val dto = SalesOrderDetailDto(
             id = purchase.id.toHexString(),
@@ -183,6 +184,7 @@ class SalesFacadeController(
             statusHistory = purchase.statusHistory.map {
                 StatusChangeDto(status = it.status.name, timestamp = it.timestamp)
             },
+            cryptoTransactions = cryptoTransactions,
             createdAt = purchase.createdAt
         )
         return ResponseEntity.ok(dto)

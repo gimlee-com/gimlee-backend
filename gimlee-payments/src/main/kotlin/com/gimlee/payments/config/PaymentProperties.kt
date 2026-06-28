@@ -38,7 +38,8 @@ data class PirateChainProperties(
     @DefaultValue("1")
     val minConfirmations: Int = 1,
     @DefaultValue("5")
-    val monitorThreads: Int = 5
+    val monitorThreads: Int = 5,
+    val explorerUrl: String? = null
 )
 
 data class YcashProperties(
@@ -49,7 +50,8 @@ data class YcashProperties(
     @DefaultValue("1")
     val minConfirmations: Int = 1,
     @DefaultValue("1")
-    val monitorThreads: Int = 1
+    val monitorThreads: Int = 1,
+    val explorerUrl: String? = null
 )
 
 data class ExchangeProperties(

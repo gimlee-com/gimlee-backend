@@ -220,6 +220,18 @@ Authorization: Bearer {{auth_token}}
 #     { "status": "CREATED", "timestamp": "2023-01-01T09:59:00Z" },
 #     { "status": "AWAITING_PAYMENT", "timestamp": "2023-01-01T10:00:00Z" }
 #   ],
+#   "cryptoTransactions": [
+#     {
+#       "txid": "tx123...",
+#       "amount": 100.0,
+#       "confirmations": 3,
+#       "currency": "ARRR",
+#       "timestamp": "2023-01-01T10:05:00Z",
+#       "memo": "gimlee:60f8f9b3a9d9e8f8a8b8c8d8",
+#       "address": "zs1...",
+#       "explorerUrl": "https://explorer.com/tx/tx123..."
+#     }
+#   ],
 #   "createdAt": "2023-01-01T10:00:00Z"
 # }
 

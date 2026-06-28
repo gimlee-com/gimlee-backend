@@ -8,6 +8,8 @@ import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.payments.persistence.PaymentEventRepository
 import com.gimlee.payments.persistence.PaymentRepository
 import com.gimlee.payments.crypto.persistence.UserWalletAddressRepository
+import com.gimlee.payments.crypto.persistence.IncomingTransactionRepository
+import com.gimlee.payments.crypto.web.dto.CryptoTransactionDto
 import org.bson.types.ObjectId
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -20,6 +22,7 @@ class PaymentService(
     private val paymentRepository: PaymentRepository,
     private val paymentEventRepository: PaymentEventRepository,
     private val userWalletAddressRepository: UserWalletAddressRepository,
+    private val incomingTransactionRepository: IncomingTransactionRepository,
     private val applicationEventPublisher: ApplicationEventPublisher,
     private val paymentProperties: PaymentProperties
 ) {
@@ -109,6 +112,21 @@ class PaymentService(
     }
 
     fun getPaymentByPurchaseId(purchaseId: ObjectId): Payment? = paymentRepository.findByPurchaseId(purchaseId)
+
+    /**
+     * Retrieves transactions related to a specific purchase by matching the payment memo.
+     */
+    fun getTransactionsByPurchaseId(purchaseId: ObjectId): List<CryptoTransactionDto> {
+        val payment = getPaymentByPurchaseId(purchaseId) ?: return emptyList()
+        val docs = incomingTransactionRepository.findByMemo(payment.memo)
+
+        val explorerUrl = when (payment.paymentMethod) {
+            PaymentMethod.PIRATE_CHAIN -> paymentProperties.pirateChain.explorerUrl
+            PaymentMethod.YCASH -> paymentProperties.ycash.explorerUrl
+        }
+
+        return docs.map { CryptoTransactionDto.fromDocument(it, explorerUrl) }
+    }
     
     private fun publishEvent(payment: Payment) {
         val paymentEvent = PaymentEvent(

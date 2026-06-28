@@ -79,6 +79,17 @@ class IncomingTransactionRepository(
     }
 
     /**
+     * Finds transactions by memo.
+     */
+    fun findByMemo(memo: String): List<IncomingTransactionDocument> {
+        val query = eq(FIELD_MEMO, memo)
+        return collection.find(query)
+            .sort(Sorts.descending(FIELD_DETECTED_AT))
+            .map { mapToTransaction(it) }
+            .toList()
+    }
+
+    /**
      * Checks existence using countDocuments.
      */
     fun exists(userId: ObjectId, zAddress: String, txid: String): Boolean {
