@@ -6,6 +6,7 @@ import com.gimlee.payments.domain.PaymentService
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.persistence.PaymentRepository
 import com.gimlee.payments.crypto.domain.CryptoPaymentMonitor
+import com.gimlee.payments.crypto.persistence.IncomingTransactionRepository
 import com.gimlee.payments.crypto.ycash.client.YcashRpcClient
 import com.gimlee.payments.crypto.ycash.config.YcashClientConfig.Companion.YCASH_MONITOR_EXECUTOR
 import org.springframework.beans.factory.annotation.Qualifier
@@ -19,6 +20,7 @@ class YcashPaymentMonitor(
     paymentService: PaymentService,
     ycashRpcClient: YcashRpcClient,
     paymentProperties: PaymentProperties,
+    incomingTransactionRepository: IncomingTransactionRepository,
     @Qualifier(YCASH_MONITOR_EXECUTOR)
     executorService: ExecutorService
 ) : CryptoPaymentMonitor(
@@ -28,7 +30,8 @@ class YcashPaymentMonitor(
     paymentProperties,
     executorService,
     Currency.YEC,
-    PaymentMethod.YCASH
+    PaymentMethod.YCASH,
+    incomingTransactionRepository
 ) {
     @Scheduled(fixedDelayString = "\${gimlee.payments.ycash.monitor-delay-ms:10000}")
     override fun monitorPayments() {

@@ -118,7 +118,14 @@ class PaymentService(
      */
     fun getTransactionsByPurchaseId(purchaseId: ObjectId): List<CryptoTransactionDto> {
         val payment = getPaymentByPurchaseId(purchaseId) ?: return emptyList()
-        val docs = incomingTransactionRepository.findByMemo(payment.memo)
+        
+        // Search by both prefixed and non-prefixed memo for robustness
+        val prefixedMemo = payment.memo
+        val nonPrefixedMemo = purchaseId.toHexString()
+        
+        val docs = (incomingTransactionRepository.findByMemo(prefixedMemo) + 
+                    incomingTransactionRepository.findByMemo(nonPrefixedMemo))
+            .distinctBy { it.txid } // Avoid duplicates if both match
 
         val explorerUrl = when (payment.paymentMethod) {
             PaymentMethod.PIRATE_CHAIN -> paymentProperties.pirateChain.explorerUrl

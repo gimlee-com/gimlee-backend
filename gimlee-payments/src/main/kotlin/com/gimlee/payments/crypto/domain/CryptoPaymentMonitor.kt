@@ -1,14 +1,18 @@
 package com.gimlee.payments.crypto.domain
 
 import com.gimlee.common.domain.model.Currency
+import com.gimlee.common.toMicros
 import com.gimlee.payments.config.PaymentProperties
 import com.gimlee.payments.crypto.client.CryptoClient
 import com.gimlee.payments.crypto.client.model.ReceivedTransaction
+import com.gimlee.payments.crypto.persistence.IncomingTransactionRepository
+import com.gimlee.payments.crypto.persistence.model.IncomingTransactionDocument
 import com.gimlee.payments.domain.PaymentService
 import com.gimlee.payments.domain.model.Payment
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.domain.model.PaymentStatus
 import com.gimlee.payments.persistence.PaymentRepository
+import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import java.time.Instant
@@ -22,7 +26,8 @@ abstract class CryptoPaymentMonitor(
     private val paymentProperties: PaymentProperties,
     private val executorService: ExecutorService,
     private val cryptoCurrency: Currency,
-    private val paymentMethod: PaymentMethod
+    private val paymentMethod: PaymentMethod,
+    protected val incomingTransactionRepository: IncomingTransactionRepository
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -65,16 +70,40 @@ abstract class CryptoPaymentMonitor(
 
         payments.forEach { payment ->
             try {
-                checkPayment(payment, transactions)
+                checkPayment(payment, transactions, address)
             } catch (e: Exception) {
                 log.error("Error processing payment ${payment.id} for $cryptoCurrency: ${e.message}", e)
             }
         }
     }
 
-    private fun checkPayment(payment: Payment, transactions: List<ReceivedTransaction>) {
+    private fun checkPayment(payment: Payment, transactions: List<ReceivedTransaction>, address: String) {
+        val memoPrefix = when (cryptoCurrency) {
+            Currency.ARRR -> paymentProperties.pirateChain.memoPrefix
+            Currency.YEC -> paymentProperties.ycash.memoPrefix
+            else -> ""
+        }
+
         val matchingTxs = transactions.filter { tx ->
-            tx.memo != null && tx.memo == payment.memo
+            tx.memo != null && (tx.memo == payment.memo || tx.memo == payment.memo.removePrefix(memoPrefix))
+        }
+
+        // Record matching transactions if they don't exist yet
+        matchingTxs.forEach { tx ->
+            if (!incomingTransactionRepository.exists(payment.sellerId, address, tx.txid)) {
+                log.info("Recording new incoming transaction ${tx.txid} for payment ${payment.id}")
+                incomingTransactionRepository.save(IncomingTransactionDocument(
+                    id = ObjectId.get(),
+                    type = cryptoCurrency,
+                    userId = payment.sellerId,
+                    address = address,
+                    txid = tx.txid,
+                    memo = tx.memo,
+                    amount = tx.amount,
+                    confirmations = tx.confirmations,
+                    detectedAtMicros = Instant.now().toMicros()
+                ))
+            }
         }
 
         val totalPaid = matchingTxs.sumOf { BigDecimal.valueOf(it.amount) }

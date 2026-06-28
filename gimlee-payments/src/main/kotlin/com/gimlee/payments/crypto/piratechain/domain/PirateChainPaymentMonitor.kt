@@ -6,6 +6,7 @@ import com.gimlee.payments.domain.PaymentService
 import com.gimlee.payments.domain.model.PaymentMethod
 import com.gimlee.payments.persistence.PaymentRepository
 import com.gimlee.payments.crypto.domain.CryptoPaymentMonitor
+import com.gimlee.payments.crypto.persistence.IncomingTransactionRepository
 import com.gimlee.payments.crypto.piratechain.client.PirateChainRpcClient
 import com.gimlee.payments.crypto.piratechain.config.PirateChainClientConfig.Companion.PIRATE_CHAIN_MONITOR_EXECUTOR
 import org.springframework.beans.factory.annotation.Qualifier
@@ -19,6 +20,7 @@ class PirateChainPaymentMonitor(
     paymentService: PaymentService,
     pirateChainRpcClient: PirateChainRpcClient,
     paymentProperties: PaymentProperties,
+    incomingTransactionRepository: IncomingTransactionRepository,
     @Qualifier(PIRATE_CHAIN_MONITOR_EXECUTOR)
     executorService: ExecutorService
 ) : CryptoPaymentMonitor(
@@ -28,7 +30,8 @@ class PirateChainPaymentMonitor(
     paymentProperties,
     executorService,
     Currency.ARRR,
-    PaymentMethod.PIRATE_CHAIN
+    PaymentMethod.PIRATE_CHAIN,
+    incomingTransactionRepository
 ) {
     @Scheduled(fixedDelayString = "\${gimlee.payments.pirate-chain.monitor-delay-ms:10000}")
     override fun monitorPayments() {
