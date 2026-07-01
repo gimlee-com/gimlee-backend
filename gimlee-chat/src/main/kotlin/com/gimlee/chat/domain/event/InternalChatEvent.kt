@@ -5,7 +5,10 @@ import java.time.Instant
 
 /**
  * Internal event to broadcast chat events (messages, typing indicators) to real-time SSE subscribers.
- * This is JVM-local — requires sticky routing or distributed bus for horizontal scaling.
+ *
+ * Delivered via [com.gimlee.chat.web.transport.ChatEventTransport]: in-process for single-node
+ * deployments, or Redis Pub/Sub for horizontal scaling.
+ * See docs/adr/0005-real-time-chat-horizontal-scaling.md.
  */
 data class InternalChatEvent(
     val chatId: String,

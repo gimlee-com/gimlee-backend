@@ -3,8 +3,11 @@ package com.gimlee.chat
 import com.gimlee.auth.config.FilterConfig
 import com.gimlee.auth.config.UtilConfig
 import com.gimlee.auth.service.JwtTokenService
+import com.gimlee.auth.service.UserService
 import com.gimlee.auth.util.HttpServletRequestAuthUtil
 import com.gimlee.chat.domain.model.ChatPrincipalProvider
+import io.mockk.every
+import io.mockk.mockk
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
@@ -26,5 +29,10 @@ class ChatTestConfig {
     fun chatPrincipalProvider(): ChatPrincipalProvider = object : ChatPrincipalProvider {
         override fun getUserId(): String = HttpServletRequestAuthUtil.getPrincipal().userId
         override fun getUsername(): String = HttpServletRequestAuthUtil.getPrincipal().username
+    }
+
+    @Bean
+    fun userService(): UserService = mockk(relaxed = true) {
+        every { findUsernamesByIds(any()) } returns emptyMap()
     }
 }

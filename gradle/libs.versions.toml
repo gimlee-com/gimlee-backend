@@ -43,6 +43,7 @@ spring-boot-starter-validation = { module = "org.springframework.boot:spring-boo
 spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 spring-boot-starter-jetty = { module = "org.springframework.boot:spring-boot-starter-jetty" }
 spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb" }
+spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis" }
 spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 springdoc-openapi-starter-webmvc-api = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc-openapi" }

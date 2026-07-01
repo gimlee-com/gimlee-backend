@@ -169,8 +169,11 @@ gimlee:
     history:
       default-limit: 20
     sse:
+      transport: in-process   # in-process | redis
       buffer-ms: 200
       heartbeat-ms: 30000
+      redis:
+        channel: gimlee.chat.events
     persistence:
       # batch-ms: 1000
       # batch-size: 100

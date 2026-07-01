@@ -6,6 +6,7 @@ import com.gimlee.chat.domain.model.ArchivedMessage
 import com.gimlee.chat.domain.model.ChatEventType
 import com.gimlee.chat.domain.model.MessageType
 import com.gimlee.chat.persistence.ChatRepository
+import com.gimlee.chat.web.transport.ChatEventTransport
 import org.bson.types.ObjectId
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -14,7 +15,8 @@ import java.time.Instant
 @Service
 class ChatService(
     private val chatRepository: ChatRepository,
-    private val eventPublisher: ApplicationEventPublisher
+    private val eventPublisher: ApplicationEventPublisher,
+    private val chatEventTransport: ChatEventTransport
 ) {
 
     fun sendMessage(chatId: String, authorId: String, authorName: String, text: String): ArchivedMessage {
@@ -29,7 +31,7 @@ class ChatService(
         )
         chatRepository.saveMessage(message)
 
-        eventPublisher.publishEvent(InternalChatEvent(
+        chatEventTransport.publish(InternalChatEvent(
             chatId = chatId,
             type = ChatEventType.MESSAGE.name,
             data = text,
@@ -65,7 +67,7 @@ class ChatService(
         )
         chatRepository.saveMessage(message)
 
-        eventPublisher.publishEvent(InternalChatEvent(
+        chatEventTransport.publish(InternalChatEvent(
             chatId = chatId,
             type = ChatEventType.MESSAGE.name,
             author = "system",
@@ -79,7 +81,7 @@ class ChatService(
     }
 
     fun indicateTyping(chatId: String, authorId: String, authorName: String) {
-        eventPublisher.publishEvent(InternalChatEvent(
+        chatEventTransport.publish(InternalChatEvent(
             chatId = chatId,
             type = ChatEventType.TYPING_INDICATOR.name,
             authorId = authorId,

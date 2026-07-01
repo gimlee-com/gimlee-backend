@@ -89,6 +89,30 @@ gimlee:
       lock-on-failed: true
       system-messages-enabled: true
       lock-delay-days: 14
+    sse:
+      # Cross-instance real-time event transport.
+      #   in-process : JVM-local delivery (default, single-node deployments)
+      #   redis      : Redis Pub/Sub fan-out for horizontal scaling (see ADR 0005).
+      #                Requires spring.data.redis.* connection config (see below).
+      transport: in-process
+      buffer-ms: 200
+      heartbeat-ms: 30000
+      redis:
+        channel: gimlee.chat.events
+
+# Redis connection — only required when gimlee.chat.sse.transport=redis
+#spring:
+#  data:
+#    redis:
+#      host: localhost
+#      port: 6379
+#      # password: ...
+#      timeout: 2s
+#      lettuce:
+#        pool:
+#          max-active: 8
+#          max-idle: 8
+#          min-idle: 0
 
   # gimlee-purchases properties
   purchases:

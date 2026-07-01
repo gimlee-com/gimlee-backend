@@ -3,10 +3,11 @@ package com.gimlee.chat.web
 import com.gimlee.chat.domain.event.InternalChatEvent
 import com.gimlee.chat.domain.model.MessageType
 import com.gimlee.chat.web.dto.response.LocalizedChatEventDto
+import com.gimlee.chat.web.transport.ChatEventTransport
+import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
 import org.springframework.context.MessageSource
-import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
@@ -17,16 +18,17 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Broadcaster that manages SSE emitters and buffers events for efficient real-time delivery.
- * 
+ *
  * Emitters are tracked by (chatId, userId) for access control.
- * 
- * NOTE: This implementation is JVM-local. For horizontal scaling, "Sticky Chat" load balancing 
- * (pinning chatId to instances) or a distributed event bus (e.g. Redis) is required.
- * See gimlee-chat/docs/architecture.md for details.
+ *
+ * Cross-instance fan-out is delegated to a [ChatEventTransport]: the default in-process transport
+ * keeps delivery JVM-local, while the Redis transport broadcasts events across instances so any
+ * participant can connect to any node. See docs/adr/0005-real-time-chat-horizontal-scaling.md.
  */
 @Component
 class ChatEventBroadcaster(
-    private val messageSource: MessageSource
+    private val messageSource: MessageSource,
+    private val chatEventTransport: ChatEventTransport
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -37,6 +39,11 @@ class ChatEventBroadcaster(
 
     // chatId -> Buffer of events
     private val eventBuffer = ConcurrentHashMap<String, MutableList<InternalChatEvent>>()
+
+    @PostConstruct
+    fun subscribeToTransport() {
+        chatEventTransport.subscribe(::bufferEvent)
+    }
 
     fun createEmitter(chatId: String, userId: String? = null, locale: Locale = Locale.ENGLISH): SseEmitter {
         val emitter = SseEmitter(0L) // Infinite timeout
@@ -75,10 +82,9 @@ class ChatEventBroadcaster(
         }
     }
 
-    @EventListener
-    fun handleInternalChatEvent(event: InternalChatEvent) {
+    private fun bufferEvent(event: InternalChatEvent) {
         if (!emitters.containsKey(event.chatId)) return
-        
+
         eventBuffer.computeIfAbsent(event.chatId) { CopyOnWriteArrayList() }.add(event)
     }
 
