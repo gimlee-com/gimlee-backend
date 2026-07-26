@@ -15,3 +15,9 @@ ansible_ssh_private_key_file=~/.ssh/id_rsa
 # MongoDB Credentials
 mongodb_user=admin
 mongodb_password=change_me_in_production
+
+# Redis (chat SSE event bus — see ADR 0005). Required by deploy-redis.yml.
+redis_password=change_me_in_production
+# Enable the Redis transport for real-time chat when running more than one app node.
+# Leave as 'in-process' for single-node deployments.
+chat_sse_transport=in-process

@@ -1,0 +1,49 @@
+---
+# Deploys Redis as the distributed event bus for real-time chat SSE fan-out across app instances.
+# See docs/adr/0005-real-time-chat-horizontal-scaling.md.
+#
+# Redis is used purely as a Pub/Sub transport — MongoDB remains the source of truth for chat
+# history, so persistence is intentionally disabled. Co-located on the db node to avoid an extra
+# server at the current scale; promote to a dedicated node if fan-out volume grows.
+#
+# Run: ansible-playbook -i inventory.ini playbooks/deploy-redis.yml
+- name: Deploy Redis
+  hosts: db
+  become: true
+  vars:
+    redis_image: "redis:7-alpine"
+    redis_maxmemory: "256mb"
+  tasks:
+    - name: Fail if redis_password is not set
+      assert:
+        that:
+          - redis_password is defined
+          - redis_password | length > 0
+        fail_msg: "redis_password must be defined (set it in inventory.ini)."
+
+    - name: Run Redis container
+      community.docker.docker_container:
+        name: redis
+        image: "{{ redis_image }}"
+        pull: true
+        restart_policy: always
+        # Pub/Sub only: persistence disabled (--save "" / --appendonly no).
+        command: >
+          redis-server
+          --requirepass {{ redis_password }}
+          --save ""
+          --appendonly no
+          --maxmemory {{ redis_maxmemory }}
+          --maxmemory-policy noeviction
+        ports:
+          - "6379:6379"
+
+    - name: Wait for Redis to respond to PING
+      shell: >
+        docker exec redis redis-cli -a "{{ redis_password }}" ping
+      register: redis_ready
+      until: redis_ready.stdout is search("PONG")
+      retries: 10
+      delay: 3
+      changed_when: false
+      no_log: true

@@ -9,6 +9,10 @@
     mongodb_uri: "mongodb://{{ mongodb_user }}:{{ mongodb_password | urlencode }}@{{ hostvars['db1']['ansible_host'] }}:27017/gimlee?authSource=admin"
     piratechain_rpc: "http://{{ hostvars['wallet1']['ansible_host'] }}:45453"
     ycash_rpc: "http://{{ hostvars['wallet1']['ansible_host'] }}:{{ ycash_rpc_port | default(19232) }}"
+    # Real-time chat SSE transport: "in-process" (single node) or "redis" (horizontal scaling).
+    # See docs/adr/0005-real-time-chat-horizontal-scaling.md.
+    chat_sse_transport: "{{ chat_sse_transport | default('in-process') }}"
+    redis_host: "{{ redis_host | default(hostvars['db1']['ansible_host']) }}"
   tasks:
     - name: Run Gimlee API container from pre-built image
       community.docker.docker_container:
@@ -40,6 +44,12 @@
           GIMLEE_MEDIA_STORE_S3_ACCESS_KEY: "{{ s3_access_key }}"
           GIMLEE_MEDIA_STORE_S3_SECRET_KEY: "{{ s3_secret_key }}"
           GIMLEE_PAYMENTS_EXCHANGE_OPEN_EXCHANGE_RATES_APP_ID: "{{ openexchangerates_app_id }}"
+          # Chat real-time SSE fan-out. Defaults to in-process; set chat_sse_transport=redis
+          # (with Redis deployed via deploy-redis.yml) when running more than one app node.
+          GIMLEE_CHAT_SSE_TRANSPORT: "{{ chat_sse_transport }}"
+          SPRING_DATA_REDIS_HOST: "{{ redis_host }}"
+          SPRING_DATA_REDIS_PORT: "6379"
+          SPRING_DATA_REDIS_PASSWORD: "{{ redis_password | default('') }}"
         labels:
           traefik.enable: "true"
           # Create the main router for HTTPS on port 443 (websecure)

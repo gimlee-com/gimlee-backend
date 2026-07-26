@@ -143,6 +143,21 @@ resource "digitalocean_firewall" "db" {
   }
   # -----------------------------------------
 
+  # --- Allow Redis (chat SSE event bus) from App Nodes ---
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "6379"
+    source_tags      = ["app"]
+    source_addresses = [for ip in var.management_ips : "${ip}/32"]
+  }
+
+  inbound_rule {
+    protocol           = "tcp"
+    port_range         = "9121" # Redis Exporter
+    source_droplet_ids = [digitalocean_droplet.wallet.id]
+  }
+  # -----------------------------------------
+
   outbound_rule {
     protocol              = "tcp"
     port_range            = "all"

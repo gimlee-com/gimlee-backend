@@ -186,6 +186,23 @@ resource "hcloud_firewall" "db" {
     source_ips = ["${hcloud_server.wallet.ipv4_address}/32"]
   }
   # ---------------------------------------------------
+  # --- Allow Redis (chat SSE event bus) from App Nodes ---
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "6379"
+    source_ips = concat(
+      [for s in hcloud_server.app : "${s.ipv4_address}/32"],
+      [for ip in var.management_ips : "${ip}/32"]
+    )
+  }
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "9121" # Redis Exporter
+    source_ips = ["${hcloud_server.wallet.ipv4_address}/32"]
+  }
+  # ---------------------------------------------------
   apply_to {
     label_selector = "role=db"
   }

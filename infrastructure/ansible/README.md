@@ -28,6 +28,7 @@ wallet1 ansible_host=1.2.3.7
 
 - **`setup.yml`**: Installs Docker and basic dependencies on all nodes.
 - **`deploy-services.yml`**: Deploys MongoDB (on `db` nodes) and the PirateChain Full Node (on `wallet` nodes).
+- **`deploy-redis.yml`**: Deploys Redis (on `db` nodes) as the distributed event bus for real-time chat SSE fan-out across multiple app nodes (see ADR 0005). Only required when running more than one app node.
 - **`deploy-exporters.yml`**: Deploys system and database metrics collectors (Node Exporter & MongoDB Exporter).
 - **`deploy-monitoring.yml`**: Deploys the monitoring stack (Prometheus & Grafana) on the wallet node.
 - **`deploy-crowdsec.yml`**: Deploys CrowdSec Security Engine for bot detection and analytics.
@@ -124,4 +125,12 @@ To add more application nodes:
 1. Increase `app_node_count` in your Terraform `variables.tf`.
 2. Run `terraform apply`.
 3. Add the new IP(s) to the `[app]` group in `inventory.ini`.
-4. Re-run the playbooks. Traefik will automatically detect and load balance to the new nodes.
+4. Deploy Redis (the cross-instance chat event bus) and enable the Redis transport:
+   ```bash
+   # Set redis_password and chat_sse_transport=redis in inventory.ini, then:
+   ansible-playbook -i ../inventory.ini deploy-redis.yml
+   ```
+   This is required so real-time chat events fan out across instances — without it, chat
+   participants connected to different nodes won't see each other's messages in real time
+   (see `docs/adr/0005-real-time-chat-horizontal-scaling.md`).
+5. Re-run the playbooks. Traefik will automatically detect and load balance to the new nodes.
