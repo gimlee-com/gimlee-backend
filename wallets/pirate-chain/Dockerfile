@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /usr/local/bin
 
 # Download Pirate Chain Binaries (Check https://github.com/PirateNetwork/pirate/releases for latest version)
-ARG PIRATE_URL=https://github.com/PirateNetwork/pirate/releases/download/v5.9.2/pirate-cli-ubuntu2004-v5.9.2.zip
+ARG PIRATE_VERSION=6.0.8-1df8c36
+ARG PIRATE_URL=https://github.com/PirateNetwork/pirate/releases/download/v${PIRATE_VERSION}/pirate-cli-x86_64-linux-v${PIRATE_VERSION}.zip
 
 RUN wget -O pirate.zip "$PIRATE_URL" \
     && unzip -j pirate.zip \

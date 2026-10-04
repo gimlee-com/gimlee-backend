@@ -49,7 +49,7 @@ class PirateChainRpcClient(
 
         private const val ALREADY_CONTAINS_PRIVATE_KEY_ERROR_CODE = -4
         private const val ALREADY_CONTAINS_PRIVATE_KEY_ERROR_MSG_PART = "The wallet already contains the private key for this viewing key"
-        private val ADDRESS_REGEX = Regex("address: ([a-zA-Z0-9]+)")
+        private val ADDRESS_REGEX = Regex("address: ([a-zA-Z0-9-]+)")
     }
 
     @Throws(IOException::class, PirateChainRpcException::class)
@@ -164,7 +164,8 @@ class PirateChainRpcClient(
                     ADDRESS_REGEX.find(msg)?.groupValues?.get(1) ?: "unknown"
                 }
                 log.info("Viewing key already has a private key in the wallet for address: {}. Ignoring error.", address)
-                RpcResponse(result = Address(type = "sapling", address = address), error = null, id = null)
+                val addressType = if (address.startsWith("pirate") || viewKey.startsWith("pirate")) "ironwood" else "sapling"
+                RpcResponse(result = Address(type = addressType, address = address), error = null, id = null)
             } else {
                 throw e
             }

@@ -17,7 +17,7 @@ class PirateChainFaucetService(
 
         // For regtest, shielding directly to the address is the most reliable way to distribute funds
         // especially when the wallet's existing shielded funds might be in a bad state.
-        if (address.startsWith("z")) {
+        if (address.startsWith("z") || address.startsWith("pirate")) {
             try {
                 log.info("Attempting direct shielding to {}", address)
                 val shieldResponse = pirateChainRpcClient.zShieldCoinbase("*", address)

@@ -20,5 +20,5 @@ class PirateChainAddressService(
     userRoleRepository,
     Currency.ARRR,
     Role.PIRATE,
-    setOf(WalletShieldedAddressType.Z_SAPLING, WalletShieldedAddressType.ORCHARD)
+    setOf(WalletShieldedAddressType.SAPLING, WalletShieldedAddressType.IRONWOOD, WalletShieldedAddressType.Z_SAPLING)
 )

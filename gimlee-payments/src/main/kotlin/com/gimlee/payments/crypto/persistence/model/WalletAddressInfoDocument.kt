@@ -29,7 +29,8 @@ enum class WalletShieldedAddressType(val rpcName: String) {
     SPROUT("sprout"),
     SAPLING("sapling"),
     Z_SAPLING("z-sapling"),
-    ORCHARD("z-orchard");
+    ORCHARD("z-orchard"),
+    IRONWOOD("ironwood");
 
     companion object {
         fun fromRpcName(rpcName: String): WalletShieldedAddressType =

@@ -16,10 +16,11 @@
 #   - Docker installed and running.
 #
 # Usage:
-#   scripts/run_piratechain_regtest_local.sh [up|down|status|logs|cli|expose|unexpose ...]
+#   scripts/run_piratechain_regtest_local.sh [up|down|clean|status|logs|cli|expose|unexpose ...]
 #
 #   up        Build images (if needed) and start the regtest stack (default).
 #   down      Stop and remove the regtest containers.
+#   clean     Stop containers and remove local blockchain data (preserves params).
 #   status    Show the status of the regtest containers.
 #   logs      Follow the pirated container logs (Ctrl-C to stop).
 #   cli       Run a pirate-cli command against the node,
@@ -67,8 +68,8 @@ PIRATE_DATA_DIR="${PIRATE_DATA_DIR:-$REPO_ROOT/.piratechain-regtest-local}"
 PIRATE_MINE_INTERVAL="${PIRATE_MINE_INTERVAL:-60}"
 
 # Image names mirror the ansible deployment.
-PIRATE_IMAGE="piratechain:latest"
-LWD_IMAGE="piratechain-lightwalletd:latest"
+PIRATE_IMAGE="${PIRATE_IMAGE:-piratechain-regtest:6.0.8}"
+LWD_IMAGE="${LWD_IMAGE:-piratechain-lightwalletd:latest}"
 
 # Container names (suffixed to make them obviously local/regtest).
 NODE_CONTAINER="piratechain-regtest-local"
@@ -144,11 +145,13 @@ rpcallowip=0.0.0.0/0
 regtest=1
 gen=0
 lightwalletd=1
-# Force Overwinter/Sapling activation at block 1 (ID:Height)
-# Overwinter: 5ba81b19, Sapling: 76b809bb
+# Force Overwinter/Sapling/Ironwood activation at block 1 (ID:Height)
+# Overwinter: 5ba81b19, Sapling: 76b809bb, Ironwood: 37a5165b
 nuparams=5ba81b19:1
 nuparams=76b809bb:1
+nuparams=37a5165b:1
 ac_sapling=1
+ac_ironwood=1
 EOF
     chmod 600 "$CONF_FILE"
 }
@@ -189,7 +192,7 @@ start_stack() {
         -v "$NODE_DATA_DIR:/root/.komodo/PIRATE" \
         -v "$CONF_FILE:/root/.komodo/PIRATE/PIRATE.conf:ro" \
         -v "$PARAMS_DIR:/root/.zcash-params:ro" \
-        "$PIRATE_IMAGE" ./pirated -printtoconsole -ac_name=PIRATE -regtest -nuparams=5ba81b19:1 -nuparams=76b809bb:1 -ac_sapling=1 >/dev/null
+        "$PIRATE_IMAGE" ./pirated -printtoconsole -ac_name=PIRATE -regtest -nuparams=5ba81b19:1 -nuparams=76b809bb:1 -nuparams=37a5165b:1 -ac_sapling=1 -ac_ironwood=1 >/dev/null
 
     echo "⏳ Waiting for PirateChain RPC to be ready..."
     local attempt=1
@@ -229,7 +232,8 @@ start_stack() {
                 break
             fi
             if [ "$status" == "failed" ]; then
-                echo "❌ Shielding failed"
+                echo "❌ Shielding failed:"
+                "$REPO_ROOT/scripts/run_piratechain_regtest_local.sh" cli z_getoperationstatus "[\"$opid\"]" || true
                 break
             fi
             if [ $shield_attempt -gt 30 ]; then
@@ -345,6 +349,13 @@ case "$COMMAND" in
         require_docker
         stop_stack
         ;;
+    clean)
+        require_docker
+        stop_stack
+        echo "🧹 Cleaning up regtest blockchain data (keeping params)..."
+        docker run --rm -v "$PIRATE_DATA_DIR:/data" alpine:latest rm -rf /data/PIRATE
+        echo "✅ Blockchain data cleaned."
+        ;;
     status)
         require_docker
         show_status
@@ -373,7 +384,7 @@ case "$COMMAND" in
         unexpose_firewall
         ;;
     *)
-        echo "Usage: $0 [up|down|status|logs|cli|expose|unexpose ...]"
+        echo "Usage: $0 [up|down|clean|status|logs|cli|expose|unexpose ...]"
         exit 1
         ;;
 esac
