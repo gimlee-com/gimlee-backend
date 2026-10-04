@@ -4,6 +4,7 @@ import com.gimlee.payments.client.model.RpcResponse
 import com.gimlee.payments.config.PaymentProperties
 import com.gimlee.payments.config.VolatilityProperties
 import com.gimlee.payments.crypto.client.model.RawReceivedTransaction
+import com.gimlee.payments.crypto.persistence.IncomingTransactionRepository
 import com.gimlee.payments.crypto.piratechain.client.PirateChainRpcClient
 import com.gimlee.payments.crypto.piratechain.domain.PirateChainPaymentMonitor
 import com.gimlee.payments.domain.model.Payment
@@ -25,6 +26,7 @@ class PirateChainPaymentMonitorTest : StringSpec({
     val paymentRepository = mockk<PaymentRepository>(relaxed = true)
     val paymentService = mockk<PaymentService>(relaxed = true)
     val rpcClient = mockk<PirateChainRpcClient>(relaxed = true)
+    val incomingTransactionRepository = mockk<IncomingTransactionRepository>(relaxed = true)
     val volatilityProperties = VolatilityProperties(
         downsideThreshold = 0.05,
         windowSeconds = 600,
@@ -34,7 +36,14 @@ class PirateChainPaymentMonitorTest : StringSpec({
     )
     val paymentProperties = PaymentProperties(timeoutHours = 1, volatility = volatilityProperties)
     val executorService = Executors.newSingleThreadExecutor()
-    val monitor = PirateChainPaymentMonitor(paymentRepository, paymentService, rpcClient, paymentProperties, executorService)
+    val monitor = PirateChainPaymentMonitor(
+        paymentRepository,
+        paymentService,
+        rpcClient,
+        paymentProperties,
+        incomingTransactionRepository,
+        executorService
+    )
 
     "should complete payment when full payment is received" {
         val paymentId = ObjectId.get()

@@ -28,11 +28,13 @@ class AdDiscoveryFilteringIntegrationTest(
     private val mongoDatabase: MongoDatabase
 ) : BaseIntegrationTest({
 
-    adRepository.clear()
-    exchangeRateRepository.clear()
-    mongoDatabase.getCollection(UserRepository.USERS_COLLECTION_NAME).deleteMany(org.bson.Document())
-    mongoDatabase.getCollection(UserRoleRepository.USER_ROLES_COLLECTION_NAME).deleteMany(org.bson.Document())
-    mongoDatabase.getCollection("gimlee-user-preferences").deleteMany(org.bson.Document())
+    beforeSpec {
+        adRepository.clear()
+        exchangeRateRepository.clear()
+        mongoDatabase.getCollection(com.gimlee.auth.persistence.UserRepository.USERS_COLLECTION_NAME).deleteMany(org.bson.Document())
+        mongoDatabase.getCollection(com.gimlee.auth.persistence.UserRoleRepository.USER_ROLES_COLLECTION_NAME).deleteMany(org.bson.Document())
+        mongoDatabase.getCollection("user-preferences").deleteMany(org.bson.Document())
+    }
 
     Given("ads in different settlement currencies and exchange rates") {
         val sellerId = ObjectId.get()
@@ -64,7 +66,7 @@ class AdDiscoveryFilteringIntegrationTest(
         adService.updateAd(ad1.id, sellerIdStr, UpdateAdRequest(
             description = "Description 1",
             fixedPrices = mapOf(Currency.ARRR to BigDecimal("100")),
-            location = com.gimlee.ads.domain.model.Location("city1", doubleArrayOf(0.0, 0.0)),
+            location = com.gimlee.ads.domain.model.Location(ObjectId.get().toHexString(), doubleArrayOf(0.0, 0.0)),
             stock = 10
         ))
         adService.activateAd(ad1.id, sellerIdStr)
@@ -74,7 +76,7 @@ class AdDiscoveryFilteringIntegrationTest(
         adService.updateAd(ad2.id, sellerIdStr, UpdateAdRequest(
             description = "Description 2",
             fixedPrices = mapOf(Currency.YEC to BigDecimal("100")),
-            location = com.gimlee.ads.domain.model.Location("city2", doubleArrayOf(0.0, 0.0)),
+            location = com.gimlee.ads.domain.model.Location(ObjectId.get().toHexString(), doubleArrayOf(0.0, 0.0)),
             stock = 10
         ))
         adService.activateAd(ad2.id, sellerIdStr)
@@ -84,7 +86,7 @@ class AdDiscoveryFilteringIntegrationTest(
         adService.updateAd(ad3.id, sellerIdStr, UpdateAdRequest(
             description = "Description 3",
             fixedPrices = mapOf(Currency.ARRR to BigDecimal("500")),
-            location = com.gimlee.ads.domain.model.Location("city3", doubleArrayOf(0.0, 0.0)),
+            location = com.gimlee.ads.domain.model.Location(ObjectId.get().toHexString(), doubleArrayOf(0.0, 0.0)),
             stock = 10
         ))
         adService.activateAd(ad3.id, sellerIdStr)

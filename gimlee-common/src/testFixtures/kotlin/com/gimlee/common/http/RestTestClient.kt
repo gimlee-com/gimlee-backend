@@ -36,6 +36,7 @@ data class RestResponse(
 class RestTestClient(
     private val baseUrl: String,
     val objectMapper: ObjectMapper = jacksonObjectMapper()
+        .findAndRegisterModules()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 ) : Closeable {
 

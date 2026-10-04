@@ -27,13 +27,24 @@ class AdDiscoveryIntegrationTest(
     private val mongoDatabase: com.mongodb.client.MongoDatabase
 ) : BaseIntegrationTest({
 
-    adRepository.clear()
-    exchangeRateRepository.clear()
-    mongoDatabase.getCollection(UserRepository.USERS_COLLECTION_NAME).deleteMany(org.bson.Document())
-    mongoDatabase.getCollection(UserRoleRepository.USER_ROLES_COLLECTION_NAME).deleteMany(org.bson.Document())
-    mongoDatabase.getCollection("gimlee-user-preferences").deleteMany(org.bson.Document())
+    beforeSpec {
+        adRepository.clear()
+        exchangeRateRepository.clear()
+        mongoDatabase.getCollection(UserRepository.USERS_COLLECTION_NAME).deleteMany(org.bson.Document())
+        mongoDatabase.getCollection(UserRoleRepository.USER_ROLES_COLLECTION_NAME).deleteMany(org.bson.Document())
+        mongoDatabase.getCollection("user-preferences").deleteMany(org.bson.Document())
+    }
 
     Given("an ad and exchange rates") {
+        // ARRR to USD rate: 1 ARRR = 0.5 USD
+        exchangeRateRepository.save(ExchangeRate(
+            baseCurrency = Currency.ARRR,
+            quoteCurrency = Currency.USD,
+            rate = BigDecimal("0.5"),
+            updatedAt = Instant.now(),
+            source = "test"
+        ))
+
         val sellerId = ObjectId.get()
         userRepository.save(User(id = sellerId, username = "seller"))
         userRoleRepository.add(sellerId, Role.USER)
@@ -44,19 +55,10 @@ class AdDiscoveryIntegrationTest(
         adService.updateAd(ad.id, sellerIdStr, UpdateAdRequest(
             description = "Description",
             fixedPrices = mapOf(Currency.ARRR to BigDecimal("100")),
-            location = com.gimlee.ads.domain.model.Location("city", doubleArrayOf(0.0, 0.0)),
+            location = com.gimlee.ads.domain.model.Location(ObjectId.get().toHexString(), doubleArrayOf(0.0, 0.0)),
             stock = 10
         ))
         adService.activateAd(ad.id, sellerIdStr)
-
-        // ARRR to USD rate: 1 ARRR = 0.5 USD
-        exchangeRateRepository.save(ExchangeRate(
-            baseCurrency = Currency.ARRR,
-            quoteCurrency = Currency.USD,
-            rate = BigDecimal("0.5"),
-            updatedAt = Instant.now(),
-            source = "test"
-        ))
 
         When("fetching the ad as a guest (default currency USD)") {
             Then("it should include the price in USD") {
@@ -108,22 +110,6 @@ class AdDiscoveryIntegrationTest(
     }
 
     Given("a multi-currency FIXED_CRYPTO ad") {
-        val sellerId = ObjectId.get()
-        userRepository.save(User(id = sellerId, username = "multi-seller"))
-        userRoleRepository.add(sellerId, Role.USER)
-        userRoleRepository.add(sellerId, Role.PIRATE)
-        userRoleRepository.add(sellerId, Role.YCASH)
-        val sellerIdStr = sellerId.toHexString()
-
-        val ad = adService.createAd(sellerIdStr, "Multi-Currency Ad", null, 10)
-        adService.updateAd(ad.id, sellerIdStr, UpdateAdRequest(
-            description = "A multi-currency ad",
-            fixedPrices = mapOf(Currency.ARRR to BigDecimal("100"), Currency.YEC to BigDecimal("5000")),
-            location = com.gimlee.ads.domain.model.Location("city", doubleArrayOf(0.0, 0.0)),
-            stock = 5
-        ))
-        adService.activateAd(ad.id, sellerIdStr)
-
         // ARRR to USD: 1 ARRR = 0.5 USD
         exchangeRateRepository.save(ExchangeRate(
             baseCurrency = Currency.ARRR,
@@ -140,6 +126,22 @@ class AdDiscoveryIntegrationTest(
             updatedAt = Instant.now(),
             source = "test"
         ))
+
+        val sellerId = ObjectId.get()
+        userRepository.save(User(id = sellerId, username = "multi-seller"))
+        userRoleRepository.add(sellerId, Role.USER)
+        userRoleRepository.add(sellerId, Role.PIRATE)
+        userRoleRepository.add(sellerId, Role.YCASH)
+        val sellerIdStr = sellerId.toHexString()
+
+        val ad = adService.createAd(sellerIdStr, "Multi-Currency Ad", null, 10)
+        adService.updateAd(ad.id, sellerIdStr, UpdateAdRequest(
+            description = "A multi-currency ad",
+            fixedPrices = mapOf(Currency.ARRR to BigDecimal("100"), Currency.YEC to BigDecimal("5000")),
+            location = com.gimlee.ads.domain.model.Location(ObjectId.get().toHexString(), doubleArrayOf(0.0, 0.0)),
+            stock = 5
+        ))
+        adService.activateAd(ad.id, sellerIdStr)
 
         When("fetching the ad as a guest") {
             Then("preferredPrices should include both currencies converted to USD") {

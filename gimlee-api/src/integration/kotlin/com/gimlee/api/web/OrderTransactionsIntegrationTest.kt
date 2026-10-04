@@ -69,8 +69,9 @@ class OrderTransactionsIntegrationTest(
         // Setup ad
         val ad = adService.createAd(sellerId.toHexString(), "Test Item", null, 10)
         adService.updateAd(ad.id, sellerId.toHexString(), UpdateAdRequest(
+            description = "Test Description",
             fixedPrices = mapOf(Currency.ARRR to BigDecimal("10.00")),
-            location = Location("Warsaw", doubleArrayOf(52.2297, 21.0122)),
+            location = Location(ObjectId.get().toHexString(), doubleArrayOf(52.2297, 21.0122)),
             stock = 10
         ))
         adService.activateAd(ad.id, sellerId.toHexString())
