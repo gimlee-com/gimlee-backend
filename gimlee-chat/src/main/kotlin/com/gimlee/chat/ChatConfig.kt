@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.gimlee.chat.web.transport.ChatEventTransport
 import com.gimlee.chat.web.transport.InProcessChatEventTransport
 import com.gimlee.chat.web.transport.RedisChatEventTransport
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -13,6 +14,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.data.redis.listener.ChannelTopic
 import org.springframework.data.redis.listener.RedisMessageListenerContainer
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 
 @ConfigurationProperties(prefix = "gimlee.chat")
 data class ChatProperties(
@@ -31,7 +33,8 @@ data class SseProperties(
 
 data class SseRedisProperties(
     /** Redis Pub/Sub channel used to fan chat events out across instances. */
-    val channel: String = "gimlee.chat.events"
+    val channel: String = "gimlee.chat.events",
+    val poolSize: Int = 8
 )
 
 @Configuration
@@ -52,13 +55,32 @@ class ChatConfig {
 
     @Bean
     @ConditionalOnProperty(prefix = "gimlee.chat.sse", name = ["transport"], havingValue = "redis")
+    fun redisChatListenerExecutor(
+        @Value("\${gimlee.chat.sse.redis.pool-size:8}") poolSize: Int
+    ): ThreadPoolTaskExecutor {
+        val executor = ThreadPoolTaskExecutor()
+        executor.corePoolSize = poolSize
+        executor.maxPoolSize = poolSize
+        executor.setQueueCapacity(500)
+        executor.setThreadNamePrefix("redis-chat-listener-")
+        executor.setWaitForTasksToCompleteOnShutdown(true)
+        executor.setAwaitTerminationSeconds(10)
+        executor.initialize()
+        return executor
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "gimlee.chat.sse", name = ["transport"], havingValue = "redis")
     fun chatRedisMessageListenerContainer(
         connectionFactory: RedisConnectionFactory,
         chatEventTransport: ChatEventTransport,
+        redisChatListenerExecutor: ThreadPoolTaskExecutor,
         properties: ChatProperties
     ): RedisMessageListenerContainer {
         val container = RedisMessageListenerContainer()
         container.setConnectionFactory(connectionFactory)
+        container.setTaskExecutor(redisChatListenerExecutor)
+        container.setSubscriptionExecutor(redisChatListenerExecutor)
         container.addMessageListener(
             chatEventTransport as RedisChatEventTransport,
             ChannelTopic(properties.sse.redis.channel)

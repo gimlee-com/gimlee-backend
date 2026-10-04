@@ -121,16 +121,46 @@ Note: For a more advanced setup, these secrets should be encrypted using Ansible
 
 ## Horizontal Scaling
 
-To add more application nodes:
-1. Increase `app_node_count` in your Terraform `variables.tf`.
-2. Run `terraform apply`.
-3. Add the new IP(s) to the `[app]` group in `inventory.ini`.
-4. Deploy Redis (the cross-instance chat event bus) and enable the Redis transport:
+To horizontally scale application nodes (`app_node_count > 1`):
+
+### 1. Terraform Provisioning & SSL Architecture
+1. In `infrastructure/terraform-hcloud/variables.tf` (or `terraform-digitalocean/variables.tf`), set `app_node_count = 2` (or greater).
+2. Execute `terraform apply`.
+   - **SSL Termination Note**: When `app_node_count > 1`, the Cloud Load Balancer (Hetzner Load Balancer / DigitalOcean LB) manages and terminates SSL via Cloud-managed Let's Encrypt certificates. This eliminates ACME HTTP-01 validation collisions across independent Traefik instances.
+
+### 2. Inventory Configuration
+Add all provisioned app node IPs to `[app]` in `inventory.ini`. Ensure the following variables are specified:
+```ini
+[all:vars]
+redis_password=YOUR_SECURE_REDIS_PASSWORD
+chat_sse_transport=redis
+```
+
+### 3. Service Deployment Sequence
+1. **Deploy Redis (Distributed Event Bus)**:
    ```bash
-   # Set redis_password and chat_sse_transport=redis in inventory.ini, then:
    ansible-playbook -i ../inventory.ini deploy-redis.yml
    ```
-   This is required so real-time chat events fan out across instances — without it, chat
-   participants connected to different nodes won't see each other's messages in real time
-   (see `docs/adr/0005-real-time-chat-horizontal-scaling.md`).
-5. Re-run the playbooks. Traefik will automatically detect and load balance to the new nodes.
+   Redis Pub/Sub connects all application nodes on channel `gimlee.chat.events` for real-time SSE event fan-out (see `docs/adr/0005-real-time-chat-horizontal-scaling.md` and `docs/operations/redis-chat-scaling.md`).
+
+2. **Deploy Database Services & Migrations**:
+   ```bash
+   ansible-playbook -i ../inventory.ini deploy-services.yml ...
+   ```
+   This automatically executes Flyway schema and index migrations for both `gimlee-ads` and `gimlee-chat` (creating `{ cid: 1, ts: -1 }` and `{ cid: 1, _id: -1 }` message indexes).
+
+3. **Deploy Metrics Exporters**:
+   ```bash
+   ansible-playbook -i ../inventory.ini deploy-exporters.yml
+   ```
+   Deploys `redis_exporter` on the `db` host exposing metrics on port 9121 alongside `node_exporter` and `mongodb_exporter`.
+
+4. **Deploy Traefik and Application**:
+   ```bash
+   ansible-playbook -i ../inventory.ini deploy-traefik.yml ...
+   ansible-playbook -i ../inventory.ini deploy-app.yml ...
+   ```
+   Or run the unified orchestration playbook:
+   ```bash
+   ansible-playbook -i ../inventory.ini deploy-all.yml ...
+   ```

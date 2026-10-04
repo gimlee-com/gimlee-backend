@@ -1,0 +1,16 @@
+---
+# Unified deployment playbook for Gimlee production infrastructure.
+# Runs the full deployment sequence in proper dependency order:
+# 1. Base system setup and common tools
+# 2. Database services & Flyway migrations (MongoDB, gimlee-ads, gimlee-chat)
+# 3. Redis distributed event bus (for real-time chat SSE fan-out)
+# 4. Metrics exporters (node_exporter, mongodb_exporter, redis_exporter)
+# 5. Traefik reverse proxy
+# 6. Application containers (gimlee-api)
+
+- import_playbook: setup.yml
+- import_playbook: deploy-services.yml
+- import_playbook: deploy-redis.yml
+- import_playbook: deploy-exporters.yml
+- import_playbook: deploy-traefik.yml
+- import_playbook: deploy-app.yml

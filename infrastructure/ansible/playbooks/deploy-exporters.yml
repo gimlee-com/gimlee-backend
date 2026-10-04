@@ -37,3 +37,15 @@
           MONGODB_URI: "{{ mongodb_uri }}"
         command:
           - '--collect-all'
+
+    - name: Run Redis Exporter
+      community.docker.docker_container:
+        name: redis-exporter
+        image: oliver006/redis_exporter:latest
+        restart_policy: always
+        ports:
+          - "9121:9121"
+        env:
+          REDIS_ADDR: "redis://{{ ansible_host }}:6379"
+          REDIS_PASSWORD: "{{ redis_password | default('') }}"
+      when: redis_password is defined and redis_password | length > 0

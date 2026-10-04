@@ -33,3 +33,9 @@ variable "management_ips" {
   default     = []
   description = "List of external IP addresses allowed to access management ports (e.g. MongoDB, SSH if restricted)"
 }
+
+variable "domain" {
+  type        = string
+  default     = ""
+  description = "Production domain name for SSL termination (e.g., api.gimlee.com). Used when app_node_count > 1."
+}

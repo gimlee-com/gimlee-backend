@@ -188,6 +188,36 @@ class ChatRedisTransportIntegrationTest(
 
         subscriberThread.interrupt()
     }
+
+    Given("a temporary Redis outage during message submission") {
+        mongoTemplate.remove(Query(), ConversationDocument.COLLECTION_NAME)
+        mongoTemplate.remove(Query(), ChatRepository.COLLECTION_NAME)
+        val conversationId = createTestConversation(listOf(userAId, userBId))
+
+        redis.dockerClient.pauseContainerCmd(redis.containerId).exec()
+
+        try {
+            When("user B sends a message while Redis is unreachable") {
+                val response = restClient.post(
+                    "/chat/$conversationId/messages",
+                    mapOf("message" to "Message during Redis downtime"),
+                    userHeaders(userBId, "userB")
+                )
+
+                Then("the HTTP response is 200 OK without user-facing failure") {
+                    response.statusCode shouldBe 200
+                }
+
+                Then("the message is safely stored in MongoDB") {
+                    val messages = chatService.getHistory(conversationId, 20)
+                    messages.size shouldBe 1
+                    messages[0].text shouldBe "Message during Redis downtime"
+                }
+            }
+        } finally {
+            redis.dockerClient.unpauseContainerCmd(redis.containerId).exec()
+        }
+    }
 }) {
     companion object {
         private val redis = GenericContainer(DockerImageName.parse("redis:7-alpine"))
@@ -200,6 +230,7 @@ class ChatRedisTransportIntegrationTest(
             registry.add("gimlee.chat.sse.transport") { "redis" }
             registry.add("spring.data.redis.host") { redis.host }
             registry.add("spring.data.redis.port") { redis.getMappedPort(6379) }
+            registry.add("spring.data.redis.timeout") { "500ms" }
         }
     }
 }

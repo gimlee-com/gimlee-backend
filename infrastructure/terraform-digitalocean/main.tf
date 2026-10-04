@@ -42,9 +42,18 @@ resource "digitalocean_droplet" "wallet" {
 }
 
 # Load Balancer
+resource "digitalocean_certificate" "lb_cert" {
+  count   = var.domain != "" ? 1 : 0
+  name    = "gimlee-lb-cert"
+  type    = "lets_encrypt"
+  domains = [var.domain]
+}
+
 resource "digitalocean_loadbalancer" "public" {
   name   = "gimlee-lb"
   region = var.region
+
+  redirect_http_to_https = var.domain != ""
 
   forwarding_rule {
     entry_port     = 80
@@ -54,19 +63,25 @@ resource "digitalocean_loadbalancer" "public" {
     target_protocol = "http"
   }
 
-  forwarding_rule {
-    entry_port     = 443
-    entry_protocol = "https"
+  dynamic "forwarding_rule" {
+    for_each = var.domain != "" ? [1] : []
+    content {
+      entry_port       = 443
+      entry_protocol   = "https"
+      target_port      = 80
+      target_protocol  = "http"
+      certificate_name = digitalocean_certificate.lb_cert[0].name
+    }
+  }
 
-    target_port     = 443
-    target_protocol = "https"
-    
-    # In a real scenario, you'd manage SSL here or use Traefik on the droplets.
-    # For Traefik on droplets, we can use TCP pass-through or just use a Floating IP for one node.
-    # To keep it simple and powerful (Traefik), we'll let Traefik handle SSL.
-    # So we forward 443 as TCP.
-    # Wait, DO LB doesn't support ACME easily if we forward as TCP without certs.
-    # Let's use DO LB for 80/443 and forward to Traefik on port 80/443.
+  dynamic "forwarding_rule" {
+    for_each = var.domain == "" ? [1] : []
+    content {
+      entry_port      = 443
+      entry_protocol  = "tcp"
+      target_port     = 443
+      target_protocol = "tcp"
+    }
   }
 
   healthcheck {

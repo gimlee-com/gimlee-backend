@@ -89,7 +89,12 @@ class ChatService(
         ))
     }
 
-    fun getHistory(chatId: String, limit: Int, beforeId: String?): List<ArchivedMessage> {
-        return chatRepository.findMessages(chatId, limit, beforeId)
+    fun getHistory(
+        chatId: String,
+        limit: Int,
+        beforeId: String? = null,
+        afterId: String? = null
+    ): List<ArchivedMessage> {
+        return chatRepository.findMessages(chatId, limit, beforeId, afterId)
     }
 }

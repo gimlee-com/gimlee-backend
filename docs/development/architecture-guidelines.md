@@ -27,3 +27,8 @@
     *   When a purchase is canceled or times out, simply decrement `lockedStock`.
     *   `availableStock` is always calculated as `stock - lockedStock`.
 *   **Atomic Operations:** Always use atomic MongoDB operations (`$inc`, `$set`, `$push`) in repositories to ensure thread-safe updates without requiring heavy application-level locking or transactions where possible.
+
+### 6. Real-Time Chat & Horizontal Scaling
+*   **Distributed Event Bus:** Real-time event broadcasting for `gimlee-chat` uses a distributed event bus (Redis Pub/Sub via `ChatEventTransport`) rather than "Sticky Chat" load-balancer hashing, adhering to ADR 0005.
+*   **Node Agnosticism:** Any chat participant can connect to any application instance. Ingress load balancers use standard round-robin distribution without requiring conversation-specific sticky routing.
+*   **Database as Source of Truth:** MongoDB remains the authoritative source of truth for message history. Redis Pub/Sub handles ephemeral live event delivery; clients reconnecting after network blips back-fill missed events via forward history pagination (`afterId`).

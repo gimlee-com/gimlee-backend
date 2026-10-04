@@ -33,6 +33,9 @@ build/
 ### Gradle ###
 .gradle/
 
+### AI Agents workdirs ###
+/.junie/
+
 ### Terraform ###
 .terraform/
 *.tfstate

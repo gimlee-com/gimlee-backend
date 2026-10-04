@@ -83,7 +83,9 @@ class ChatController(
 
     @Operation(
         summary = "Get History",
-        description = "Retrieves archived messages for the specified conversation. Requires USER role."
+        description = "Retrieves archived messages for the specified conversation. Supports pagination backwards " +
+            "with beforeId (messages older than beforeId) or forward with afterId (messages newer than afterId, " +
+            "useful for back-filling missed messages after SSE reconnection). Requires USER role."
     )
     @ApiResponse(responseCode = "200", description = "History retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Not a participant or conversation is archived")
@@ -93,17 +95,19 @@ class ChatController(
     fun getHistory(
         @PathVariable conversationId: String,
         @RequestParam(defaultValue = "20") limit: Int,
-        @RequestParam(required = false) beforeId: String?
+        @RequestParam(required = false) beforeId: String?,
+        @RequestParam(required = false) afterId: String?
     ): ResponseEntity<Any> {
         val userId = principalProvider.getUserId()
 
         val accessOutcome = conversationService.verifyReadAccess(conversationId, userId)
         if (accessOutcome != null) return handleOutcome(accessOutcome)
 
+        val clampedLimit = limit.coerceIn(1, 100)
         val locale = LocaleContextHolder.getLocale()
-        val messages = chatService.getHistory(conversationId, limit, beforeId)
+        val messages = chatService.getHistory(conversationId, clampedLimit, beforeId, afterId)
         val response = ArchivedMessagesResponseDto(
-            hasMore = messages.size >= limit,
+            hasMore = messages.size >= clampedLimit,
             messages = messages.map { ArchivedMessageDto.from(it, messageSource, locale) }
         )
         return ResponseEntity.ok(response)
@@ -111,7 +115,10 @@ class ChatController(
 
     @Operation(
         summary = "Chat Events Stream",
-        description = "Exposes a Server-Sent Events (SSE) stream for real-time chat updates. Requires USER role."
+        description = "Exposes a Server-Sent Events (SSE) stream for real-time chat updates. " +
+            "Stream delivers batched 'chat-event' updates buffered every 200ms and periodic 'heartbeat' keep-alive " +
+            "events every 30s. Upon reconnection after disconnect, clients should query the messages history endpoint " +
+            "with afterId set to their last received message ID to back-fill missed events. Requires USER role."
     )
     @GetMapping(value = ["/{conversationId}/events"], produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     @Privileged(role = "USER")

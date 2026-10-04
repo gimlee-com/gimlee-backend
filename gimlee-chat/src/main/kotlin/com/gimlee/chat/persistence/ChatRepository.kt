@@ -33,18 +33,35 @@ class ChatRepository(mongoDatabase: MongoDatabase) {
         collection.insertMany(documents)
     }
 
-    fun findMessages(chatId: String, limit: Int, beforeId: String? = null): List<ArchivedMessage> {
+    fun findMessages(
+        chatId: String,
+        limit: Int,
+        beforeId: String? = null,
+        afterId: String? = null
+    ): List<ArchivedMessage> {
         val queryFilters = mutableListOf<Bson>()
         queryFilters.add(Filters.eq(ArchivedMessageDocument.FIELD_CHAT_ID, chatId))
 
-        beforeId?.let {
-            queryFilters.add(Filters.lt(ArchivedMessageDocument.FIELD_ID, ObjectId(it)))
+        try {
+            beforeId?.let {
+                queryFilters.add(Filters.lt(ArchivedMessageDocument.FIELD_ID, ObjectId(it)))
+            }
+            afterId?.let {
+                queryFilters.add(Filters.gt(ArchivedMessageDocument.FIELD_ID, ObjectId(it)))
+            }
+        } catch (_: IllegalArgumentException) {
+            return emptyList()
         }
 
         val filter = Filters.and(queryFilters)
+        val sort = if (afterId != null) {
+            Sorts.ascending(ArchivedMessageDocument.FIELD_ID)
+        } else {
+            Sorts.descending(ArchivedMessageDocument.FIELD_ID)
+        }
 
         return collection.find(filter)
-            .sort(Sorts.descending(ArchivedMessageDocument.FIELD_ID))
+            .sort(sort)
             .limit(limit)
             .map { mapToArchivedMessageDocument(it).toDomain() }
             .toList()

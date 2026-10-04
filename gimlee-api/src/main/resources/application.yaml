@@ -23,6 +23,9 @@ management:
       application: ${spring.application.name}
 
 spring:
+  data:
+    redis:
+      timeout: 2s
   lifecycle:
     timeout-per-shutdown-phase: 30s
   servlet:
@@ -174,6 +177,7 @@ gimlee:
       heartbeat-ms: 30000
       redis:
         channel: gimlee.chat.events
+        pool-size: 8
     persistence:
       # batch-ms: 1000
       # batch-size: 100

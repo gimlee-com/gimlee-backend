@@ -2,7 +2,8 @@ package com.gimlee.chat.domain.model
 
 enum class ChatEventType(val shortName: String) {
     MESSAGE("M"),
-    TYPING_INDICATOR("TI");
+    TYPING_INDICATOR("TI"),
+    CONVERSATION_LOCKED("CL");
 
     companion object {
         fun fromShortName(shortName: String): ChatEventType {

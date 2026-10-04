@@ -1,7 +1,10 @@
 package com.gimlee.chat.domain
 
 import com.gimlee.chat.ChatProperties
+import com.gimlee.chat.domain.event.InternalChatEvent
+import com.gimlee.chat.domain.model.ChatEventType
 import com.gimlee.chat.web.ChatEventBroadcaster
+import com.gimlee.chat.web.transport.ChatEventTransport
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Component
 class ConversationLockJob(
     private val conversationService: ConversationService,
     private val chatEventBroadcaster: ChatEventBroadcaster,
+    private val chatEventTransport: ChatEventTransport,
     private val properties: ChatProperties
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -27,6 +31,13 @@ class ConversationLockJob(
                 val locked = conversationService.lockConversation(conversation.id)
                 if (locked) {
                     log.info("Automatically locked conversation {} due to expiration", conversation.id)
+                    chatEventTransport.publish(
+                        InternalChatEvent(
+                            chatId = conversation.id,
+                            type = ChatEventType.CONVERSATION_LOCKED.name,
+                            author = "system"
+                        )
+                    )
                     chatEventBroadcaster.closeEmittersForConversation(conversation.id)
                     successCount++
                 }

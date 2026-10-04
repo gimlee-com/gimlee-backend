@@ -132,7 +132,46 @@ class ChatRedisCrossInstanceIntegrationTest(
             }
         }
 
-        subscriberThread.interrupt()
+        When("user A disconnects from SSE and user B sends more messages via instance 1") {
+            subscriberThread.interrupt()
+
+            val instance2Client = com.gimlee.common.http.RestTestClient("http://localhost:$port2")
+            try {
+                val initialHistoryResponse = instance2Client.get(
+                    "/chat/$conversationId/messages?limit=10",
+                    restClient.createAuthHeader(subject = userAId, username = "userA", roles = listOf("USER"))
+                )
+                initialHistoryResponse.statusCode shouldBe 200
+                val initialHistory = initialHistoryResponse.bodyAs<com.gimlee.chat.web.dto.response.ArchivedMessagesResponseDto>()!!
+                initialHistory.messages.size shouldBe 1
+                val firstMessageId = initialHistory.messages[0].id
+
+                restClient.post(
+                    "/chat/$conversationId/messages",
+                    mapOf("message" to "offline message 2"),
+                    restClient.createAuthHeader(subject = userBId, username = "userB", roles = listOf("USER"))
+                )
+                restClient.post(
+                    "/chat/$conversationId/messages",
+                    mapOf("message" to "offline message 3"),
+                    restClient.createAuthHeader(subject = userBId, username = "userB", roles = listOf("USER"))
+                )
+
+                Then("user A back-fills missed messages using afterId on instance 2 in chronological order") {
+                    val backfillResponse = instance2Client.get(
+                        "/chat/$conversationId/messages?afterId=$firstMessageId",
+                        restClient.createAuthHeader(subject = userAId, username = "userA", roles = listOf("USER"))
+                    )
+                    backfillResponse.statusCode shouldBe 200
+                    val backfill = backfillResponse.bodyAs<com.gimlee.chat.web.dto.response.ArchivedMessagesResponseDto>()!!
+                    backfill.messages.size shouldBe 2
+                    backfill.messages[0].text shouldBe "offline message 2"
+                    backfill.messages[1].text shouldBe "offline message 3"
+                }
+            } finally {
+                instance2Client.close()
+            }
+        }
     }
 }) {
     companion object {

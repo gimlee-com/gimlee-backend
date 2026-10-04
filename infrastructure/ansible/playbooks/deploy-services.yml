@@ -58,6 +58,7 @@
         mode: '0755'
       loop:
         - gimlee-ads
+        - gimlee-chat
 
     - name: Copy Flyway configuration
       copy:
@@ -66,6 +67,7 @@
         mode: '0644'
       loop:
         - gimlee-ads
+        - gimlee-chat
 
     - name: Copy Flyway migrations
       copy:
@@ -74,6 +76,7 @@
         mode: '0644'
       loop:
         - gimlee-ads
+        - gimlee-chat
 
     - name: Run Flyway migrations
       command: >
@@ -84,6 +87,7 @@
         -baselineOnMigrate=true
       loop:
         - gimlee-ads
+        - gimlee-chat
 
 - name: Deploy PirateChain Wallet
   hosts: wallet

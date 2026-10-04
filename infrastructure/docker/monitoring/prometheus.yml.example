@@ -18,3 +18,8 @@ scrape_configs:
     static_configs:
       # MongoDB Exporter running on the DB node
       - targets: ['DB_IP:9216']
+
+  - job_name: 'redis-exporter'
+    static_configs:
+      # Redis Exporter running on the DB node
+      - targets: ['DB_IP:9121']

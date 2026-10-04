@@ -99,6 +99,7 @@ gimlee:
       heartbeat-ms: 30000
       redis:
         channel: gimlee.chat.events
+        pool-size: 8
 
 # Redis connection — only required when gimlee.chat.sse.transport=redis
 #spring:

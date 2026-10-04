@@ -11,8 +11,14 @@ Authorization: Bearer {{token}}
 GET {{host}}/chat/{{conversationId}}/messages?limit=20
 Authorization: Bearer {{token}}
 
-### Get chat history (with cursor pagination)
+### Get chat history (backwards cursor pagination)
+# Retrieves messages older than beforeId (chronologically backwards).
 GET {{host}}/chat/{{conversationId}}/messages?limit=20&beforeId={{messageId}}
+Authorization: Bearer {{token}}
+
+### Get chat history (forward back-fill after reconnect)
+# Retrieves messages newer than afterId (chronological order) to recover messages missed during disconnect.
+GET {{host}}/chat/{{conversationId}}/messages?limit=20&afterId={{messageId}}
 Authorization: Bearer {{token}}
 
 ### Indicate typing
@@ -20,6 +26,13 @@ POST {{host}}/chat/{{conversationId}}/typing
 Authorization: Bearer {{token}}
 
 ### Subscribe to chat events (SSE)
+# Opens a persistent Server-Sent Events stream for real-time delivery of messages and typing indicators.
+# Stream sends:
+#   - 'chat-event': batches of localized events buffered every 200ms
+#   - 'heartbeat': periodic keep-alive comments sent every 30s to keep connection open
+# Reconnection Protocol:
+#   On network interruption or node failure, client reconnects to this endpoint and invokes
+#   GET /chat/{conversationId}/messages?afterId={lastSeenId} to back-fill missed events.
 GET {{host}}/chat/{{conversationId}}/events
 Authorization: Bearer {{token}}
 Accept: text/event-stream

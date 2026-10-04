@@ -9,7 +9,17 @@ import scala.language.postfixOps
 
 class ChatTestSSE extends Simulation {
 
-  private val httpProtocol = http.baseUrl("http://localhost:12060")
+  private val baseUrls: List[String] = sys.props.get("baseUrls")
+    .orElse(sys.env.get("BASE_URLS"))
+    .map(_.split(",").map(_.trim).filter(_.nonEmpty).toList)
+    .filter(_.nonEmpty)
+    .getOrElse(List(sys.props.get("baseUrl").orElse(sys.env.get("BASE_URL")).getOrElse("http://localhost:12060")))
+
+  private val httpProtocol = if (baseUrls.size == 1) {
+    http.baseUrl(baseUrls.head)
+  } else {
+    http.baseUrls(baseUrls)
+  }
 
   private val usersFeed = csv("resources/users.csv").circular
   private val randomMessagesFeed = jsonFile("resources/messages.json").random
@@ -84,6 +94,13 @@ class ChatTestSSE extends Simulation {
       .headers(baseHeaders))
     .pause(10 seconds)
     .exec(sse("Chat Stream [CLOSE]").sseName("chatStream").close())
+    .pause(1 seconds)
+
+    .exec(http("User back-fills messages after reconnect")
+      .get("/api/chat/${chatId}/messages?limit=20&afterId=5c27a39f1e80ed8160a76d10")
+      .header("Cookie", "JWT=${jwt}")
+      .header("Accept", "application/json")
+      .headers(baseHeaders))
 
   before {
     Helper.initChats(GatlingFiles.resourcesDirectory)

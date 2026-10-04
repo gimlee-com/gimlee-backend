@@ -91,6 +91,12 @@ resource "hcloud_load_balancer_target" "app_target" {
   depends_on       = [hcloud_load_balancer_network.public]
 }
 
+resource "hcloud_managed_certificate" "lb_cert" {
+  count        = var.app_node_count > 1 && var.domain != "" ? 1 : 0
+  name         = "gimlee-lb-cert"
+  domain_names = [var.domain]
+}
+
 resource "hcloud_load_balancer_service" "http" {
   load_balancer_id = hcloud_load_balancer.public.id
   protocol         = "http"
@@ -109,10 +115,35 @@ resource "hcloud_load_balancer_service" "http" {
 }
 
 resource "hcloud_load_balancer_service" "https" {
+  count            = var.app_node_count > 1 && var.domain != "" ? 0 : 1
   load_balancer_id = hcloud_load_balancer.public.id
-  protocol         = "tcp" # Passthrough to Traefik
+  protocol         = "tcp" # Passthrough to Traefik for single-node deployments
   listen_port      = 443
   destination_port = 443
+}
+
+resource "hcloud_load_balancer_service" "https_terminated" {
+  count            = var.app_node_count > 1 && var.domain != "" ? 1 : 0
+  load_balancer_id = hcloud_load_balancer.public.id
+  protocol         = "https"
+  listen_port      = 443
+  destination_port = 80
+
+  http {
+    certificates  = [hcloud_managed_certificate.lb_cert[0].id]
+    redirect_http = true
+  }
+
+  health_check {
+    protocol = "http"
+    port     = 80
+    interval = 10
+    timeout  = 5
+    retries  = 3
+    http {
+      path = "/health"
+    }
+  }
 }
 
 # Firewalls

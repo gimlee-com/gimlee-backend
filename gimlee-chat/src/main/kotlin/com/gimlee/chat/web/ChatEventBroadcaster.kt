@@ -1,6 +1,7 @@
 package com.gimlee.chat.web
 
 import com.gimlee.chat.domain.event.InternalChatEvent
+import com.gimlee.chat.domain.model.ChatEventType
 import com.gimlee.chat.domain.model.MessageType
 import com.gimlee.chat.web.dto.response.LocalizedChatEventDto
 import com.gimlee.chat.web.transport.ChatEventTransport
@@ -8,6 +9,7 @@ import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
 import org.springframework.context.MessageSource
+import org.springframework.context.SmartLifecycle
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
@@ -29,8 +31,11 @@ import java.util.concurrent.CopyOnWriteArrayList
 class ChatEventBroadcaster(
     private val messageSource: MessageSource,
     private val chatEventTransport: ChatEventTransport
-) {
+) : SmartLifecycle {
     private val log = LoggerFactory.getLogger(javaClass)
+
+    @Volatile
+    private var running = false
 
     data class UserEmitter(val userId: String, val emitter: SseEmitter, val locale: Locale)
 
@@ -42,8 +47,21 @@ class ChatEventBroadcaster(
 
     @PostConstruct
     fun subscribeToTransport() {
-        chatEventTransport.subscribe(::bufferEvent)
+        chatEventTransport.subscribe(::handleTransportEvent)
     }
+
+    override fun start() {
+        running = true
+    }
+
+    override fun stop() {
+        shutdownBroadcaster()
+        running = false
+    }
+
+    override fun isRunning(): Boolean = running
+
+    override fun getPhase(): Int = Integer.MAX_VALUE
 
     fun createEmitter(chatId: String, userId: String? = null, locale: Locale = Locale.ENGLISH): SseEmitter {
         val emitter = SseEmitter(0L) // Infinite timeout
@@ -82,7 +100,12 @@ class ChatEventBroadcaster(
         }
     }
 
-    private fun bufferEvent(event: InternalChatEvent) {
+    private fun handleTransportEvent(event: InternalChatEvent) {
+        if (event.type == ChatEventType.CONVERSATION_LOCKED.name) {
+            closeEmittersForConversation(event.chatId)
+            return
+        }
+
         if (!emitters.containsKey(event.chatId)) return
 
         eventBuffer.computeIfAbsent(event.chatId) { CopyOnWriteArrayList() }.add(event)
@@ -160,6 +183,12 @@ class ChatEventBroadcaster(
 
     @PreDestroy
     fun onShutdown() {
+        if (running) {
+            stop()
+        }
+    }
+
+    private fun shutdownBroadcaster() {
         log.info("Completing all chat SSE emitters and flushing buffers before shutdown...")
         flushBuffers()
         emitters.values.forEach { chatEmitters ->
