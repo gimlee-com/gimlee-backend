@@ -11,7 +11,7 @@
     - name: Run MongoDB container
       community.docker.docker_container:
         name: mongodb
-        image: mongo:9.0.8
+        image: mongo:9.0.4
         command: mongod --auth
         restart_policy: always
         env:

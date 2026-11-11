@@ -88,7 +88,7 @@ abstract class BaseIntegrationTest(body: BaseIntegrationTest.() -> Unit) : Behav
 
 
     companion object {
-        private val mongodb = MongoDBContainer("mongo:9.0.8").apply {
+        private val mongodb = MongoDBContainer("mongo:9.0.4").apply {
             start()
         }
 
