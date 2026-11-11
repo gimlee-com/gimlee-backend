@@ -11,7 +11,7 @@
     - name: Run MongoDB container
       community.docker.docker_container:
         name: mongodb
-        image: mongo:8.0
+        image: mongo:9.0.8
         command: mongod --auth
         restart_policy: always
         env:
@@ -49,6 +49,9 @@
           fi
         fi
       register: mongodb_init_status
+      until: mongodb_init_status.rc == 0
+      retries: 10
+      delay: 3
       changed_when: "'USER_CREATED' in mongodb_init_status.stdout"
 
     - name: Create Flyway migrations directory

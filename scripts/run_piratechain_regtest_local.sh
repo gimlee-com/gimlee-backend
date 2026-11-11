@@ -68,7 +68,7 @@ PIRATE_DATA_DIR="${PIRATE_DATA_DIR:-$REPO_ROOT/.piratechain-regtest-local}"
 PIRATE_MINE_INTERVAL="${PIRATE_MINE_INTERVAL:-60}"
 
 # Image names mirror the ansible deployment.
-PIRATE_IMAGE="${PIRATE_IMAGE:-piratechain-regtest:6.0.8}"
+PIRATE_IMAGE="${PIRATE_IMAGE:-piratechain-regtest:6.0.14}"
 LWD_IMAGE="${LWD_IMAGE:-piratechain-lightwalletd:latest}"
 
 # Container names (suffixed to make them obviously local/regtest).

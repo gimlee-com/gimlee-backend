@@ -67,7 +67,7 @@ This section guides developers looking to contribute or run a local instance for
 ### Prerequisites
 
 *   **Java Development Kit (JDK):** Version 21 or later.
-*   **MongoDB:** Version 8.0 or later. The provided Docker configuration simplifies local setup:
+*   **MongoDB:** Version 9.0 or later. The provided Docker configuration simplifies local setup:
     `docker-compose -f docker/mongo/docker-compose.yml up`. Authentication is enabled by default with `admin` as the username and `password` as the password.
 *   **Flyway CLI:** For database migrations, ensure the Flyway CLI is installed and available in your PATH.
 *   **PirateChain Full Node:** A running [PirateChain](https://piratechain.com) full node wallet is required for 

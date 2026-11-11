@@ -109,7 +109,8 @@ resource "hcloud_load_balancer_service" "http" {
     timeout  = 5
     retries  = 3
     http {
-      path = "/health"
+      path         = "/health"
+      status_codes = ["2??", "3??"]
     }
   }
 }
@@ -294,12 +295,6 @@ resource "hcloud_firewall" "wallet" {
     protocol  = "tcp"
     port      = "19067"
     source_ips = ["0.0.0.0/0", "::/0"] # Ycash Lightwalletd (gimlee-internal-testnet)
-  }
-  rule {
-    direction = "in"
-    protocol  = "tcp"
-    port      = "18232"
-    source_ips = ["0.0.0.0/0", "::/0"] # ycashd (gimlee-internal-testnet)
   }
   apply_to {
     label_selector = "role=wallet"

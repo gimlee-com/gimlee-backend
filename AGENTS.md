@@ -12,7 +12,7 @@
 *   **Language:** Kotlin (primary), Java 21
 *   **Framework:** Spring Boot
 *   **Build Tool:** Gradle (Multi-module)
-*   **Database:** MongoDB 8.0+
+*   **Database:** MongoDB 9.0+
 *   **Infrastructure:** Docker, Terraform, Ansible
 
 ## Project Modules

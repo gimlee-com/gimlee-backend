@@ -13,15 +13,16 @@ variable "app_node_count" {
 }
 
 variable "app_server_type" {
-  default = "cx23" # 2 vCPU, 2GB RAM
+  default = "cx23" # 2 vCPU, 4GB RAM
 }
 
 variable "db_server_type" {
-  default = "cpx11" # 2 vCPU, 2GB RAM
+  default = "cx23" # 2 vCPU, 4GB RAM
 }
 
 variable "wallet_server_type" {
-  default = "cpx31" # 4 vCPU, 8GB RAM (For PirateChain node)
+  default = "cx23" # 2 vCPU, 4GB RAM
+#  default = "cpx31" # 4 vCPU, 8GB RAM (For PirateChain node)
 }
 
 variable "ssh_key_name" {
