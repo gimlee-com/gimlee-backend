@@ -7,9 +7,10 @@
       - crowdsecurity/base-http-scenarios
   tasks:
     - name: Add CrowdSec repository
-      shell: curl -s https://install.crowdsec.net/install.sh | sh
+      shell: curl -s https://install.crowdsec.net | sh
       args:
-        creates: /etc/apt/sources.list.d/crowdsec.list
+        creates: /etc/apt/sources.list.d/crowdsec_crowdsec.list
+        warn: false
 
     - name: Install CrowdSec
       apt:

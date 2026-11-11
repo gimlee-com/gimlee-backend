@@ -95,7 +95,7 @@ ansible-playbook -i ../inventory.ini deploy-app.yml \
   --extra-vars "mail_port=587" \
   --extra-vars "mail_username=some@username.com" \
   --extra-vars "mail_password=YOUR_SMTP_PASSWORD" \
-  --extra-vars "jwt_key=YOUR_SUPER_SECRET_JWT_KEY" \
+  --extra-vars "jwt_key=YOUR_SUPER_SECRET_JWT_KEY_MIN_32_CHARS" \
   --extra-vars "s3_endpoint=https://your-bucket.s3.provider.com" \
   --extra-vars "s3_region=your-region" \
   --extra-vars "s3_bucket_name=your-bucket-name" \
@@ -111,13 +111,50 @@ ansible-playbook -i ../inventory.ini deploy-app.yml \
 
 **Where to get these values:**
 * `spring_profile`: The Spring Boot profile to activate (e.g., `test`, `prod`).
-* `mail_password` & `jwt_key`: These are secrets you should generate and manage.
+* `mail_password`: SMTP password for outgoing notification emails.
+* `jwt_key`: Secret key for JWT signing. Must be at least 32 characters long (256-bit secret for HMAC-256).
 * `openexchangerates_app_id`: Get this from your [Open Exchange Rates](https://openexchangerates.org/) account.
 * `s3_*` variables: These come from your object storage provider.
   * If using DigitalOcean, run `terraform output` in the `terraform-digitalocean` directory to get the keys and bucket name.
   * If using Hetzner, you will have these from the manual setup process.
 
+**Optional Variables:**
+* `chat_sse_transport`: Chat real-time SSE fan-out transport. Defaults to `in-process` for single-node deployments. Set to `redis` when running multiple app nodes (see [Horizontal Scaling](#horizontal-scaling)). Note: When setting `chat_sse_transport=redis`, Redis must first be deployed on the `db` node via `deploy-redis.yml`.
+* `redis_password`: Password for Redis when `chat_sse_transport=redis` is enabled (can also be defined in `inventory.ini`).
+* `redis_host`: Redis host IP or hostname (defaults to the `db1` node IP).
+* `image_tag`: Docker image tag to deploy (defaults to `master`).
+
 Note: For a more advanced setup, these secrets should be encrypted using Ansible Vault.
+
+## 4. Investigating Application & Service Logs
+
+All Gimlee services and background daemons run as Docker containers on their respective nodes. You can inspect logs directly by connecting via SSH to the server listed in `inventory.ini`:
+
+```bash
+# Connect to the application node
+ssh -i ~/.ssh/hetzner_rsa root@<app_node_ip>
+
+# Inspect Gimlee API container logs (real-time follow)
+docker logs -f --tail 100 gimlee-api
+
+# Inspect previous container logs if it restarted/crashed
+docker logs --tail 200 gimlee-api
+
+# Check Traefik reverse proxy logs
+docker logs -f --tail 100 traefik
+```
+
+On the database node (`db1`), you can view MongoDB or Redis logs:
+```bash
+# Connect to the database node
+ssh -i ~/.ssh/hetzner_rsa root@<db_node_ip>
+
+# View Redis logs
+docker logs -f --tail 100 redis
+
+# View MongoDB logs
+docker logs -f --tail 100 mongodb
+```
 
 ## Horizontal Scaling
 

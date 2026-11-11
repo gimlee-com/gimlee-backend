@@ -3,6 +3,23 @@
   hosts: all
   become: true
   tasks:
+    - name: Ensure private network interface is configured in netplan
+      copy:
+        dest: /etc/netplan/60-private-network.yaml
+        mode: '0600'
+        content: |
+          network:
+            version: 2
+            ethernets:
+              enp7s0:
+                dhcp4: true
+      when: "'enp7s0' in ansible_interfaces"
+      register: private_net_config
+
+    - name: Apply netplan configuration if changed
+      command: netplan apply
+      when: private_net_config is changed
+
     - name: Install dependencies
       apt:
         name:

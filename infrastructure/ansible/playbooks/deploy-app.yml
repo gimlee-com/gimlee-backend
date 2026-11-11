@@ -9,11 +9,31 @@
     mongodb_uri: "mongodb://{{ mongodb_user }}:{{ mongodb_password | urlencode }}@{{ hostvars['db1']['ansible_host'] }}:27017/gimlee?authSource=admin"
     piratechain_rpc: "http://{{ hostvars['wallet1']['ansible_host'] }}:45453"
     ycash_rpc: "http://{{ hostvars['wallet1']['ansible_host'] }}:{{ ycash_rpc_port | default(19232) }}"
-    # Real-time chat SSE transport: "in-process" (single node) or "redis" (horizontal scaling).
-    # See docs/adr/0005-real-time-chat-horizontal-scaling.md.
-    chat_sse_transport: "{{ chat_sse_transport | default('in-process') }}"
-    redis_host: "{{ redis_host | default(hostvars['db1']['ansible_host']) }}"
   tasks:
+    - name: Validate JWT key length
+      ansible.builtin.assert:
+        that:
+          - jwt_key is defined
+          - jwt_key | length >= 32
+        fail_msg: "jwt_key must be at least 32 characters long for HMAC-256 signing (currently {{ jwt_key | default('') | length }} characters)."
+
+    - name: Validate Redis configuration when chat_sse_transport is redis
+      ansible.builtin.assert:
+        that:
+          - redis_password is defined
+          - redis_password | length > 0
+        fail_msg: "redis_password must be defined (in inventory.ini or --extra-vars) when chat_sse_transport=redis."
+      when: (chat_sse_transport | default('in-process')) == 'redis'
+
+    - name: Verify Redis is reachable when chat_sse_transport is redis
+      ansible.builtin.wait_for:
+        host: "{{ redis_host | default(hostvars['db1']['ansible_host']) }}"
+        port: "{{ redis_port | default(6379) }}"
+        timeout: 5
+        msg: "Redis is not reachable on {{ redis_host | default(hostvars['db1']['ansible_host']) }}:{{ redis_port | default(6379) }}. Ensure Redis has been deployed on the db node via 'ansible-playbook -i ../inventory.ini deploy-redis.yml' before deploying the application with Redis transport enabled."
+      when: (chat_sse_transport | default('in-process')) == 'redis'
+      check_mode: false
+
     - name: Run Gimlee API container from pre-built image
       community.docker.docker_container:
         name: gimlee-api
@@ -46,8 +66,9 @@
           GIMLEE_PAYMENTS_EXCHANGE_OPEN_EXCHANGE_RATES_APP_ID: "{{ openexchangerates_app_id }}"
           # Chat real-time SSE fan-out. Defaults to in-process; set chat_sse_transport=redis
           # (with Redis deployed via deploy-redis.yml) when running more than one app node.
-          GIMLEE_CHAT_SSE_TRANSPORT: "{{ chat_sse_transport }}"
-          SPRING_DATA_REDIS_HOST: "{{ redis_host }}"
+          # See docs/adr/0005-real-time-chat-horizontal-scaling.md.
+          GIMLEE_CHAT_SSE_TRANSPORT: "{{ chat_sse_transport | default('in-process') }}"
+          SPRING_DATA_REDIS_HOST: "{{ redis_host | default(hostvars['db1']['ansible_host']) }}"
           SPRING_DATA_REDIS_PORT: "6379"
           SPRING_DATA_REDIS_PASSWORD: "{{ redis_password | default('') }}"
         labels:
@@ -64,8 +85,8 @@
 
           # CORS Middleware definition
           traefik.http.middlewares.gimlee-cors.headers.accesscontrolallowmethods: "GET,OPTIONS,PUT,POST,DELETE,PATCH"
-          traefik.http.middlewares.gimlee-cors.headers.accesscontrolalloworiginlist: "{{ cors_allowed_origins }}"
-          traefik.http.middlewares.gimlee-cors.headers.accesscontrolallowheaders: "Content-Type,Authorization"
+          traefik.http.middlewares.gimlee-cors.headers.accesscontrolalloworiginlist: "{{ cors_allowed_origins | default('https://gimlee.com,https://staging.gimlee.com') }}"
+          traefik.http.middlewares.gimlee-cors.headers.accesscontrolallowheaders: "Content-Type,Authorization,X-CSRF-TOKEN,*"
           traefik.http.middlewares.gimlee-cors.headers.accesscontrolmaxage: "100"
 
           # Rate Limit Middleware for token refresh endpoint (10 req/min per IP)
